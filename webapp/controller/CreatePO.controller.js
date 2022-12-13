@@ -6,7 +6,7 @@ sap.ui.define([
     "sap/m/MessageToast"
 ],
 
-function (Controller, JSONModel, MessageBox, History, MessageToast) {
+function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHandler, NavType) {
     var dateFormat = sap.ui.core.format.DateFormat.getDateInstance({pattern : "MM/dd/yyyy" });
     var sapDateFormat = sap.ui.core.format.DateFormat.getDateInstance({pattern : "yyyy-MM-dd" });
     
@@ -23,9 +23,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast) {
                     me.onNavBack();
                 }
             }
+
+            console.log("onInit")
         },
         
-        onPatternMatched: function() {
+        onPatternMatched: function() {  
+            console.log("onPatternMatched")         
             this.getView().setModel(new JSONModel({
                 today: dateFormat.format(new Date()),
                 activeGroup: "1"
@@ -232,7 +235,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast) {
                     me.getView().setModel(new JSONModel(oData.results), "incoterm");
                 },
                 error: function (err) { }
-            });
+            });            
         },
 
         onNavBack: function(oEvent) {
@@ -2624,6 +2627,31 @@ function (Controller, JSONModel, MessageBox, History, MessageToast) {
 
         handlesuggestionItemSelected: function(oEvent) {
             oEvent.getSource().setDescription("test");    
+        },
+
+        onNewStyle: function (oEvent) {
+            // var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            // oRouter.navTo("RouteStyles");
+            // console.log()
+            var me = this;
+            var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
+
+            var hash = (oCrossAppNavigator && oCrossAppNavigator.hrefForExternal({
+                target: {
+                    semanticObject: "ZUI_3DERP",
+                    action: "manage&/RouteStyleDetail/NEW/" + me._sbu + "/" + me._ioNo
+                }
+                // params: {
+                //     "styleno": "NEW",
+                //     "sbu": me._sbu
+                // }
+            })) || ""; // generate the Hash to display style
+
+            oCrossAppNavigator.toExternal({
+                target: {
+                    shellHash: hash
+                }
+            }); // navigate to Supplier application
         },
     })
 })

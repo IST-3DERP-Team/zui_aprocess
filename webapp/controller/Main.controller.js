@@ -380,19 +380,43 @@ sap.ui.define([
                     // console.log(context.getObject().DataType)
                     if (sColumnWidth === 0) sColumnWidth = 100;
                     // console.log(context)
-                    return new sap.ui.table.Column({
-                        id: sColumnId,
-                        label: sColumnLabel,
-                        template: me.columnTemplate(sColumnId, sColumnType),
-                        width: sColumnWidth + 'px',
-                        sortProperty: sColumnId,
-                        filterProperty: sColumnId,
-                        autoResizable: true,
-                        visible: sColumnVisible,
-                        sorted: sColumnSorted,                        
-                        hAlign: sColumnDataType === "NUMBER" ? "End" : sColumnDataType === "BOOLEAN" ? "Center" : "Begin",
-                        sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending" )
-                    });
+                    if (sColumnDataType === "NUMBER") {
+                        return new sap.ui.table.Column({
+                            id: sColumnId,
+                            label: sColumnLabel,
+                            template: me.columnTemplate(sColumnId, sColumnType),
+                            width: sColumnWidth + 'px',
+                            sortProperty: sColumnId,
+                            filterProperty: sColumnId,
+                            autoResizable: true,
+                            visible: sColumnVisible,
+                            sorted: sColumnSorted,                        
+                            hAlign: sColumnDataType === "NUMBER" ? "End" : sColumnDataType === "BOOLEAN" ? "Center" : "Begin",
+                            sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending" )
+                            // multiLabels: [
+                            //     new sap.m.Text({text: sColumnLabel}),
+                            //     new sap.m.Input({ 
+                            //         value : "500",
+                            //         editable: false
+                            //     })
+                            // ]
+                        });                        
+                    }
+                    else {
+                        return new sap.ui.table.Column({
+                            id: sColumnId,
+                            label: sColumnLabel,
+                            template: me.columnTemplate(sColumnId, sColumnType),
+                            width: sColumnWidth + 'px',
+                            sortProperty: sColumnId,
+                            filterProperty: sColumnId,
+                            autoResizable: true,
+                            visible: sColumnVisible,
+                            sorted: sColumnSorted,                        
+                            hAlign: sColumnDataType === "NUMBER" ? "End" : sColumnDataType === "BOOLEAN" ? "Center" : "Begin",
+                            sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending" ),
+                        });
+                    }
                 });
             },
             // hAlign: "End",
@@ -1575,7 +1599,7 @@ sap.ui.define([
 
                                                         //FOR TESTING, CHANGE TO LEN = 0
                                                         if (me._oCreateData.filter(fItem => fItem.REMARKS === '').length > 0) {
-                                                            //check record with no need for inforec, get conv factor in ZERP_MRPDATA
+                                                            //check record with no need for inforec, get in ZERP_MRPDATA
                                                             var iCtr = 0;
                                                             var aNOIR = me._oCreateData.filter(fItem => fItem.REMARKS === '' && !fItem.INFORECCHECK);
                                                             if (aNOIR.length == 0) {
@@ -1595,6 +1619,9 @@ sap.ui.define([
                                                                             if (oDataNOIR.results.length > 0) {
                                                                                 noir.ORDERCONVFACTOR = oDataNOIR.results[0].Umren;
                                                                                 noir.BASECONVFACTOR = oDataNOIR.results[0].Umrez;
+                                                                                noir.UOM = oDataNOIR.results[0].Orderuom;
+                                                                                noir.GROSSPRICE = oDataNOIR.results[0].Unitprice;
+                                                                                noir.NETPRICE = oDataNOIR.results[0].Unitprice;
                                                                             }
                                                                             else {
                                                                                 noir.ORDERCONVFACTOR = "1";
@@ -1703,6 +1730,9 @@ sap.ui.define([
                                                             if (oDataNOIR.results.length > 0) {
                                                                 noir.ORDERCONVFACTOR = oDataNOIR.results[0].Umren;
                                                                 noir.BASECONVFACTOR = oDataNOIR.results[0].Umrez;
+                                                                noir.UOM = oDataNOIR.results[0].Orderuom;
+                                                                noir.GROSSPRICE = oDataNOIR.results[0].Unitprice;
+                                                                noir.NETPRICE = oDataNOIR.results[0].Unitprice;
                                                             }
                                                             else {
                                                                 noir.ORDERCONVFACTOR = "1";

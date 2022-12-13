@@ -202,7 +202,12 @@
                             icon="sap-icon://sys-cancel"
                             press="onCancelPO"
                             tooltip="{ddtext>/CANCEL}"
-                            visible="true"/>                           
+                            visible="true"/>
+                        <Button id="btnCrossApp"
+                            icon="sap-icon://action" 
+                            tooltip="{ddtext>/SAVELAYOUT}" 
+                            press="onNewStyle"
+                            visible="false"/>
                         <!-- <Button id="btnSaveHdr" 
                             icon="sap-icon://save"
                             press="onSaveHdr"

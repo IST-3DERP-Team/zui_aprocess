@@ -191,7 +191,7 @@
                             <Button id="btnTabLayout"
                                 icon="sap-icon://grid" 
                                 tooltip="{ddtext>/SAVELAYOUT}" 
-                                press="onSaveTableLayout"/>                               
+                                press="onSaveTableLayout"/>
                         </Toolbar>
                     </uiT:extension>
                     <uiT:layoutData>
