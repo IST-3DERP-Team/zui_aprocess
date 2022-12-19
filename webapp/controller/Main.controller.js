@@ -453,6 +453,7 @@ sap.ui.define([
                 // console.log(oModel)
                 var oSmartFilter = this.getView().byId("smartFilterBar");
                 oSmartFilter.setModel(oModel);
+                // console.log(oSmartFilter)
 
                 // var oMultiInput2 = this.getView().byId("multiInput2");
                 // oMultiInput2.addValidator(function(args){
@@ -790,7 +791,7 @@ sap.ui.define([
                                 oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg && item.PurGroup === value.PurGroup) === index) ;
                                 oParam['N_GetInfoRecMatParam'] = oParamData;
                                 oParam['N_GetInfoRecReturn'] = [];
-                                console.log(oParamData)
+                                console.log(oParam)
                                 oModel.create("/GetInfoRecordSet", oParam, {
                                     method: "POST",
                                     success: function(oResult, oResponse) {
@@ -1459,7 +1460,8 @@ sap.ui.define([
                                 PLANMONTH: aData.at(item).PLANMONTH,
                                 ITEM: '00000',
                                 REMARKS: '',
-                                INFORECCHECK: false
+                                INFORECCHECK: false,
+                                INFOREC: ""
                             })
                         }
                     })
@@ -1539,7 +1541,6 @@ sap.ui.define([
                                                             itemIR.ORDERCONVFACTOR = returnData[0].ConvNum1;
                                                             itemIR.BASECONVFACTOR = returnData[0].ConvDen1;
                                                             itemIR.INFOREC = returnData[0].InfoRec;
-
                                                             itemIR.ORDERPOQTY = (itemIR.ORDERPOQTY / ((+returnData[0].ConvNum1) * (+returnData[0].ConvDen1) * (+returnData[0].PriceUnit))).toFixed(3);
                                                         }
                                                     });
@@ -1608,9 +1609,14 @@ sap.ui.define([
                                                             }
                                                             else {
                                                                 aNOIR.forEach(noir => {
+                                                                    var sVendor = noir.VENDOR;
+                                                                    if (!isNaN(sVendor)) {
+                                                                        while (sVendor.length < 10) sVendor = "0" + sVendor;
+                                                                    }
+
                                                                     me._oModel.read("/MRPDataSet", {
                                                                         urlParameters: {
-                                                                            "$filter": "Iono eq '" + noir.IONUMBER + "' and Matno eq '" + noir.MATERIALNO + "'"
+                                                                            "$filter": "Iono eq '" + noir.IONUMBER + "' and Matno eq '" + noir.MATERIALNO + "' and Vendor eq '" + sVendor + "' and Purchorg eq '" + noir.PURCHORG + "'"
                                                                         },
                                                                         success: function (oDataNOIR) {
                                                                             iCtr++;
@@ -1621,7 +1627,13 @@ sap.ui.define([
                                                                                 noir.BASECONVFACTOR = oDataNOIR.results[0].Umrez;
                                                                                 noir.UOM = oDataNOIR.results[0].Orderuom;
                                                                                 noir.GROSSPRICE = oDataNOIR.results[0].Unitprice;
-                                                                                noir.NETPRICE = oDataNOIR.results[0].Unitprice;
+                                                                                noir.NETPRICE = oDataNOIR.results[0].Netprice;
+                                                                                noir.ORDERPRICEUNIT = oDataNOIR.results[0].Orderuom;
+                                                                                noir.TAXCODE = oDataNOIR.results[0].Taxcode;
+                                                                                noir.OVERDELTOL = oDataNOIR.results[0].Uebto;
+                                                                                noir.UNDERDELTOL = oDataNOIR.results[0].Untto;
+                                                                                noir.UNLI = oDataNOIR.results[0].Uebtk === "X" ? true : false;
+                    
                                                                             }
                                                                             else {
                                                                                 noir.ORDERCONVFACTOR = "1";
@@ -1716,23 +1728,34 @@ sap.ui.define([
                                             //FOR TESTING, CHANGE TO LEN = 0
                                             if (me._oCreateData.filter(fItem => fItem.REMARKS === '').length > 0) {
                                                 var iCtr = 0;
-                                                var aNOIR = me._oCreateData.filter(fItem => fItem.REMARKS === '');
+                                                var aNOIR = me._oCreateData.filter(fItem => fItem.REMARKS === '');                                                
                                                 console.log(aNOIR)
+
                                                 aNOIR.forEach(noir => {
+                                                    var sVendor = noir.VENDOR;
+                                                    if (!isNaN(sVendor)) {
+                                                        while (sVendor.length < 10) sVendor = "0" + sVendor;
+                                                    }
+
                                                     me._oModel.read("/MRPDataSet", {
                                                         urlParameters: {
-                                                            "$filter": "Iono eq '" + noir.IONUMBER + "' and Matno eq '" + noir.MATERIALNO + "'"
+                                                            "$filter": "Iono eq '" + noir.IONUMBER + "' and Matno eq '" + noir.MATERIALNO + "' and Vendor eq '" + sVendor + "' and Purchorg eq '" + noir.PURCHORG + "'"
                                                         },
                                                         success: function (oDataNOIR) {
                                                             iCtr++;
                                                             noir.PER = "1";
-                                                            // console.log(oDataNOIR)
+                                                            console.log(oDataNOIR)
                                                             if (oDataNOIR.results.length > 0) {
                                                                 noir.ORDERCONVFACTOR = oDataNOIR.results[0].Umren;
                                                                 noir.BASECONVFACTOR = oDataNOIR.results[0].Umrez;
                                                                 noir.UOM = oDataNOIR.results[0].Orderuom;
                                                                 noir.GROSSPRICE = oDataNOIR.results[0].Unitprice;
-                                                                noir.NETPRICE = oDataNOIR.results[0].Unitprice;
+                                                                noir.NETPRICE = oDataNOIR.results[0].Netprice;
+                                                                noir.ORDERPRICEUNIT = oDataNOIR.results[0].Orderuom;
+                                                                noir.TAXCODE = oDataNOIR.results[0].Taxcode;
+                                                                noir.OVERDELTOL = oDataNOIR.results[0].Uebto;
+                                                                noir.UNDERDELTOL = oDataNOIR.results[0].Untto;
+                                                                noir.UNLI = oDataNOIR.results[0].Uebtk === "X" ? true : false;
                                                             }
                                                             else {
                                                                 noir.ORDERCONVFACTOR = "1";

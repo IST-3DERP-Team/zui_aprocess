@@ -203,11 +203,11 @@
                             press="onCancelPO"
                             tooltip="{ddtext>/CANCEL}"
                             visible="true"/>
-                        <Button id="btnCrossApp"
+                        <!-- <Button id="btnTest"
                             icon="sap-icon://action" 
-                            tooltip="{ddtext>/SAVELAYOUT}" 
-                            press="onNewStyle"
-                            visible="false"/>
+                            tooltip="{ddtext>/TEST}" 
+                            press="savePOTolerance('test')"
+                            visible="true"/> -->
                         <!-- <Button id="btnSaveHdr" 
                             icon="sap-icon://save"
                             press="onSaveHdr"
