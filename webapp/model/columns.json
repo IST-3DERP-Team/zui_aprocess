@@ -6,7 +6,7 @@
         {"name": "INCOTERMS", "label": "Inco Terms", "type": "STRING", "required": true, "length": "3",
             "valueHelp": {"show": true, "items": {"path": "incoterm", "value": "INCO1", "text": "INCO1"},
             "suggestionItems": {"path": "incoterm>/", "text": "{incoterm>INCO1}", "additionalText": "{incoterm>INCO1}", "maxSuggestionWidth": "150px"}}},
-        {"name": "SHIPMODE", "label": "Ship Mode", "type": "STRING", "required": true, "length": "2",
+        {"name": "SHIPMODE", "label": "Ship Mode", "type": "STRING", "required": true, "length": "2", "TextFormatMode": "ValueKey",
             "valueHelp": {"show": true, "items": {"path": "shipmode", "value": "SHIPMODE", "text": "DESC"},
             "suggestionItems": {"path": "shipmode>/", "text": "{shipmode>SHIPMODE}", "additionalText": "{shipmode>DESC}", "maxSuggestionWidth": "160px"}}}
         ],
@@ -15,5 +15,5 @@
             "valueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
         {"name": "BASEPOQTY", "label": "PO QTY (BASE)", "type": "NUMBER", "required": true, "length": "13", "precision":"13", "scale": "3",
             "valueHelp": {"show": false, "source": "", "value": "", "desc": ""}}
-    ]    
+        ]    
 }

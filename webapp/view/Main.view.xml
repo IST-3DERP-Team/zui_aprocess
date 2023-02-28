@@ -10,13 +10,14 @@
     xmlns:semantic="sap.m.semantic"
     xmlns:smartfilterbar="sap.ui.comp.smartfilterbar"
     xmlns:fb="sap.ui.comp.filterbar" 
+    xmlns:smartMultiInput="sap.ui.comp.smartmultiinput"
     displayBlock="true"> 
     <Page id="page" title="{i18n>title}" showHeader="false">
         <content> 
             <VBox fitContainer="true" class="anp">
                 <smartfilterbar:SmartFilterBar id="smartFilterBar" entitySet="ZVB_3DERP_ANP_FILTERS" search="onSearch" persistencyKey="3DERP_ANPPKey">
                     <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="SBU" label="{ddtext>/SBU}" groupId="_BASIC" mandatory="mandatory" width="50px">
+                        <smartfilterbar:ControlConfiguration key="SBU" label="{ddtext>/SBU}" groupId="_BASIC" mandatory="mandatory" width="50px" class="mandatoryFontColor">
                             <smartfilterbar:customControl>
                                 <ComboBox id="cboxSBU"
                                     selectedKey="{ui>/sbu}"
@@ -57,52 +58,58 @@
                     <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="MATERIALGRP" label="{ddtext>/MATERIALGRP}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
                     </smartfilterbar:controlConfiguration>
-                    <smartfilterbar:controlConfiguration>
+                    <!-- <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
                             <smartfilterbar:customControl>
-                                <!-- <MultiInput
+                                <MultiInput
                                     id="multiInput2"
                                     width="100%"
                                     placeholder=""
                                     showSuggestion="true"
-                                    showValueHelp="false"
-                                    suggestionRows="{/ZVB_3DERP_MATTYPE_SH}">
+                                    maxSuggestionWidth="400px"
+                                    showValueHelp="true"
+                                    suggestionRows="{ZVB_3DERP_MATTYPE_SH_FILTER>/}">
                                     <suggestionColumns>
                                         <Column
                                             hAlign="Begin"
                                             popinDisplay="Inline"
-                                            demandPopin="true">
-                                            <Label text="Name"/>
+                                            demandPopin="true"
+                                            width="100px">
+                                            <Label text="Material Type"/>
                                         </Column>
                                         <Column
-                                            hAlign="Center"
+                                            hAlign="Begin"
                                             popinDisplay="Inline"
                                             demandPopin="true"
                                             minScreenWidth="Tablet">
-                                            <Label text="Product ID"/>
+                                            <Label text="Description"/>
                                         </Column>
                                     </suggestionColumns>
                                     <suggestionRows>
                                         <ColumnListItem>
                                             <cells>
-                                                <Label text="{MaterialType}"/>
-                                                <Label text="{Description}"/>
+                                                <Label text="{ZVB_3DERP_MATTYPE_SH_FILTER>MaterialType}"/>
+                                                <Label text="{ZVB_3DERP_MATTYPE_SH_FILTER>Description}"/>
                                             </cells>
                                         </ColumnListItem>
                                     </suggestionRows>
-                                </MultiInput> -->
+                                </MultiInput>
                                 <MultiInput id="multiInput4"
                                             width="100%"
-                                            showValueHelp="false"
+                                            showValueHelp="true"
                                             suggestionItems="{
                                     path: 'ZVB_3DERP_MATTYPE_SH_FILTER>/'
                                 }">
                                     <core:Item key="{ZVB_3DERP_MATTYPE_SH_FILTER>MaterialType}" text="{ZVB_3DERP_MATTYPE_SH_FILTER>MaterialType} - {ZVB_3DERP_MATTYPE_SH_FILTER>Description}" />
                                 </MultiInput>
+                                <smartMultiInput:SmartMultiInput value="{MaterialType}" entitySet="ZVB_3DERP_MATTYPE_SH" supportRanges="true" />
                             </smartfilterbar:customControl>
                         </smartfilterbar:ControlConfiguration>
-                    </smartfilterbar:controlConfiguration>
+                    </smartfilterbar:controlConfiguration> -->
 
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" />
+                    </smartfilterbar:controlConfiguration>
                     <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="IONUMBER" label="{ddtext>/IONUMBER}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" />
                     </smartfilterbar:controlConfiguration>
@@ -174,16 +181,25 @@
                                 width="15rem"/>
                             <ToolbarSeparator />
                             <Button id="btnAssign" 
+                                text="{ddtext>/ASSIGNVENDOR}"
                                 icon="sap-icon://multiselect-all"
                                 press="onAssign"
                                 tooltip="{ddtext>/ASSIGNVENDOR}"
                                 visible="true"/>
+                            <Button id="btnManualAssign" 
+                                text="{ddtext>/MANUALASSIGNVENDOR}"
+                                icon="sap-icon://request"
+                                press="onManualAssign"
+                                tooltip="{ddtext>/MANUALASSIGNVENDOR}"
+                                visible="true"/>
                             <Button id="btnUnassign" 
+                                text="{ddtext>/UNDOASSIGNVENDOR}"
                                 icon="sap-icon://multiselect-none"
                                 press="onUnassign"
                                 tooltip="{ddtext>/UNDOASSIGNVENDOR}"
                                 visible="true"/>
                             <Button id="btnCreatePO" 
+                                text="{ddtext>/CREATEPO}"
                                 icon="sap-icon://document"
                                 press="onCreatePO" 
                                 tooltip="{ddtext>/CREATEPO}"

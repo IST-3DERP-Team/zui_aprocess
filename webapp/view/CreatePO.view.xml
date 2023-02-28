@@ -233,8 +233,8 @@
                                 emptySpanM="0"
                                 emptySpanS="0"
                                 columnsXL="3"
-                                columnsL="2"
-                                columnsM="1"
+                                columnsL="3"
+                                columnsM="2"
                                 singleContainerFullSize="false" />
                         </form:layout>
                         <form:formContainers>
@@ -368,7 +368,11 @@
                                         <form:fields>
                                             <!-- <Input value="{grpheader>/0/SHIPMODE}" /> -->
                                             <Input type="Text" 
-                                                value="{grpheader>/0/SHIPMODE}"
+                                                value="{ 
+                                                    parts: [{ path: 'grpheader>/0/SHIPMODE' }, { value: 'shipmode' }, { value: 'SHIPMODE' }, { value: 'DESC' }, { value: 'ValueKey' }],
+                                                    formatter: '.formatValueHelp'
+                                                }" 
+                                                textFormatMode="ValueKey"
                                                 showValueHelp="true"
                                                 valueHelpRequest="handleValueHelp" 
                                                 showSuggestion="true" 
@@ -376,7 +380,7 @@
                                                 maxSuggestionWidth="160px"
                                                 change="onValueHelpInputChange">
                                                 <suggestionItems>
-                                                    <core:ListItem key="{shipmode>SHIPMODE}" text="{shipmode>SHIPMODE}" additionalText="{shipmode>DESC}" />
+                                                    <core:ListItem key="{shipmode>SHIPMODE}" text="{shipmode>DESC}" additionalText="{shipmode>SHIPMODE}" />
                                                 </suggestionItems>
                                                 <!-- <customData>
                                                     <core:CustomData key="SHIPMODE" value="{grpheader>/0/SHIPMODE}"/>
@@ -440,6 +444,38 @@
                                 <Text text="{detail>BASEPOQTY}" wrapping="false" />
                             </uiT:template>
                         </uiT:Column>
+
+                        <!-- <uiT:Column width="125px" hAlign="End">
+                            <Text text="{ddtext>/BASEPOQTY}" />
+                            <uiT:template>
+                                <Text text="{detail>BASEPOQTY2}" wrapping="false" />
+                            </uiT:template>
+                        </uiT:Column>
+                        <uiT:Column width="125px" hAlign="End">
+                            <Text text="{ddtext>/BASEPOQTY}" />
+                            <uiT:template>
+                                <Text text="{detail>BASEPOQTY3}" wrapping="false" />
+                            </uiT:template>
+                        </uiT:Column>
+                        <uiT:Column width="125px" hAlign="End">
+                            <Text text="{ddtext>/BASEPOQTY}" />
+                            <uiT:template>
+                                <Text text="{detail>BASEPOQTY4}" wrapping="false" />
+                            </uiT:template>
+                        </uiT:Column>                        
+                        <uiT:Column width="125px" hAlign="End">
+                            <Text text="{ddtext>/BASEPOQTY}" />
+                            <uiT:template>
+                                <Text text="{detail>BASEPOQTY5}" wrapping="false" />
+                            </uiT:template>
+                        </uiT:Column>
+                        <uiT:Column width="125px" hAlign="End">
+                            <Text text="{ddtext>/BASEPOQTY}" />
+                            <uiT:template>
+                                <Text text="{detail>BASEPOQTY6}" wrapping="false" />
+                            </uiT:template>
+                        </uiT:Column> -->
+
                         <uiT:Column width="100px" hAlign="End">
                             <Text text="{ddtext>/ORDERPOQTY}" />
                             <uiT:template>
@@ -455,7 +491,7 @@
                         <uiT:Column width="100px" hAlign="End">
                             <Text text="{ddtext>/GROSSPRICE}" />
                             <uiT:template>
-                                <Input value="{detail>GROSSPRICE}" enabled="true" textAlign="Right" change="onNumberChange" type="Number" />
+                                <Input value="{detail>GROSSPRICE}" enabled="true" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px" hAlign="End">

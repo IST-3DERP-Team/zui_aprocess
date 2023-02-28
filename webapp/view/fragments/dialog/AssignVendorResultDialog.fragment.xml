@@ -31,7 +31,7 @@
                         <Text text="{PRITEMNO}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
+                <uit:Column width="20rem">
                     <Label text="Remarks" />
                     <uit:template>
                         <Text text="{REMARKS}" wrapping="false" />
