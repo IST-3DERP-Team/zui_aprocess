@@ -2758,6 +2758,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var rfcModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
             var oParamInitParam = {};
             var oParamDataPO = [];
+            var oParamCPOClosePRData = [];
 
             var delDt; 
             var ebelpArray = [];
@@ -2845,6 +2846,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                         // Elikz     : resultExtendPop[0][x].ELIKZ,
                         // DeleteRec : resultExtendPop[0][x].LOEKZ
                     });
+
+                    oParamCPOClosePRData.push({
+                        Banfn: resultExtendPop[0][x].BANFN,
+                        Bnfpo: resultExtendPop[0][x].BNFPO
+                    })
                 }
                 
                 // console.log(this.byId("detailTab").getModel("detail").getData());
@@ -2867,7 +2873,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                         Werks     : resultExtendPop[0][0].WERKS,
                         Unsez     : resultExtendPop[0][0].UNSEZ,
                         Matnr     : item.MATERIALNO,
-                        Txz01     : item.GMCDESCEN,
+                        Txz01     : item.GMCDESCEN.substring(0, 40),
                         Menge     : item.BASEPOQTY + "",
                         Meins     : item.UOM,
                         Netpr     : item.GROSSPRICE,
@@ -2888,16 +2894,23 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
 
                     if(ebelpLastCount != "" || ebelpLastCount != null){
                         while(ebelpLastCount.length < 5) ebelpLastCount = "0" + ebelpLastCount.toString();
-                    }                    
+                    }
+
+                    oParamCPOClosePRData.push({
+                        Banfn: item.PRNUMBER,
+                        Bnfpo: item.PRITEMNO
+                    })
                 })
 
                 oParam = oParamInitParam;
                 oParam['N_ChangePOItemParam'] = oParamDataPO;
+                oParam['N_ChangePOClosePRParam'] = oParamCPOClosePRData;
                 oParam['N_ChangePOReturn'] = [];
 
-                // console.log(oParam);
+                console.log(oParam);
                 // return;
-                var vSuccess = "", sRetMessage = "";
+                var bSuccess = "", sRetMessage = "";
+                var oCurrHeaderData = me.getView().getModel("grpheader").getData();
 
                 this.showLoadingDialog('Processing...');
                 promiseResult = new Promise((resolve, reject)=>{
@@ -2913,10 +2926,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                 me.loadExtendPODialog.close();
                                 me._poCreated = true;
                                 me._aCreatePOResult.push({
-                                    GROUP: item.GROUP,
-                                    VENDOR: item.VENDOR,
-                                    PURCHORG: item.PURCHORG,
-                                    PURCHGRP: item.PURCHGRP,
+                                    GROUP: oCurrHeaderData[0].GROUP,
+                                    VENDOR: oCurrHeaderData[0].VENDOR,
+                                    PURCHORG: oCurrHeaderData[0].PURCHORG,
+                                    PURCHGRP: oCurrHeaderData[0].PURCHGRP,
                                     REMARKS: oData.N_ChangePOReturn.results[0].Msgtyp + ": " + oData.N_ChangePOReturn.results[0].Msgv1
                                 })                                
                                 resolve();
@@ -2938,8 +2951,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
 
                 await promiseResult;
 
-                if (vSuccess === "X") {
-                    var oCurrHeaderData = me.getView().getModel("grpheader").getData();
+                if (bSuccess === "X") {
                     var oHeaderData = me.getView().getModel("header").getData();
 
                     if (oHeaderData.length >= ((+oCurrHeaderData[0].GROUP) + 1)) {
