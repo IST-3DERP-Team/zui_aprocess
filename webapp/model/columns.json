@@ -14,6 +14,15 @@
         {"name": "DELVDATE", "label": "Delv Date", "type": "DATE", "required": true, "length": "10",
             "valueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
         {"name": "BASEPOQTY", "label": "PO QTY (BASE)", "type": "NUMBER", "required": true, "length": "13", "precision":"13", "scale": "3",
-            "valueHelp": {"show": false, "source": "", "value": "", "desc": ""}}
-        ]    
+            "valueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "UOM", "label": "Order UOM", "type": "STRING", "required": true, "length": "3",
+            "valueHelp": {"show": true, "items": {"path": "uom", "value": "MSEHI", "text": "MSEHI"},
+            "suggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHI}", "maxSuggestionWidth": "150px"}}},
+        {"name": "ORDERPRICEUNIT", "label": "Order Price Unit", "type": "STRING", "required": true, "length": "3",
+            "valueHelp": {"show": true, "items": {"path": "uom", "value": "MSEHI", "text": "MSEHI"},
+            "suggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHI}", "maxSuggestionWidth": "150px"}}},
+        {"name": "SUPPLYTYPE", "label": "Supply Type", "type": "STRING", "required": false, "length": "3", "TextFormatMode": "ValueKey",
+            "valueHelp": {"show": true, "items": {"path": "supplyType", "value": "SUPPLYTYP", "text": "SHORTTEXT"},
+            "suggestionItems": {"path": "supplyType>/", "text": "{supplyType>SUPPLYTYP}", "additionalText": "{supplyType>SHORTTEXT}", "maxSuggestionWidth": "150px"}}}              
+        ]
 }

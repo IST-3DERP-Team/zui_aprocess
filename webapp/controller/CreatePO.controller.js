@@ -24,20 +24,23 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 }
             }
 
+            var oEventDelegate = {
+                onclick: function(oEvent) {
+                    me.showGeneratePOGroups();
+                }
+            };
+
+            this.byId("titlePOCreate").addEventDelegate(oEventDelegate);
+
             // window.onhashchange = function() {
             //     console.log("browser back is clicked!");
             //     var oRouter = sap.ui.core.UIComponent.getRouterFor(me);
             //     oRouter.navTo("RouteMain", {}, true /*no history*/);
-            // }
+            // } 
         },
         
         onPatternMatched: function() {  
             // console.log("onPatternMatched")         
-            this.getView().setModel(new JSONModel({
-                today: dateFormat.format(new Date()),
-                activeGroup: "1"
-            }), "ui");
-
             var me = this;
             this._oModel = this.getOwnerComponent().getModel();
             this._aColumns = [];
@@ -75,7 +78,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             this.getView().setModel(new JSONModel(oDataDetail), "detail");
             this.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
             this.byId("detailTab").bindRows({path: "detail>/"});
-            // console.log(this.getView().getModel("detail").getData())
+            console.log(this.byId("detailTab").getModel("detail").getData())
             
             // var oJSONModel = new JSONModel();
             var oHeaderData = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().header;
@@ -85,7 +88,32 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             // var oJSONModelSM = new JSONModel();
             var iCounter = 0, iCounter2 = 0;
             var mData = {};
+
             this._poNO = "";
+            this._bFabSpecsChanged = false;
+            this._bRemarksChanged = false;
+            this._bPackInsChanged = false;
+            this._bHeaderChanged = false;
+            this._bDetailsChanged = false;
+            this._aRemarksDataBeforeChange = [];
+            this._aPackInsDataBeforeChange = [];
+            this._aFabSpecsDataBeforeChange = [];
+            this._aHeaderDataBeforeChange = [];
+            this._aDetailsDataBeforeChange = [];
+            this._validationErrors = [];
+            this._aCreatePOResult = [];
+            this._oParamCPOTolData = [];
+            this._oDataPOTolerance = {
+                WEMNG: "0",
+                FOCQTY: "0",
+                TOLALLOWEDIT: "",
+                QTYMIN: "0",
+                QTYMAX: "0",
+                UNTTOMIN: "0",
+                UNTTOMAX: "0",
+                UEBTOMIN: "0",
+                UEBTOMAX: "0"
+            };
 
             oHeaderData.forEach((item, idx) => {
                 item.PODATE = dateFormat.format(new Date());
@@ -95,6 +123,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 item.CURR = "";
                 item.EXRATE = "";
                 item.SHIPMODE = "";
+                item.STATUS = "NEW"
 
                 var sVendor = item.VENDOR;
 
@@ -153,7 +182,14 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     GROUP: item.GROUP,
                     ITEM: "1",
                     REMARKS: "",
-                    STATUS: ""                    
+                    STATUS: ""
+                });
+
+                aDataRemItems.push({
+                    GROUP: item.GROUP,
+                    ITEM: "1",
+                    REMARKS: "",
+                    STATUS: ""
                 });
 
                 oDataRem[item.GROUP] = aDataRemItems;
@@ -223,7 +259,22 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     });
                 }
                 else iCounter2++;
-            })
+
+                this._aCreatePOResult.push({
+                    GROUP: item.GROUP,
+                    VENDOR: item.VENDOR,
+                    PURCHORG: item.PURCHORG,
+                    PURCHGRP: item.PURCHGRP,
+                    STATUS: "NEW",
+                    REMARKS: "For PO Generation"
+                })
+            })            
+
+            this.getView().setModel(new JSONModel({
+                today: dateFormat.format(new Date()),
+                activeGroup: "1",
+                totalGroup: oHeaderData.length + ""
+            }), "ui");
 
             // var oJSONModelRem = new JSONModel();
             // var oJSONModelPackIns = new JSONModel();
@@ -243,32 +294,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             // var oJSONModelDDText = new JSONModel();
             // oJSONModelDDText.setData(this.getOwnerComponent().getModel("CAPTION_MSGS_MODEL").getData().text);
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("CAPTION_MSGS_MODEL").getData().text), "ddtext");
-
-            this._bFabSpecsChanged = false;
-            this._bRemarksChanged = false;
-            this._bPackInsChanged = false;
-            this._bHeaderChanged = false;
-            this._bDetailsChanged = false;
-            this._aRemarksDataBeforeChange = [];
-            this._aPackInsDataBeforeChange = [];
-            this._aFabSpecsDataBeforeChange = [];
-            this._aHeaderDataBeforeChange = [];
-            this._aDetailsDataBeforeChange = [];
-            this._validationErrors = [];
-            this._aCreatePOResult = [];
-            this._oParamCPOTolData = [];
-            this._oDataPOTolerance = {
-                    WEMNG: "0",
-                    FOCQTY: "0",
-                    TOLALLOWEDIT: "",
-                    QTYMIN: "0",
-                    QTYMAX: "0",
-                    UNTTOMIN: "0",
-                    UNTTOMAX: "0",
-                    UEBTOMIN: "0",
-                    UEBTOMAX: "0"
-                };
-
             this.getOwnerComponent().getModel("UI_MODEL").setProperty("/flag", false);
             this.setFormInputValueHelp();
             this.getDiscRate();
@@ -278,7 +303,26 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     me.getView().setModel(new JSONModel(oData.results), "incoterm");
                 },
                 error: function (err) { }
+            });      
+            
+            this._oModel.read("/SupplyTypeRscSet", {
+                success: function (oData, oResponse) {
+                    me.getView().setModel(new JSONModel(oData.results), "supplyType");
+                },
+                error: function (err) { }
             });
+
+            this._oModel.read("/UOMSet", {
+                success: function (oData, oResponse) {
+                    me.getView().setModel(new JSONModel(oData.results), "uom");
+                },
+                error: function (err) { }
+            });
+
+            this.byId("btnPrevPO").setEnabled(false);
+
+            if (oHeaderData.length > 1) { this.byId("btnNextPO").setEnabled(true); } 
+            else { this.byId("btnNextPO").setEnabled(false); }
         },
 
         onNavBack: function(oEvent) {
@@ -307,7 +351,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var oModelColumns = new JSONModel();
             await oModelColumns.loadData(sPath);
 
-            this._aColumns = oModelColumns.getData();
+            this._aColumns = oModelColumns.getData();            
             this.setRowEditMode("detail");
         },
 
@@ -369,7 +413,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             if (this._bHeaderChanged) {
                 var oData = {
                     Process: "header-cancel",
-                    Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
+                    Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                 }
 
                 // var oJSONModel = new JSONModel();
@@ -418,7 +462,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             if (this._bDetailsChanged) {
                 var oData = {
                     Process: "details-cancel",
-                    Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
+                    Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                 }
 
                 // var oJSONModel = new JSONModel();
@@ -561,7 +605,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 else if (col.mAggregations.template.mBindingInfos.value !== undefined) {
                     sColName = col.mAggregations.template.mBindingInfos.value.parts[0].path;
                 }
-
+                // console.log(this._aColumns[arg])
                 this._aColumns[arg].filter(item => item.name === sColName)
                     .forEach(ci => {
                         // console.log(ci)
@@ -575,7 +619,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                 showSuggestion: true,
                                 maxSuggestionWidth: ci.valueHelp["suggestionItems"].additionalText !== undefined ? ci.valueHelp["suggestionItems"].maxSuggestionWidth : "1px",
                                 suggestionItems: {
-                                    path: sColName === "SHIPMODE" ? ci.valueHelp["suggestionItems"].path : '',
+                                    path: ci.valueHelp["suggestionItems"].path,
                                     length: 10000,
                                     template: new sap.ui.core.ListItem({
                                         key: ci.valueHelp["suggestionItems"].text, 
@@ -684,22 +728,52 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
 
             this.getView().getModel(arg).getData().forEach(item => item.Edited = false);
 
-            var iGPCellIndex = -1;
-            oTable.getRows()[0].getCells().forEach((cell, idx) => {
-                if (cell.getBindingInfo("value") !== undefined) {
-                    if (cell.getBindingInfo("value").parts[0].path === "GROSSPRICE") iGPCellIndex = idx;
-                }
-            })
-            
-            var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
+            setTimeout(() => {
+                var iGPCellIndex = -1, iOTCellIndex = -1, iUTCellIndex = -1, iUnliCellIndex = -1, iOrdUOMCellIndex = -1, iOrdPrxUnitCellIndex = -1, iSupTypCellIndex = -1;
+                oTable.getRows()[0].getCells().forEach((cell, idx) => {
+                    if (cell.getBindingInfo("value") !== undefined) {
+                        if (cell.getBindingInfo("value").parts[0].path === "GROSSPRICE") iGPCellIndex = idx;
+                        else if (cell.getBindingInfo("value").parts[0].path === "OVERDELTOL") iOTCellIndex = idx;
+                        else if (cell.getBindingInfo("value").parts[0].path === "UNDERDELTOL") iUTCellIndex = idx;
+                        else if (cell.getBindingInfo("value").parts[0].path === "UOM") iOrdUOMCellIndex = idx;
+                        else if (cell.getBindingInfo("value").parts[0].path === "ORDERPRICEUNIT") iOrdPrxUnitCellIndex = idx;
+                        else if (cell.getBindingInfo("value").parts[0].path === "SUPPLYTYPE") iSupTypCellIndex = idx;
+                    }
+                    else if (cell.getBindingInfo("selected") !== undefined) {
+                        if (cell.getBindingInfo("selected").parts[0].path === "UNLI") iUnliCellIndex = idx;
+                    }
+                })
 
-            this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup).forEach((item, index) => {
-                if (item.INFORECCHECK) { 
-                    oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", false);
-                }
-                else oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", true);
-                
-            })
+                this._iGPCellIndex = iGPCellIndex;
+                var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
+
+                this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup).forEach((item, index) => {
+                    if (item.INFORECCHECK) { oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", false); }
+                    else { oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", true); }
+
+                    if (item.CHECK && item.MRPSUPTYP !== "NOM") {
+                        oTable.getRows()[index].getCells()[iOrdUOMCellIndex].setProperty("enabled", true);
+                        oTable.getRows()[index].getCells()[iOrdPrxUnitCellIndex].setProperty("enabled", true);
+                        oTable.getRows()[index].getCells()[iSupTypCellIndex].setProperty("enabled", true);
+                    }
+                    else {
+                        oTable.getRows()[index].getCells()[iOrdUOMCellIndex].setProperty("enabled", false);
+                        oTable.getRows()[index].getCells()[iOrdPrxUnitCellIndex].setProperty("enabled", false);
+                        oTable.getRows()[index].getCells()[iSupTypCellIndex].setProperty("enabled", false);
+                    }
+                    
+                    if (!item.WITHPOTOL && (item.CHECK && item.MRPSUPTYP !== "NOM")) {
+                        oTable.getRows()[index].getCells()[iOTCellIndex].setProperty("enabled", true);
+                        oTable.getRows()[index].getCells()[iUTCellIndex].setProperty("enabled", true);
+                        oTable.getRows()[index].getCells()[iUnliCellIndex].setProperty("editable", true);
+                    }
+                    else {
+                        oTable.getRows()[index].getCells()[iOTCellIndex].setProperty("enabled", false);
+                        oTable.getRows()[index].getCells()[iUTCellIndex].setProperty("enabled", false);
+                        oTable.getRows()[index].getCells()[iUnliCellIndex].setProperty("editable", false);
+                    }
+                })
+            }, 100);
         },
 
         setValuePrecision(oEvent) {
@@ -867,7 +941,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 this._inputField = oSource.getBindingInfo("value").parts[0].path;
             }
 
-            if (this._inputField === 'SHIPMODE' || this._inputField === 'INCOTERMS') {
+            if (this._inputField === 'SHIPMODE' || this._inputField === 'INCOTERMS' || this._inputField === 'SUPPLYTYPE' || this._inputField === 'UOM' || this._inputField === 'ORDERPRICEUNIT') {
                 var vCellPath = this._inputField;
                 var vColProp = this._aColumns[sModel].filter(item => item.name === vCellPath);
                 var vItemValue = vColProp[0].valueHelp.items.value;
@@ -1101,11 +1175,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var oSource = oEvent.getSource();
             var isInvalid = !oSource.getSelectedKey() && oSource.getValue().trim();
             oSource.setValueState(isInvalid ? "Error" : "None");
-
+            console.log(oSource)
             // var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
             var sRowPath = "";
             var sModel = oSource.getBindingInfo("value").parts[0].model;
-            
+
             oSource.getSuggestionItems().forEach(item => {
                 if (item.getProperty("key") === oSource.getValue().trim()) {
                     isInvalid = false;
@@ -1126,153 +1200,166 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 this.getView().getModel(sModel).setProperty(oSource.getBindingInfo("value").parts[0].path, oSource.getSelectedKey());
             }
             else {
-                sRowPath = oSource.oParent.getBindingContext().sPath;
+                sRowPath = oSource.oParent.getBindingContext(sModel).sPath;
                 this.getView().getModel(sModel).setProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path, oSource.getSelectedKey());
             }
             
+            if (oSource.getBindingInfo("value").parts[0].path === "SUPPLYTYPE") {
+                var oTable = this.byId(sModel + "Tab");
+                var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === oSource.getSelectedKey());
+                var iRowIndex = +sRowPath.split("/")[sRowPath.split("/").length-1];
+                console.log(sRowPath, iRowIndex)
+                if (oSupplyType[0].FOC === "X") {
+                    //disable gross/net price, set value to zero
+                    oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false);
+                    this.getView().getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
+                    this.getView().getModel(sModel).setProperty(sRowPath + '/NETPRICE', "0");
+                }
+                else {
+                    var vInfoRecCheck = this.getView().getModel(sModel).getProperty(sRowPath + '/INFORECCHECK');
+                    if (vInfoRecCheck) { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false); }
+                    else { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", true); }
+                }
+            }
             // this.getView().getModel(sModel).setProperty(sRowPath + '/Edited', true);
             // console.log(this.getView().getModel(sModel));
             this._bHeaderChanged = true;
         },
 
-        onStepInputChange: function(oEvent) {
-            var me = this;
-            var oSource = oEvent.getSource();
-            var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
-            var sModel = oSource.getBindingInfo("value").parts[0].model;
-            var vDecPlaces = 0;
+        // onStepInputChange: function(oEvent) {
+        //     var me = this;
+        //     var oSource = oEvent.getSource();
+        //     var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
+        //     var sModel = oSource.getBindingInfo("value").parts[0].model;
+        //     var vDecPlaces = 0;
 
-            if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY") {
-                vDecPlaces = me.getView().getModel(sModel).getProperty(sRowPath + "/ANDEC");
-            }
+        //     if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY") {
+        //         vDecPlaces = me.getView().getModel(sModel).getProperty(sRowPath + "/ANDEC");
+        //     }
 
-            if (vDecPlaces === 0) {
-                oSource.setValue((+oSource.getValue()).toFixed(0));
-            }
+        //     if (vDecPlaces === 0) {
+        //         oSource.setValue((+oSource.getValue()).toFixed(0));
+        //     }
 
-            if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY") {
-                var sActiveGroup = me.getView().getModel("ui").getData().activeGroup;
+        //     if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY") {
+        //         var sActiveGroup = me.getView().getModel("ui").getData().activeGroup;
 
-                me.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
-                    .forEach((item, idx) => {
-                        if (idx.toString() === sRowPath.replace("/","")) { 
-                            var sOrderConvFactor = item.ORDERCONVFACTOR === "" || item.ORDERCONVFACTOR === "0" ? "1" : item.ORDERCONVFACTOR;
-                            var sBaseConvFactor = item.BASECONVFACTOR === "" || item.BASECONVFACTOR === "0" ? "1" : item.BASECONVFACTOR;
-                            var sPer = item.PER === "" ? "1" : item.PER;
-                            var vComputedPOQty = +item.BASEPOQTY / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
-                            var vFinalPOQty = "0";
+        //         me.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
+        //             .forEach((item, idx) => {
+        //                 if (idx.toString() === sRowPath.replace("/","")) { 
+        //                     var sOrderConvFactor = item.ORDERCONVFACTOR === "" || item.ORDERCONVFACTOR === "0" ? "1" : item.ORDERCONVFACTOR;
+        //                     var sBaseConvFactor = item.BASECONVFACTOR === "" || item.BASECONVFACTOR === "0" ? "1" : item.BASECONVFACTOR;
+        //                     var sPer = item.PER === "" ? "1" : item.PER;
+        //                     var vComputedPOQty = +item.BASEPOQTY / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
+        //                     var vFinalPOQty = "0";
 
-                            if (item.ORDERUOMANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
-                            else vFinalPOQty = vComputedPOQty.toFixed(item.ORDERUOMANDEC);
+        //                     if (item.ORDERUOMANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
+        //                     else vFinalPOQty = vComputedPOQty.toFixed(item.ORDERUOMANDEC);
 
-                            item.ORDERPOQTY = vFinalPOQty;
-                            me.getPOTolerance(sRowPath, item);
-                        }
-                })
+        //                     item.ORDERPOQTY = vFinalPOQty;
+        //                     me.getPOTolerance(sRowPath, item);
+        //                 }
+        //         })
     
-                me.byId("detailTab").setModel(new JSONModel(me.getView().getModel("detail").getData()), "detail");
-                me.byId("detailTab").bindRows({path: "detail>/"});
-            }
-        },
+        //         me.byId("detailTab").setModel(new JSONModel(me.getView().getModel("detail").getData()), "detail");
+        //         me.byId("detailTab").bindRows({path: "detail>/"});
+        //     }
+        // },
 
-        onNumberChange: function(oEvent) {
-            if (this._validationErrors === undefined) this._validationErrors = [];
+        // onNumberChange: function(oEvent) {
+        //     if (this._validationErrors === undefined) this._validationErrors = [];
 
-            var oSource = oEvent.getSource();
-            var sModel = oSource.getBindingInfo("value").parts[0].model;
-            var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
-            var vDecPlaces = 0;
+        //     var oSource = oEvent.getSource();
+        //     var sModel = oSource.getBindingInfo("value").parts[0].model;
+        //     var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
+        //     var vDecPlaces = 0;
 
-            if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY") {
-                vDecPlaces = this.getView().getModel(sModel).getProperty(sRowPath + "/ANDEC");
-            }
-            else if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY2") {
-                vDecPlaces = 3;
-            }
+        //     if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY") {
+        //         vDecPlaces = this.getView().getModel(sModel).getProperty(sRowPath + "/ANDEC");
+        //     }
+        //     else if (oSource.getBindingInfo("value").parts[0].path === "BASEPOQTY2") {
+        //         vDecPlaces = 3;
+        //     }
 
-            if (oEvent.getParameters().value.split(".").length > 1) {
-                if (vDecPlaces === 0) {
-                    // MessageBox.information("Value should not have decimal place/s.");
-                    oEvent.getSource().setValueState("Error");
-                    oEvent.getSource().setValueStateText("Value should not have decimal place/s.");
-                    this._validationErrors.push(oEvent.getSource().getId());
-                }
-                else {
-                    if (oEvent.getParameters().value.split(".")[1].length > vDecPlaces) {
-                        oEvent.getSource().setValueState("Error");
-                        oEvent.getSource().setValueStateText("Enter a number with a maximum decimal places: " + vDecPlaces.toString());
-                        this._validationErrors.push(oEvent.getSource().getId());
-                    }
-                    else {
-                        oEvent.getSource().setValueState("None");
-                        this._validationErrors.forEach((item, index) => {
-                            if (item === oEvent.getSource().getId()) {
-                                this._validationErrors.splice(index, 1)
-                            }
-                        })
-                    }
-                }
-            }
-            else {
-                oEvent.getSource().setValueState("None");
-                this._validationErrors.forEach((item, index) => {
-                    if (item === oEvent.getSource().getId()) {
-                        this._validationErrors.splice(index, 1)
-                    }
-                })
-            }
+        //     if (oEvent.getParameters().value.split(".").length > 1) {
+        //         if (vDecPlaces === 0) {
+        //             // MessageBox.information("Value should not have decimal place/s.");
+        //             oEvent.getSource().setValueState("Error");
+        //             oEvent.getSource().setValueStateText("Value should not have decimal place/s.");
+        //             this._validationErrors.push(oEvent.getSource().getId());
+        //         }
+        //         else {
+        //             if (oEvent.getParameters().value.split(".")[1].length > vDecPlaces) {
+        //                 oEvent.getSource().setValueState("Error");
+        //                 oEvent.getSource().setValueStateText("Enter a number with a maximum decimal places: " + vDecPlaces.toString());
+        //                 this._validationErrors.push(oEvent.getSource().getId());
+        //             }
+        //             else {
+        //                 oEvent.getSource().setValueState("None");
+        //                 this._validationErrors.forEach((item, index) => {
+        //                     if (item === oEvent.getSource().getId()) {
+        //                         this._validationErrors.splice(index, 1)
+        //                     }
+        //                 })
+        //             }
+        //         }
+        //     }
+        //     else {
+        //         oEvent.getSource().setValueState("None");
+        //         this._validationErrors.forEach((item, index) => {
+        //             if (item === oEvent.getSource().getId()) {
+        //                 this._validationErrors.splice(index, 1)
+        //             }
+        //         })
+        //     }
            
-            // var oSource = oEvent.getSource();
-            // var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
-            // var sModel = oSource.getBindingInfo("value").parts[0].model;
-            // this.getView().getModel(sModel).setProperty(sRowPath + '/Edited', true);
-            this._bDetailsChanged = false;
+        //     // var oSource = oEvent.getSource();
+        //     // var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
+        //     // var sModel = oSource.getBindingInfo("value").parts[0].model;
+        //     // this.getView().getModel(sModel).setProperty(sRowPath + '/Edited', true);
+        //     this._bDetailsChanged = false;
 
-            if (oEvent.getSource().getBindingInfo("value").parts[0].path === "BASEPOQTY") {
-                var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
-                // var sRowPath = oEvent.getSource().getBindingInfo("value").binding.oContext.sPath
+        //     if (oEvent.getSource().getBindingInfo("value").parts[0].path === "BASEPOQTY") {
+        //         var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
+        //         // var sRowPath = oEvent.getSource().getBindingInfo("value").binding.oContext.sPath
 
-                this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
-                    .forEach((item, idx) => {
-                        if (idx.toString() === sRowPath.replace("/","")) { 
-                            var sOrderConvFactor = item.ORDERCONVFACTOR === "" || item.ORDERCONVFACTOR === "0" ? "1" : item.ORDERCONVFACTOR;
-                            var sBaseConvFactor = item.BASECONVFACTOR === "" || item.BASECONVFACTOR === "0" ? "1" : item.BASECONVFACTOR;
-                            var sPer = item.PER === "" ? "1" : item.PER;
-                            var vComputedPOQty = +item.BASEPOQTY / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
-                            var vFinalPOQty = "0";
-                            console.log(item.BASEPOQTY, sOrderConvFactor, sBaseConvFactor, sPer)
-                            if (item.ORDERUOMANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
-                            else vFinalPOQty = vComputedPOQty.toFixed(item.ORDERUOMANDEC);
-                            console.log(vFinalPOQty)
-                            item.ORDERPOQTY = vFinalPOQty;
-                            this.getPOTolerance(sRowPath, item);
-                        }
-                })
+        //         this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
+        //             .forEach((item, idx) => {
+        //                 if (idx.toString() === sRowPath.replace("/","")) { 
+        //                     var sOrderConvFactor = item.ORDERCONVFACTOR === "" || item.ORDERCONVFACTOR === "0" ? "1" : item.ORDERCONVFACTOR;
+        //                     var sBaseConvFactor = item.BASECONVFACTOR === "" || item.BASECONVFACTOR === "0" ? "1" : item.BASECONVFACTOR;
+        //                     var sPer = item.PER === "" ? "1" : item.PER;
+        //                     var vComputedPOQty = +item.BASEPOQTY / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
+        //                     var vFinalPOQty = "0";
+
+        //                     if (item.ORDERUOMANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
+        //                     else vFinalPOQty = vComputedPOQty.toFixed(item.ORDERUOMANDEC);
+
+        //                     item.ORDERPOQTY = vFinalPOQty;
+        //                     this.getPOTolerance(sRowPath, item);
+        //                 }
+        //         })
     
-                // var oJSONModel = new JSONModel();
-                // oJSONModel.setData(this.getView().getModel("detail").getData());
+        //         // var oJSONModel = new JSONModel();
+        //         // oJSONModel.setData(this.getView().getModel("detail").getData());
     
-                this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
-                this.byId("detailTab").bindRows({path: "detail>/"});
-            }
-            else if (oEvent.getSource().getBindingInfo("value").parts[0].path === "GROSSPRICE") {
-                var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
-                var sRowPath = oEvent.getSource().getBindingInfo("value").binding.oContext.sPath
+        //         this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
+        //         this.byId("detailTab").bindRows({path: "detail>/"});
+        //     }
+        //     else if (oEvent.getSource().getBindingInfo("value").parts[0].path === "GROSSPRICE") {
+        //         var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
+        //         var sRowPath = oEvent.getSource().getBindingInfo("value").binding.oContext.sPath
 
-                this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
-                    .forEach((item, idx) => {
-                        if (idx.toString() === sRowPath.replace("/","")) { 
-                            item.NETPRICE = item.GROSSPRICE
-                        }
-                })
+        //         this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
+        //             .forEach((item, idx) => {
+        //                 if (idx.toString() === sRowPath.replace("/","")) { 
+        //                     item.NETPRICE = item.GROSSPRICE
+        //                 }
+        //         })
     
-                this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
-                this.byId("detailTab").bindRows({path: "detail>/"});
-            }
-        },
-
-        // onNumberLiveChange: function(oEvent) {
-        //     console.log("onNumberLiveChange");
+        //         this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
+        //         this.byId("detailTab").bindRows({path: "detail>/"});
+        //     }
         // },
 
         onNumberLiveChange: function(oEvent) {
@@ -1290,7 +1377,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             else if (oSource.getBindingInfo("value").parts[0].path === "GROSSPRICE")  {
                 vDecPlaces = 4;
             }
-            
+            else if (oSource.getBindingInfo("value").parts[0].path === "OVERDELTOL" || oSource.getBindingInfo("value").parts[0].path === "UNDERDELTOL")  {
+                vDecPlaces = 1;
+            }
+
             if (oEvent.getParameters().value.split(".").length > 1) {
                 if (vDecPlaces === 0) {
                     // MessageBox.information("Value should not have decimal place/s.");
@@ -1373,6 +1463,16 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
         
                     // this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
                     // this.byId("detailTab").bindRows({path: "detail>/"});
+                }
+            }
+        },
+
+        onInputLiveChange: function(oEvent) {
+            var oSource = oEvent.getSource();
+            
+            if (oSource.getProperty("required") !== undefined && oSource.getProperty("required") === true) {
+                if (oEvent.getParameters().value !== "") {
+                    oSource.setValueState("None");
                 }
             }
         },
@@ -1663,11 +1763,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 // item.EBELN = sap.ui.getCore().byId("EBELN").getValue();
             });
             // console.log(this.getView().getModel("ddtext").getData())
-            var msg = this.getView().getModel("ddtext").getData()["INFO_FABSPECS_SAVED"];
-            MessageBox.information(msg)
+
+            MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_FABSPECS_SAVED"])
             this._FabSpecsDialog.close();
             this._bFabSpecsChanged = false;
-            // console.log(this.getView().getModel("fabspecs").getData())
+            console.log(this._HeaderTextDialog.getModel().getData().fs)
         },
 
         onDeleteFabSpecs: function(oEvent) {
@@ -1712,7 +1812,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             if (this._bFabSpecsChanged) {
                 var oData = {
                     Process: "fabspecs-close",
-                    Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
+                    Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                 }
 
                 // var oJSONModel = new JSONModel();
@@ -1728,7 +1828,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     
                 this._ConfirmDialog.open();
             }
-            else this._FabSpecsDialog.close();
+            else {
+                this._HeaderTextDialog.close();
+                // this._FabSpecsDialog.close();
+            }
         },
 
         beforeOpenFabSpecs: function(oEvent) {
@@ -1767,14 +1870,24 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             }
 
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
-            // console.log(this.getView().getModel("remarks").getData())
+
             if (!this._HeaderTextDialog) {
                 this._HeaderTextDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.HeaderTextDialog", this);
+
+                //GET UNIQ OBJ, just for double checking
+                var mapRemarks = new Map(this.getView().getModel("remarks").getData()[sActiveGroup].map(pos => [pos.ITEM, pos]).reverse());
+                var uniqRemarks = [...mapRemarks.values()].reverse();
+                this.getView().getModel("remarks").setProperty('/' + sActiveGroup, uniqRemarks);
+
+                var mapPackIns = new Map(this.getView().getModel("packins").getData()[sActiveGroup].map(pos => [pos.ITEM, pos]).reverse());
+                var uniqPackIns = [...mapPackIns.values()].reverse();
+                this.getView().getModel("packins").setProperty('/' + sActiveGroup, uniqPackIns);
 
                 this._HeaderTextDialog.setModel(
                     new JSONModel({
                         rem_items: this.getView().getModel("remarks").getData()[sActiveGroup],
-                        packins_items: this.getView().getModel("packins").getData()[sActiveGroup]
+                        packins_items: this.getView().getModel("packins").getData()[sActiveGroup],
+                        fs: this.getView().getModel("fabspecs").getData()[sActiveGroup]
                     })
                 )
 
@@ -1785,13 +1898,47 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             else {
                 this._HeaderTextDialog.getModel().setProperty("/rem_items", this.getView().getModel("remarks").getData()[sActiveGroup]);
                 this._HeaderTextDialog.getModel().setProperty("/packins_items", this.getView().getModel("packins").getData()[sActiveGroup]);
+                this._HeaderTextDialog.getModel().setProperty("/fs", this.getView().getModel("fabspecs").getData()[sActiveGroup]);
             }
 
             this._aRemarksDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("remarks").getData()[sActiveGroup]);
             this._aPackInsDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("packins").getData()[sActiveGroup]);
+            this._aFabSpecsDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("fabspecs").getData()[sActiveGroup]);
 
             this._HeaderTextDialog.setTitle(this.getView().getModel("ddtext").getData()["HEADERTEXT"]);
             this._HeaderTextDialog.open(); 
+
+            var oHeaderData = this.getView().getModel("header").getData();
+            var oHdrTxtTab = sap.ui.getCore().byId("ITB1");
+            oHdrTxtTab.setSelectedKey("remarks");
+
+            if (oHeaderData[0].DOCTYPE !== "ZFAB") {
+                oHdrTxtTab.getItems().forEach(item => {
+                    if (item.getProperty("key") === "fabspecs") { item.setProperty("enabled", false) }
+                });
+            }
+            else {
+                oHdrTxtTab.getItems().forEach(item => {
+                    item.setProperty("enabled", true);
+                });
+            }
+
+            var oData = this.getView().getModel("fabspecs").getData()[sActiveGroup];
+            sap.ui.getCore().byId("ZZMAKT").setValue(oData[0].ZZMAKT);
+            sap.ui.getCore().byId("ZZHAFE").setValue(oData[0].ZZHAFE);
+            sap.ui.getCore().byId("ZZSHNK").setValue(oData[0].ZZSHNK);
+            sap.ui.getCore().byId("ZZCHNG").setValue(oData[0].ZZCHNG);
+            sap.ui.getCore().byId("ZZSTAN").setValue(oData[0].ZZSTAN);
+            sap.ui.getCore().byId("ZZDRY").setValue(oData[0].ZZDRY);
+            sap.ui.getCore().byId("ZZCFWA").setValue(oData[0].ZZCFWA);
+            sap.ui.getCore().byId("ZZCFCW").setValue(oData[0].ZZCFCW);
+            sap.ui.getCore().byId("ZZSHRQ").setValue(oData[0].ZZSHRQ);
+            sap.ui.getCore().byId("ZZSHDA").setValue(oData[0].ZZSHDA);
+            sap.ui.getCore().byId("PLANMONTH1").setText(oData[0].PLANMONTH);
+            sap.ui.getCore().byId("ZZREQ1").setValue(oData[0].ZZREQ1);
+            sap.ui.getCore().byId("ZZREQ2").setValue(oData[0].ZZREQ2);
+            // sap.ui.getCore().byId("EBELP").setValue(oData[0].EBELP);
+            // sap.ui.getCore().byId("EBELN").setValue(oData[0].EBELN);
         },
 
         onAddHdrTxt: function(oEvent) {
@@ -1870,12 +2017,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     this._bRemarksChanged = false;
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_REMARKS_SAVED"]);
 
-                    // this.getView().getModel("remarks").getData().forEach(item => item.STATUS = "UPDATED");
+                    this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._HeaderTextDialog.getModel().getData().rem_items);
                     this.getView().getModel("remarks").getData()[sActiveGroup].forEach(item => item.STATUS = "UPDATED");
-                    // console.log(this.getView().getModel("remarks").getData())
+                    this._aRemarksDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("remarks").getData()[sActiveGroup]);
                 }
             }
-            else {
+            else if (activeTab === "packins") {
                 if (this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.PACKINS === "").length > 0) {
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_INPUT_PACKINS"]);
                 }
@@ -1883,9 +2030,14 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     // this._HeaderTextDialog.close();
                     this._bPackInsChanged = false;
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_PACKINS_SAVED"]);
+
+                    this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._HeaderTextDialog.getModel().getData().packins_items);
                     this.getView().getModel("packins").getData()[sActiveGroup].forEach(item => item.STATUS = "UPDATED");
-                    // this.getView().getModel("packins").getData().forEach(item => item.STATUS = "UPDATED");
+                    this._aPackInsDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("packins").getData()[sActiveGroup]);
                 }
+            }
+            else {
+                this.onSaveFabSpecs();
             }
         },
 
@@ -1893,36 +2045,41 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
             var oTable, sProcess;
 
-            if (activeTab === "remarks") {
-                oTable = sap.ui.getCore().byId("remarksTab");
-                sProcess = "remarks-delete";
-            } 
-            else {
-                oTable = sap.ui.getCore().byId("packinsTab");
-                sProcess = "packins-delete";
-            }
-
-            if (oTable.getSelectedIndices().length === 0) {
-                MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_SEL_RECORD_TO_DELETE"]);
+            if (activeTab === "fabspecs") {
+                this.onDeleteFabSpecs();
             }
             else {
-                var oData = {
-                    Process: sProcess,
-                    Text: this.getView().getModel("ddtext").getData()["CONF_DELETE_RECORDS"]
+                if (activeTab === "remarks") {
+                    oTable = sap.ui.getCore().byId("remarksTab");
+                    sProcess = "remarks-delete";
+                } 
+                else if (activeTab === "packins") {
+                    oTable = sap.ui.getCore().byId("packinsTab");
+                    sProcess = "packins-delete";
                 }
 
-                // var oJSONModel = new JSONModel();
-                // oJSONModel.setData(oData);
-                
-                if (!this._ConfirmDialog) {
-                    this._ConfirmDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ConfirmDialog", this);
-
-                    this._ConfirmDialog.setModel(new JSONModel(oData));
-                    this.getView().addDependent(this._ConfirmDialog);
+                if (oTable.getSelectedIndices().length === 0) {
+                    MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_SEL_RECORD_TO_DELETE"]);
                 }
-                else this._ConfirmDialog.setModel(new JSONModel(oData));
+                else {
+                    var oData = {
+                        Process: sProcess,
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DELETE_RECORDS"]
+                    }
+    
+                    // var oJSONModel = new JSONModel();
+                    // oJSONModel.setData(oData);
                     
-                this._ConfirmDialog.open(); 
+                    if (!this._ConfirmDialog) {
+                        this._ConfirmDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ConfirmDialog", this);
+    
+                        this._ConfirmDialog.setModel(new JSONModel(oData));
+                        this.getView().addDependent(this._ConfirmDialog);
+                    }
+                    else this._ConfirmDialog.setModel(new JSONModel(oData));
+                        
+                    this._ConfirmDialog.open(); 
+                }
             }
         },
 
@@ -1932,51 +2089,55 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var bProceed = true;
             var iNew = 0;
 
-            // console.log(this._HeaderTextDialog.getModel().getData())
-            if (activeTab === "remarks") {
-                if (this._HeaderTextDialog.getModel().getData().rem_items !== undefined) {
-                    iNew = this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
-                }
-
-                if (this._bRemarksChanged || iNew > 0) {
-                    bProceed = false;
-
-                    oData = {
-                        Process: "remarks-close",
-                        Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
-                    }
-                }
+            if (activeTab === "fabspecs") {
+                this.onCloseFabSpecs();
             }
             else {
-                if (this._HeaderTextDialog.getModel().getData().packins_items !== undefined) {
-                    iNew = this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
-                }
-
-                if (this._bPackInsChanged || iNew > 0) {
-                    bProceed = false;
-
-                    oData = {
-                        Process: "packins-close",
-                        Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
+                if (activeTab === "remarks") {
+                    if (this._HeaderTextDialog.getModel().getData().rem_items !== undefined) {
+                        iNew = this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
+                    }
+    
+                    if (this._bRemarksChanged || iNew > 0) {
+                        bProceed = false;
+    
+                        oData = {
+                            Process: "remarks-close",
+                            Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
+                        }
                     }
                 }
-            }
-
-            if (!bProceed) {
-                // var oJSONModel = new JSONModel();
-                // oJSONModel.setData(oData);
-
-                if (!this._ConfirmDialog) {
-                    this._ConfirmDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ConfirmDialog", this);
-
-                    this._ConfirmDialog.setModel(new JSONModel(oData));
-                    this.getView().addDependent(this._ConfirmDialog);
+                else if (activeTab === "packins") {
+                    if (this._HeaderTextDialog.getModel().getData().packins_items !== undefined) {
+                        iNew = this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
+                    }
+    
+                    if (this._bPackInsChanged || iNew > 0) {
+                        bProceed = false;
+    
+                        oData = {
+                            Process: "packins-close",
+                            Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
+                        }
+                    }
                 }
-                else this._ConfirmDialog.setModel(new JSONModel(oData));
-                    
-                this._ConfirmDialog.open();
+    
+                if (!bProceed) {
+                    // var oJSONModel = new JSONModel();
+                    // oJSONModel.setData(oData);
+    
+                    if (!this._ConfirmDialog) {
+                        this._ConfirmDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ConfirmDialog", this);
+    
+                        this._ConfirmDialog.setModel(new JSONModel(oData));
+                        this.getView().addDependent(this._ConfirmDialog);
+                    }
+                    else this._ConfirmDialog.setModel(new JSONModel(oData));
+                        
+                    this._ConfirmDialog.open();
+                }
+                else this._HeaderTextDialog.close();
             }
-            else this._HeaderTextDialog.close();
         },
 
         onRemarksChange: function(oEvent) {
@@ -1994,6 +2155,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             // console.log(activeTab)
 
             if (activeTab === "remarks") {
+                sap.ui.getCore().byId("btnAddHdrTxt").setVisible(true);
+
                 if (this._HeaderTextDialog.getModel().getData().rem_items !== undefined) {
                     iNew = this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
                 }
@@ -2003,11 +2166,21 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
 
                     oData = {
                         Process: "packins-cancel",
-                        Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                     }
                 }
+                else if (this._bFabSpecsChanged || iNew > 0) {
+                    bProceed = false;
+
+                    oData = {
+                        Process: "fabspecs-cancel",
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
+                    }                    
+                }
             }
-            else {
+            else if (activeTab === "packins") {
+                sap.ui.getCore().byId("btnAddHdrTxt").setVisible(true);
+
                 if (this._HeaderTextDialog.getModel().getData().packins_items !== undefined) {
                     iNew = this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
                 }
@@ -2017,7 +2190,39 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
 
                     oData = {
                         Process: "remarks-cancel",
-                        Text: this.getView().getModel("ddtext").getData()["CONFIRM_DISREGARD_CHANGE"]
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
+                    }
+                }
+                else if (this._bFabSpecsChanged || iNew > 0) {
+                    bProceed = false;
+
+                    oData = {
+                        Process: "fabspecs-cancel",
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
+                    }                    
+                }
+            }
+            else if (activeTab === "fabspecs") {
+                sap.ui.getCore().byId("btnAddHdrTxt").setVisible(false);
+                
+                if (this._HeaderTextDialog.getModel().getData().fs !== undefined) {
+                    iNew = this._HeaderTextDialog.getModel().getData().fs.filter(item => item.STATUS === "NEW").length;
+                }
+
+                if (this._bRemarksChanged || iNew > 0) {
+                    bProceed = false;
+
+                    oData = {
+                        Process: "remarks-cancel",
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
+                    }
+                }
+                else if (this._bPackInsChanged || iNew > 0) {
+                    bProceed = false;
+
+                    oData = {
+                        Process: "packins-cancel",
+                        Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                     }
                 }
             }
@@ -2069,7 +2274,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 // this.clearFabSpecs();
                 this.getView().getModel("fabspecs").setProperty('/' + sActiveGroup, this._aFabSpecsDataBeforeChange);
                 this._bFabSpecsChanged = false;
-                this._FabSpecsDialog.close();
+                // this._FabSpecsDialog.close();
+                this._HeaderTextDialog.close();
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "remarks-delete") {
                 var oTable = sap.ui.getCore().byId("remarksTab");
@@ -2129,6 +2335,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 // var oTableModel = oTable.getModel("packins");
                 // oTableModel.setData(this._aPackInsDataBeforeChange);
                 this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._aPackInsDataBeforeChange);
+            }
+            else if (this._ConfirmDialog.getModel().getData().Process === "fabspecs-cancel") {
+                this._bFabSpecsChanged = false;
+                this.getView().getModel("fabspecs").setProperty('/' + sActiveGroup, this._aFabSpecsDataBeforeChange);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "header-cancel") {
                 this.setRowReadMode("header");
@@ -2203,6 +2413,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 sap.ui.getCore().byId("ITB1").setSelectedKey("packins");
                 sap.ui.getCore().byId("ITB1").selectedKey = "packins";
             }
+            else if (this._ConfirmDialog.getModel().getData().Process === "fabspecs-cancel") {
+                sap.ui.getCore().byId("ITB1").setSelectedKey("fabspecs");
+                sap.ui.getCore().byId("ITB1").selectedKey = "fabspecs";
+            }
             else if (this._ConfirmDialog.getModel().getData().Process === "delvdate-update") {
                 this.updateDelvDate(this._ConfirmDialog.getModel().getData().Source, this._ConfirmDialog.getModel().getData().DelvDate);
             }
@@ -2274,6 +2488,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                             VENDOR: item.VENDOR,
                                             PURCHORG: item.PURCHORG,
                                             PURCHGRP: item.PURCHGRP,
+                                            STATUS: "ERROR",
                                             REMARKS: "No number range code retrieve."
                                         })
         
@@ -2306,6 +2521,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                         VENDOR: item.VENDOR,
                                                         PURCHORG: item.PURCHORG,
                                                         PURCHGRP: item.PURCHGRP,
+                                                        STATUS: "ERROR",
                                                         REMARKS: oResult.N_GetNumberReturn.results[0].Type + " " + oResult.N_GetNumberReturn.results[0].Message
                                                     })
         
@@ -2372,7 +2588,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                         if (fs.ZZSHDA !== "") {
                                                             oParamCPOAddtlDtlsData.push({
                                                                 PoNumber: oResult.EReturnno,
-                                                                PoItem: "00000",
+                                                                PoItem: "00010",
                                                                 Zzhafe: fs.ZZHAFE,
                                                                 Zzshnk: fs.ZZSHNK,
                                                                 Zzcfwa: fs.ZZCFWA,
@@ -2384,15 +2600,15 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                                 Zzreq2: fs.ZZREQ2,
                                                                 Zzshrq: fs.ZZSHRQ,
                                                                 Zzshda: sapDateFormat.format(new Date(fs.ZZSHDA)) + "T00:00:00",
-                                                                Zzprmo: fs.PLANMONTH.slice(4,6),
-                                                                Zzpryr: fs.PLANMONTH.slice(0,4),
-                                                                Zzmakt: fs.ZZMAKT
+                                                                Zzprmo: fs.PLANMONTH.slice(0,2),
+                                                                Zzpryr: fs.PLANMONTH.slice(3,7)
+                                                                // Zzmakt: fs.ZZMAKT
                                                             })
                                                         }
                                                         else {
                                                             oParamCPOAddtlDtlsData.push({
                                                                 PoNumber: oResult.EReturnno,
-                                                                PoItem: "00000",
+                                                                PoItem: "00010",
                                                                 Zzhafe: fs.ZZHAFE,
                                                                 Zzshnk: fs.ZZSHNK,
                                                                 Zzcfwa: fs.ZZCFWA,
@@ -2403,9 +2619,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                                 Zzreq1: fs.ZZREQ1,
                                                                 Zzreq2: fs.ZZREQ2,
                                                                 Zzshrq: fs.ZZSHRQ,
-                                                                Zzprmo: fs.PLANMONTH.slice(5,6),
-                                                                Zzpryr: fs.PLANMONTH.slice(0,4),
-                                                                Zzmakt: fs.ZZMAKT
+                                                                Zzprmo: fs.PLANMONTH.slice(0,2),
+                                                                Zzpryr: fs.PLANMONTH.slice(3,7)
+                                                                // Zzmakt: fs.ZZMAKT
                                                             })
                                                         }
                                                     })
@@ -2452,6 +2668,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                                 Over_Dlv_Tol: poitem.OVERDELTOL,
                                                                 Under_Dlv_Tol: poitem.UNDERDELTOL,
                                                                 Unlimited_Dlv: poitem.UNLI === true ? "X" : ""
+                                                                // Zzmakt: poitem.POADDTLDESC
                                                             })
             
                                                             oParamCPOItemSchedData.push({
@@ -2518,16 +2735,37 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                             me.closeLoadingDialog();
                                                             console.log(oResult);
                                                             var oRetMsgs = oResult.N_CreatePOReturn.results;
+                                                            var sRetMSg = "";
+
+                                                            oRetMsgs.forEach(msg => {
+                                                                if (msg.Type === "S") {
+                                                                    sRetMSg = msg.Type + ": " + msg.Message;
+                                                                }
+                                                                else if (msg.Type === "E") {
+                                                                    sRetMSg = sRetMSg + msg.Type + ": " +  msg.Message + "\r\n";
+                                                                }
+                                                            })
     
+                                                            me._aCreatePOResult.forEach((item, index) => {
+                                                                if (item.GROUP === sActiveGroup) {
+                                                                    me._aCreatePOResult.splice(index, 1);
+                                                                } 
+                                                            })
+
                                                             me._aCreatePOResult.push({
                                                                 GROUP: item.GROUP,
                                                                 VENDOR: item.VENDOR,
                                                                 PURCHORG: item.PURCHORG,
                                                                 PURCHGRP: item.PURCHGRP,
-                                                                REMARKS: oRetMsgs[0].Type + ": " + oRetMsgs[0].Message
+                                                                STATUS: oRetMsgs[0].Type === "S" ? "CREATED" : "ERROR",
+                                                                REMARKS: sRetMSg //oRetMsgs[0].Type + ": " + oRetMsgs[0].Message
                                                             })
     
+                                                            if (me._toExtend) me.loadExtendPODialog.close();
+                                                            var oHeaderData = me.getView().getModel("header").getData();
+
                                                             if (oRetMsgs[0].Type === "S") {
+                                                                item.STATUS = "CREATED";
                                                                 me._poCreated = true;
                                                                 me.savePOTolerance(sPONo);
                                                                 // me._oModel.setUseBatch(true);
@@ -2544,27 +2782,26 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                                 //     success: function (oData, oResponse) { },
                                                                 //     error: function () { }
                                                                 // })
+
+                                                                if (oHeaderData.length >= ((+item.GROUP) + 1)) {
+                                                                    //next group
+                                                                    // me.closeLoadingDialog();
+                                                                    MessageBox.information(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message);
+                                                                    // me.showMessage(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message, 500);
+                                                                    me.onNextGroup(((+item.GROUP) + 1 ) + "");
+                                                                }
+                                                                else {
+                                                                    // console.log("showGeneratePOResult");
+                                                                    me.showGeneratePOResult();
+                                                                }
+                                                            }
+                                                            else {
+                                                                MessageBox.error(sRetMSg);
                                                             }
     
                                                             // if (iCounter === me.getView().getModel("header").getData().length) {
                                                             //     me.showGeneratePOResult();
                                                             // }
-
-                                                            var oHeaderData = me.getView().getModel("header").getData();
-    
-                                                            if (me._toExtend) me.loadExtendPODialog.close();
-
-                                                            if (oHeaderData.length >= ((+item.GROUP) + 1)) {
-                                                                //next group
-                                                                // me.closeLoadingDialog();
-                                                                MessageBox.information(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message);
-                                                                // me.showMessage(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message, 500);
-                                                                me.onNextGroup(((+item.GROUP) + 1 ) + "");
-                                                            }
-                                                            else {
-                                                                // console.log("showGeneratePOResult");
-                                                                me.showGeneratePOResult();
-                                                            }
                                                         },
                                                         error: function(err) {
                                                             iCounter++;
@@ -2917,7 +3154,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     rfcModel.create("/ChangePOSet", oParam, {
                         method: "POST",
                         success: function(oData, oResponse) {
-                            // console.log(oData)
+                            console.log(oData)
                             if(oData.N_ChangePOReturn.results.length > 0){
                                 // message = oData.N_ChangePOReturn.results[0].Msgv1;
                                 me.closeLoadingDialog();
@@ -2925,12 +3162,24 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                 sRetMessage = oData.N_ChangePOReturn.results[0].Msgv1;
                                 me.loadExtendPODialog.close();
                                 me._poCreated = true;
+
+                                var sRetMSg = "";
+
+                                oData.N_ChangePOReturn.results.forEach(msg => {
+                                    if (msg.Msgtyp === "S") {
+                                        sRetMSg = msg.Msgtyp + ": " + msg.Msgv1;
+                                    }
+                                    else if (msg.Msgtyp === "E") {
+                                        sRetMSg = sRetMSg + msg.Msgtyp + ": " +  msg.Msgv1 + "\r\n";
+                                    }
+                                })
+
                                 me._aCreatePOResult.push({
                                     GROUP: oCurrHeaderData[0].GROUP,
                                     VENDOR: oCurrHeaderData[0].VENDOR,
                                     PURCHORG: oCurrHeaderData[0].PURCHORG,
                                     PURCHGRP: oCurrHeaderData[0].PURCHGRP,
-                                    REMARKS: oData.N_ChangePOReturn.results[0].Msgtyp + ": " + oData.N_ChangePOReturn.results[0].Msgv1
+                                    REMARKS: sRetMSg //oData.N_ChangePOReturn.results[0].Msgtyp + ": " + oData.N_ChangePOReturn.results[0].Msgv1
                                 })                                
                                 resolve();
                             }else{
@@ -2977,22 +3226,83 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             this.loadExtendPODialog.close();
         },
 
+        onPrevPO: function(oEvent) {
+            var vCurrGrp = this.getView().getModel("ui").getData().activeGroup;
+            var vNextGrp = (+vCurrGrp) - 1;
+            var oHeaderData = this.getView().getModel("header").getData();
+            var vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
+            var vMin = "0";
+            
+            oHeaderData.forEach(item => {
+                if (item.STATUS === "NEW" && vMin === "0") { vMin = item.GROUP }
+            })
+
+            if (vNextGrp === +vMin && vStatus === "NEW") {
+                this.onNextGroup(vNextGrp+"");
+            }
+            else {
+                while (vStatus === "CREATED") {
+                    vNextGrp++;
+                    vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
+                }
+
+                this.onNextGroup(vNextGrp+"");
+            }
+
+            console.log(vNextGrp)
+
+            if (vNextGrp === +vMin || vNextGrp === 1) {
+                this.byId("btnPrevPO").setEnabled(false); 
+                this.byId("btnNextPO").setEnabled(true); 
+            }
+            else { this.byId("btnPrevPO").setEnabled(true); }
+        },
+
+        onNextPO: function(oEvent) {
+            var vCurrGrp = this.getView().getModel("ui").getData().activeGroup;
+            var vNextGrp = (+vCurrGrp) + 1;
+            var oHeaderData = this.getView().getModel("header").getData();
+            var vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
+            var vMax = oHeaderData.length + "";
+            
+            oHeaderData.forEach(item => {
+                if (item.STATUS === "NEW") { vMax = item.GROUP }
+            })
+
+            if (vNextGrp === +vMax && vStatus === "NEW") {
+                this.onNextGroup(vNextGrp+"");
+            }
+            else {
+                while (vStatus === "CREATED") {
+                    vNextGrp++;
+                    vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
+                }
+
+                this.onNextGroup(vNextGrp+"");
+            }
+
+            if (vNextGrp === +vMax || vNextGrp === oHeaderData.length) {
+                this.byId("btnNextPO").setEnabled(false); 
+                this.byId("btnPrevPO").setEnabled(true);
+            }
+            else { this.byId("btnNextPO").setEnabled(true); }
+        }, 
+        
         onNextGroup(arg) {
             this._validationErrors = [];
             var me = this;
-            this.showLoadingDialog("Loading next group...");
+            this.showLoadingDialog("Loading group " + arg + "...");
 
             setTimeout(() => {
                 me.closeLoadingDialog();
 
                 var oHeaderData = me.getView().getModel("header").getData();
-                me.getView().getModel("grpheader").setProperty("/", oHeaderData.filter(grp => grp.GROUP === arg));
+                var aGrpHeaderData = oHeaderData.filter(grp => grp.GROUP === arg);
+                me.getView().getModel("grpheader").setProperty("/", aGrpHeaderData);
                 me.getView().getModel("ui").setProperty("/activeGroup", arg);
     
                 // var oJSONModel = new JSONModel();
                 var oDataDetail = me.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail.filter(fItem => fItem.GROUP === arg);
-                console.log(arg)
-                console.log(oDataDetail)
                 me.getView().getModel("detail").setProperty("/", oDataDetail);
                 // me.byId("detailTab").getModel().setProperty("/", oDataDetail);
                 me.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
@@ -3013,6 +3323,69 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     }
                     else oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", true);
                 })
+
+                var oHdrTxtTab = sap.ui.getCore().byId("ITB1");
+
+                if (oHdrTxtTab !== undefined) {
+                    oHdrTxtTab.setSelectedKey("remarks");
+
+                    oHdrTxtTab.getItems().forEach(item => {
+                        if (item.getProperty("key") === "fabspecs" && aGrpHeaderData[0].DOCTYPE !== "ZFAB") { item.setProperty("enabled", false) }
+                        else { item.setProperty("enabled", true) }
+                    });
+                }
+            }, 500);
+        },
+
+        onLoadGroup(arg) {
+            this._validationErrors = [];
+            var me = this;
+            var oHeaderData = me.getView().getModel("header").getData();
+            var aGrpHeaderData = oHeaderData.filter(grp => grp.GROUP === arg);
+            var vStatus = aGrpHeaderData[0].STATUS;
+
+            me.showLoadingDialog("Loading group " + arg + "...");
+
+            setTimeout(() => {
+                me.getView().getModel("grpheader").setProperty("/", aGrpHeaderData);
+                me.getView().getModel("ui").setProperty("/activeGroup", arg);
+
+                // var oJSONModel = new JSONModel();
+                var oDataDetail = me.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail.filter(fItem => fItem.GROUP === arg);
+                me.getView().getModel("detail").setProperty("/", oDataDetail);
+                // me.byId("detailTab").getModel().setProperty("/", oDataDetail);
+                me.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
+                me.byId("detailTab").bindRows({path: "detail>/"});
+
+                var oTable = me.byId("detailTab");
+                var iGPCellIndex = -1;
+
+                oTable.getRows()[0].getCells().forEach((cell, idx) => {
+                    if (cell.getBindingInfo("value") !== undefined) {
+                        if (cell.getBindingInfo("value").parts[0].path === "GROSSPRICE") iGPCellIndex = idx;
+                    }
+                })
+
+                me.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === arg).forEach((item, index) => {
+                    if (item.INFORECCHECK) { 
+                        oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", false);
+                    }
+                    else oTable.getRows()[index].getCells()[iGPCellIndex].setProperty("enabled", true);
+                })
+
+                var oHdrTxtTab = sap.ui.getCore().byId("ITB1");
+
+                if (oHdrTxtTab !== undefined) {
+                    oHdrTxtTab.setSelectedKey("remarks");
+
+                    oHdrTxtTab.getItems().forEach(item => {
+                        if (item.getProperty("key") === "fabspecs" && aGrpHeaderData[0].DOCTYPE !== "ZFAB") { item.setProperty("enabled", false) }
+                        else { item.setProperty("enabled", true) }
+                    });
+                }
+
+                me._GeneratePOGroupDialog.close(); 
+                me.closeLoadingDialog();
             }, 500);
         },
 
@@ -3021,11 +3394,18 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var aHeaderData = this.getView().getModel("grpheader").getData();
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup; 
 
+            this._aCreatePOResult.forEach((item, index) => {
+                if (item.GROUP === sActiveGroup) {
+                    this._aCreatePOResult.splice(index, 1);
+                } 
+            })
+
             this._aCreatePOResult.push({
                 GROUP: sActiveGroup,
                 VENDOR: aHeaderData[0].VENDOR,
                 PURCHORG: aHeaderData[0].PURCHORG,
                 PURCHGRP: aHeaderData[0].PURCHGRP,
+                STATUS: "CANCELLED",
                 REMARKS: "Generate PO cancelled."
             })
             
@@ -3040,6 +3420,33 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             }
         },
 
+        onCancelAllPO: function(oEvent) {
+            var oHeaderData = this.getView().getModel("header").getData();
+
+            oHeaderData.filter(fItem => fItem.STATUS === "NEW").forEach(item => {
+                if (this._aCreatePOResult.filter(fItem2 => fItem2.GROUP === item.GROUP).length > 0) {
+                    this._aCreatePOResult.forEach(res => {
+                        if (res.GROUP === item.GROUP) {
+                            res.STATUS = "CANCELLED";
+                            res.REMARKS = "Generate PO cancelled.";
+                        }
+                    })
+                }
+                else {
+                    this._aCreatePOResult.push({
+                        GROUP: item.GROUP,
+                        VENDOR: item.VENDOR,
+                        PURCHORG: item.PURCHORG,
+                        PURCHGRP: item.PURCHGRP,
+                        STATUS: "CANCELLED",
+                        REMARKS: "Generate PO cancelled."
+                    })
+                }
+            })
+
+            this.showGeneratePOResult();
+        },
+        
         showLoadingDialog(arg) {
             if (!this._LoadingDialog) {
                 this._LoadingDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.LoadingDialog", this);
@@ -3055,6 +3462,32 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             this._LoadingDialog.close();
         },
 
+        showGeneratePOGroups() {
+            if (!this._GeneratePOGroupDialog) {
+                this._GeneratePOGroupDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.GeneratePOGroupDialog", this);
+
+                this._GeneratePOGroupDialog.setModel(
+                    new JSONModel({
+                        items: this._aCreatePOResult,
+                        rowCount: this._aCreatePOResult.length < 7 ? 7 : this._aCreatePOResult.length
+                    })
+                )
+
+                this.getView().addDependent(this._GeneratePOGroupDialog);
+            }
+            else {
+                this._GeneratePOGroupDialog.getModel().setProperty("/items", this._aCreatePOResult);
+                this._GeneratePOGroupDialog.getModel().setProperty("/rowCount", this._aCreatePOResult.length);
+            }
+
+            this._GeneratePOGroupDialog.setTitle("PO Creation: Groups");
+            this._GeneratePOGroupDialog.open();
+        },
+
+        onCreatePOGroupClose: function(oEvent) {
+            this._GeneratePOGroupDialog.close();           
+        },
+
         showGeneratePOResult() {
             // console.log(this._aCreatePOResult)
             // display pop-up for user selection
@@ -3064,7 +3497,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 this._GeneratePOResultDialog.setModel(
                     new JSONModel({
                         items: this._aCreatePOResult,
-                        rowCount: this._aCreatePOResult.length
+                        rowCount: this._aCreatePOResult.length < 7 ? 7 : this._aCreatePOResult.length
                     })
                 )
 
@@ -3166,12 +3599,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     var sActiveGroup = me.getView().getModel("ui").getData().activeGroup;
                     var sRowPath = arg1;
 
-                    if ((oData.RETURN + "") !== "4") {       
+                    if ((oData.RETURN + "") !== "4") {
                         me.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
                             .forEach((item, idx) => {
                                 if (idx.toString() === sRowPath.replace("/","")) { 
-                                    item.OVERDELTOL = oData.EV_UEBTO;
-                                    item.UNDERDELTOL = oData.EV_UNTTO;
+                                    item.OVERDELTOL = (+oData.EV_UEBTO).toFixed(1);
+                                    item.UNDERDELTOL = (+oData.EV_UNTTO).toFixed(1);
                                     item.UNLI = oData.EV_UNLI === "" ? false : true;
 
                                     me.byId("detailTab").getModel("detail").setProperty(sRowPath + '/OVERDELTOL', oData.EV_UEBTO);
@@ -3297,6 +3730,40 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 }
             }
             else return sValue;
+        },
+
+        onCreatePOGroupCellClick: function (oEvent) {
+            var vGroup = oEvent.getParameters().rowBindingContext.getObject().GROUP;
+            var vCurrGrp = this.getView().getModel("ui").getData().activeGroup;
+            var oHeaderData = this.getView().getModel("header").getData();
+            var aGrpHeaderData = oHeaderData.filter(grp => grp.GROUP === vGroup);
+            var vStatus = aGrpHeaderData[0].STATUS;
+            var vMax = oHeaderData.length + "";
+            var vMin = "0";
+
+            oHeaderData.forEach(item => {
+                if (item.STATUS !== "CREATED") {
+                    if (vMin === "0") { vMin = item.GROUP; }
+                    vMax = item.GROUP;
+                }
+            })
+
+            if (vGroup !== vCurrGrp && vStatus !== "CREATED") {
+                this.onLoadGroup(vGroup);
+
+                if (vMin === vGroup) { 
+                    this.byId("btnPrevPO").setEnabled(false); 
+
+                    if (vMax === vGroup) { this.byId("btnNextPO").setEnabled(false); }
+                    else { this.byId("btnNextPO").setEnabled(true); }
+                }
+                else if (vMax === vGroup) { 
+                    this.byId("btnNextPO").setEnabled(false); 
+
+                    if (vMin === vGroup) { this.byId("btnPrevPO").setEnabled(false); }
+                    else { this.byId("btnPrevPO").setEnabled(true); }
+                }
+            }
         },
 
         // onBrowserBack: function(oEvent) {

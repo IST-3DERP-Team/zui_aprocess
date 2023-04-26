@@ -3,12 +3,14 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageBox",
     "../js/Common",
-    "sap/m/Token"
+    "sap/m/Token",
+    "sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator",    
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageBox, Common, Token) {
+    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator) {
         "use strict";
 
         var that;
@@ -30,12 +32,12 @@ sap.ui.define([
                             sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction = that._fBackButton; 
                             
                             if (that.getOwnerComponent().getModel("UI_MODEL").getData().flag) {
-                                that.refresh();
+                                that.refreshTableData();
                             }
                             
-                            if (that._oLock.length > 0) {
-                                that.unLock();
-                            }
+                            // if (that._oLock.length > 0) {
+                            //     that.unLock();
+                            // }
                         }
                     }, oView);
                 }
@@ -160,7 +162,7 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "INFO_CREATEPO_VALIDATION"});
                 oDDTextParam.push({CODE: "INFO_INPUT_REQD_FIELDS"});
                 oDDTextParam.push({CODE: "CONF_CANCEL_CREATEPO"});
-                oDDTextParam.push({CODE: "CONFIRM_DISREGARD_CHANGE"});
+                oDDTextParam.push({CODE: "CONF_DISCARD_CHANGE"});
                 oDDTextParam.push({CODE: "INFO_INVALID_SEL_MATTYP"});  
                 oDDTextParam.push({CODE: "INFO_FABSPECS_SAVED"});  
                 oDDTextParam.push({CODE: "INFO_INPUT_REMARKS"});  
@@ -186,6 +188,15 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "INCO2"});
                 oDDTextParam.push({CODE: "CONFIRM_CANCEL_ASSIGNVENDOR"});
                 oDDTextParam.push({CODE: "INFO_INVALID_SEL_MANUALASSIGNVENDOR"});
+                oDDTextParam.push({CODE: "CLOSE"});
+                oDDTextParam.push({CODE: "POCREATE"});
+                oDDTextParam.push({CODE: "INFO_VENDOR_ALREADY_ASSIGNED"});
+                oDDTextParam.push({CODE: "CANCELALL"});
+                oDDTextParam.push({CODE: "ORDUOM"});
+                oDDTextParam.push({CODE: "CONFIRM_SAVE_CHANGE"});
+                oDDTextParam.push({CODE: "POADDTLDESC"});
+                oDDTextParam.push({CODE: "PREVIOUS"});
+                oDDTextParam.push({CODE: "NEXT"});
 
                 oModel.create("/CaptionMsgSet", { CaptionMsgItems: oDDTextParam  }, {
                     method: "POST",
@@ -210,6 +221,14 @@ sap.ui.define([
                     flag: false
                 })
 
+                this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setData({
+                    items: []
+                })
+
+                this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").setData({
+                    items: []
+                })
+
                 var oTableEventDelegate = {
                     onkeyup: function(oEvent){
                         that.onKeyUp(oEvent);
@@ -232,6 +251,8 @@ sap.ui.define([
                     },
                     error: function (err) { }
                 });
+
+                this._aColFilters = [], this._aColSorters = [];
             },
 
             onExit: function() {
@@ -620,61 +641,81 @@ sap.ui.define([
                 var oModel = this.getOwnerComponent().getModel();
                 var oJSONDataModel = new JSONModel();     
                 
-                var aFilters = this.getView().byId("smartFilterBar").getFilters();   
-                var aFiltersObj = [];
+                var oSmartFilter = this.getView().byId("smartFilterBar").getFilters();   
+                // var aFiltersObj = [];
                 
-                aFiltersObj.push(aFilters);
-                aFiltersObj = aFiltersObj[0];
+                // aFiltersObj.push(oSmartFilter);
+                // aFiltersObj = aFiltersObj[0];
                 
-                if (this.getView().byId("smartFilterBar")) {
+                // if (this.getView().byId("smartFilterBar")) {
 
-                    var oCtrl = this.getView().byId("smartFilterBar").determineControlByName("MATERIALTYPE");
-                    if (oCtrl) {
-                        oCtrl.getTokens().map(function(oToken) {
-                            if(aFilters.length === 0){
-                                aFiltersObj.push({
-                                    aFilters: [{
-                                        sPath: "MATERIALTYPE",
-                                        sOperator: "EQ",
-                                        oValue1: oToken.getKey(),
-                                        _bMultiFilter: false
-                                    }]
-                                })
-                            }else{
-                                aFiltersObj[0].aFilters[parseInt(Object.keys(aFiltersObj[0].aFilters).pop())+1] = ({
-                                    sPath: "MATERIALTYPE",
-                                    sOperator: "EQ",
-                                    oValue1: oToken.getKey(),
-                                    _bMultiFilter: false
-                                })
-                            }
-                            // me.getView().byId("smartFilterBar").setFilterData({
-                            //     _CUSTOM: {
-                            //         item: {key: oToken.getKey(), text: oToken.getKey()}, 
-                            //     }
+                //     var oCtrl = this.getView().byId("smartFilterBar").determineControlByName("MATERIALTYPE");
+                //     if (oCtrl) {
+                //         oCtrl.getTokens().map(function(oToken) {
+                //             if(aFilters.length === 0){
+                //                 aFiltersObj.push({
+                //                     aFilters: [{
+                //                         sPath: "MATERIALTYPE",
+                //                         sOperator: "EQ",
+                //                         oValue1: oToken.getKey(),
+                //                         _bMultiFilter: false
+                //                     }]
+                //                 })
+                //             }else{
+                //                 aFiltersObj[0].aFilters[parseInt(Object.keys(aFiltersObj[0].aFilters).pop())+1] = ({
+                //                     sPath: "MATERIALTYPE",
+                //                     sOperator: "EQ",
+                //                     oValue1: oToken.getKey(),
+                //                     _bMultiFilter: false
+                //                 })
+                //             }
+                //             // me.getView().byId("smartFilterBar").setFilterData({
+                //             //     _CUSTOM: {
+                //             //         item: {key: oToken.getKey(), text: oToken.getKey()}, 
+                //             //     }
                             
-                            // });
-                        })
-                    }
-                }
+                //             // });
+                //         })
+                //     }
+                // }
                 
                 // console.log(aFiltersObj);
                 // console.log(aFilters);
-                if (aFilters.length > 0) {
-                    aFilters[0].aFilters.forEach(item => {
-                        if (item.sPath === 'VENDOR') {
-                            if (!isNaN(item.oValue1)) {
-                                while (item.oValue1.length < 10) item.oValue1 = "0" + item.oValue1;
+                if (oSmartFilter.length > 0) {
+                    var aFilters = oSmartFilter[0].aFilters;
+                    console.log(aFilters)
+                    if (aFilters.length === 1) {
+                        if (aFilters[0].sPath === 'VENDOR') {
+                            if (!isNaN(aFilters[0].oValue1)) {
+                                while (aFilters[0].oValue1.length < 10) aFilters[0].oValue1 = "0" + aFilters[0].oValue1;
                             }
                         }
-                    })
+                    }
+                    else {
+                        aFilters.forEach(item => {
+                            if (item.aFilters !== undefined) {
+                                if (item.aFilters[0].sPath === 'VENDOR') {
+                                    if (!isNaN(item.aFilters[0].oValue1)) {
+                                        while (item.aFilters[0].oValue1.length < 10) item.aFilters[0].oValue1 = "0" + item.aFilters[0].oValue1;
+                                    }
+                                }
+                            }
+                            else {
+                                if (item.sPath === 'VENDOR') {
+                                    if (!isNaN(item.oValue1)) {
+                                        while (item.oValue1.length < 10) item.oValue1 = "0" + item.oValue1;
+                                    }
+                                }
+                            }
+                        })
+                    }
                 }
 
                 // console.log(this.byId('mainTab').getColumns());
                 // this.addDateFilters(aFilters); //date not automatically added to filters
-                // console.log(aFilters);
+                console.log(oSmartFilter);
                 oModel.read("/MainSet", { 
-                    filters: aFilters,
+                    filters: oSmartFilter,
                     success: function (oData, oResponse) {
                         var vUnassigned = 0, vPartial = 0;
                         // console.log(oData.results)
@@ -730,6 +771,7 @@ sap.ui.define([
                 var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
                 var vSBU = this.getView().getModel("ui").getData().sbu;
                 var vMatTypExist = false;
+                var wVendor = false;
 
                 if (oSelectedIndices.length > 0) {
                     this._oModel.read("/ZERPCheckSet", {
@@ -746,6 +788,41 @@ sap.ui.define([
                             oSelectedIndices.forEach((item, index) => {
                                 if (oDataCheck.results.length > 0) {
                                     if (oDataCheck.results.filter(fItem => fItem.Field2 === aData.at(item).MATERIALTYPE).length === 0) {
+                                        if (aData.at(item).VENDOR === "") {
+                                            oParamData.push({
+                                                Vendor: aData.at(item).VENDOR,
+                                                Material: aData.at(item).MATERIALNO,
+                                                PurchOrg: aData.at(item).PURCHORG,
+                                                PurGroup: aData.at(item).PURCHGRP,
+                                                Plant: ''
+                                                // Plant: aData.at(item).PURCHPLANT
+                                            })
+                    
+                                            me._oAssignVendorData.push({
+                                                PRNUMBER: aData.at(item).PRNUMBER,
+                                                PRITEMNO: aData.at(item).PRITEMNO,
+                                                MATERIALNO: aData.at(item).MATERIALNO,
+                                                IONUMBER: aData.at(item).IONUMBER,
+                                                QTY: aData.at(item).QTY,
+                                                UNIT: aData.at(item).UNIT,
+                                                VENDOR: aData.at(item).VENDOR,
+                                                PURCHORG: aData.at(item).PURCHORG,
+                                                PURCHPLANT: aData.at(item).PURCHPLANT,
+                                                PURCHGRP: aData.at(item).PURCHGRP,
+                                                REMARKS: ''
+                                            })
+    
+                                            me._oLock.push({
+                                                Prno: aData.at(item).PRNUMBER,
+                                                Prln: aData.at(item).PRITEMNO
+                                            })
+                                        } 
+                                        else { wVendor = true; }
+                                    }
+                                    else vMatTypExist = true;
+                                }
+                                else {
+                                    if (aData.at(item).VENDOR === "") {
                                         oParamData.push({
                                             Vendor: aData.at(item).VENDOR,
                                             Material: aData.at(item).MATERIALNO,
@@ -768,42 +845,13 @@ sap.ui.define([
                                             PURCHGRP: aData.at(item).PURCHGRP,
                                             REMARKS: ''
                                         })
-
+    
                                         me._oLock.push({
                                             Prno: aData.at(item).PRNUMBER,
                                             Prln: aData.at(item).PRITEMNO
                                         })
                                     }
-                                    else vMatTypExist = true;
-                                }
-                                else {
-                                    oParamData.push({
-                                        Vendor: aData.at(item).VENDOR,
-                                        Material: aData.at(item).MATERIALNO,
-                                        PurchOrg: aData.at(item).PURCHORG,
-                                        PurGroup: aData.at(item).PURCHGRP,
-                                        Plant: ''
-                                        // Plant: aData.at(item).PURCHPLANT
-                                    })
-            
-                                    me._oAssignVendorData.push({
-                                        PRNUMBER: aData.at(item).PRNUMBER,
-                                        PRITEMNO: aData.at(item).PRITEMNO,
-                                        MATERIALNO: aData.at(item).MATERIALNO,
-                                        IONUMBER: aData.at(item).IONUMBER,
-                                        QTY: aData.at(item).QTY,
-                                        UNIT: aData.at(item).UNIT,
-                                        VENDOR: aData.at(item).VENDOR,
-                                        PURCHORG: aData.at(item).PURCHORG,
-                                        PURCHPLANT: aData.at(item).PURCHPLANT,
-                                        PURCHGRP: aData.at(item).PURCHGRP,
-                                        REMARKS: ''
-                                    })
-
-                                    me._oLock.push({
-                                        Prno: aData.at(item).PRNUMBER,
-                                        Prln: aData.at(item).PRITEMNO
-                                    })
+                                    else { wVendor = true; }
                                 }
                             })
                             
@@ -811,8 +859,8 @@ sap.ui.define([
                                 me.showLoadingDialog('Processing...');
 
                                 // console.log("before lock");
-                                var bProceed = await me.lock(me);
-                                if (!bProceed) return;
+                                var bProceed = true; //await me.lock(me);
+                                // if (!bProceed) return;
                                 // console.log("after lock");
 
                                 oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg && item.PurGroup === value.PurGroup) === index) ;
@@ -994,12 +1042,12 @@ sap.ui.define([
                                         else {
                                             me.closeLoadingDialog();
                                             me.showAssignVendorResult("assign");
-                                            me.unLock();
+                                            // me.unLock();
                                         }
                                     },
                                     error: function() {
                                         me.closeLoadingDialog();
-                                        me.unLock();
+                                        // me.unLock();
                                     }
                                 }); 
                             }
@@ -1008,6 +1056,9 @@ sap.ui.define([
                                 
                                 if (vMatTypExist) {
                                     sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_INVALID_SEL_MATTYP"]);
+                                }
+                                else if (wVendor) {
+                                    sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_VENDOR_ALREADY_ASSIGNED"]);
                                 }
                                 else {
                                     sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_NO_RECORD_TO_PROC"]);
@@ -1136,7 +1187,7 @@ sap.ui.define([
                             },
                             error: function() {
                                 // alert("Error");
-                                me.unLock();
+                                // me.unLock();
                             }
                         });                        
                     }
@@ -1163,7 +1214,19 @@ sap.ui.define([
             },
 
             onAssignVendorClose: function(oEvent) {
-                if (this._refresh) this.refreshTableData();
+                if (this._refresh) { 
+                    if (this.byId("mainTab").getBinding("rows").aFilters.length > 0) {
+                        this._aColFilters = this.byId("mainTab").getBinding("rows").aFilters;
+                        this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setProperty("/items", this._aColFilters);
+                    }
+
+                    if (this.byId("mainTab").getBinding("rows").aSorters.length > 0) {
+                        this._aColSorters = this.byId("mainTab").getBinding("rows").aSorters;
+                        this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").setProperty("/items", this._aColSorters);
+                    }
+
+                    this.refreshTableData(); 
+                }
 
                 this._AssignVendorResultDialog.close();
                 
@@ -1178,7 +1241,7 @@ sap.ui.define([
             showAssignVendorResult(arg) {
                 // console.log(this._oAssignVendorData)
                 // display pop-up for user selection
-                this.unLock();
+                // this.unLock();
 
                 if (!this._AssignVendorResultDialog) {
                     this._AssignVendorResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.AssignVendorResultDialog", this);
@@ -1254,7 +1317,8 @@ sap.ui.define([
                                             SEASON: aData.at(item).SEASON,
                                             SHORTTEXT: aData.at(item).SHORTTEXT,
                                             VENDOR: "",
-                                            EDITED: false
+                                            EDITED: false,
+                                            REMARKS: ""
                                         })
 
                                         me._oLock.push({
@@ -1285,7 +1349,8 @@ sap.ui.define([
                                             SEASON: aData.at(item).SEASON,
                                             SHORTTEXT: aData.at(item).SHORTTEXT,
                                             VENDOR: "",
-                                            EDITED: false
+                                            EDITED: false,
+                                            REMARKS: ""
                                     })
 
                                     me._oLock.push({
@@ -1305,9 +1370,9 @@ sap.ui.define([
                             }
                             else if (me._oAssignVendorData.length > 0) {
                                 me.showLoadingDialog('Processing...');
-                                console.log(me._oAssignVendorData)
-                                var bProceed = await me.lock(me);
-                                if (!bProceed) return;
+                                // console.log(me._oAssignVendorData)
+                                var bProceed = true; //await me.lock(me);
+                                // if (!bProceed) return;
 
                                 me.closeLoadingDialog();
                                 me.showManualVendorAssignment(); 
@@ -1374,6 +1439,13 @@ sap.ui.define([
                     };
 
                     sap.ui.getCore().byId("assignVendorManualTab").addEventDelegate(oTableEventDelegate);
+
+                    // console.log(sap.ui.getCore().byId("iptManualVendor"));
+                    // sap.ui.getCore().byId("iptManualVendor").setFilterFunction(function(sTerm, oItem) {
+                    //     // A case-insensitive 'string contains' filter
+                    //     console.log(sTerm, oItem)
+                    //     return oItem.getText().match(new RegExp(sTerm, "i"));
+                    // });
                 }
                 else {
                     me._AssignVendorManualDialog.getModel().setProperty("/rows", oData);
@@ -1516,7 +1588,7 @@ sap.ui.define([
                                 },
                                 error: function() {
                                     // alert("Error");
-                                    me.unLock();
+                                    // me.unLock();
                                 }
                             }); 
                         }
@@ -1562,12 +1634,14 @@ sap.ui.define([
                                             ShortText: oItem.SHORTTEXT,
                                             Callbapi: 'X'
                                         })
+
+                                        oItem.REMARKS = "Process";
                                     })
                             })
 
                             oParam['N_ChangePRParam'] = oParamData;
                             oParam['N_ChangePRReturn'] = [];
-                            // console.log(oParam)
+                            console.log(oParam)
                             oModel.create("/ChangePRSet", oParam, {
                                 method: "POST",
                                 success: function(oResultCPR, oResponse) {   
@@ -1604,7 +1678,12 @@ sap.ui.define([
                                                 }
                                             }
                                             else {
-                                                item.REMARKS = 'No return message on PR change.';
+                                                if (item.REMARKS === "Process") {
+                                                    item.REMARKS = 'No return message on PR change.';
+                                                }
+                                                else {
+                                                    item.REMARKS = 'Skip, manual assign not process.';
+                                                }
                                             }
                                         })
                                     }
@@ -1616,7 +1695,7 @@ sap.ui.define([
                                 },
                                 error: function() {
                                     // alert("Error");
-                                    me.unLock();
+                                    // me.unLock();
                                 }
                             });
                         }
@@ -1837,8 +1916,8 @@ sap.ui.define([
                         this.showLoadingDialog('Processing...');
                         
                         // console.log("before lock");
-                        var bProceed = await this.lock(this);
-                        if (!bProceed) return;
+                        var bProceed = true; //await this.lock(this);
+                        // if (!bProceed) return;
                         // console.log("after lock");
 
                         oParam['N_ChangePRParam'] = oParamData;
@@ -1889,28 +1968,34 @@ sap.ui.define([
 
                 var me = this; 
                 var oModel = this.getOwnerComponent().getModel();
-                var aFilters = this.getView().byId("smartFilterBar").getFilters();
+                var oSmartFilter = this.getView().byId("smartFilterBar").getFilters();
 
-                if (aFilters.length > 0) {
-                    aFilters[0].aFilters.forEach(item => {
-                        // console.log(item)
-                        if (item.sPath === 'VENDOR') {
-                            if (!isNaN(item.oValue1)) {
-                                while (item.oValue1.length < 10) item.oValue1 = "0" + item.oValue1;
+                if (oSmartFilter.length > 0) {
+                    var aFilters = oSmartFilter[0].aFilters;
+
+                    if (aFilters.length === 1) {
+                        if (aFilters[0].sPath === 'VENDOR') {
+                            if (!isNaN(aFilters[0].oValue1)) {
+                                while (aFilters[0].oValue1.length < 10) aFilters[0].oValue1 = "0" + aFilters[0].oValue1;
                             }
                         }
-                    })
-                }
-
-                if (this.getView().byId("mainTab").getBinding("rows")) {
-                    this._colFilters = this.getView().byId("mainTab").getBinding("rows").aFilters;
+                    }
+                    else {
+                        aFilters.forEach(item => {
+                            if (item.aFilters[0].sPath === 'VENDOR') {
+                                if (!isNaN(item.aFilters[0].oValue1)) {
+                                    while (item.aFilters[0].oValue1.length < 10) item.aFilters[0].oValue1 = "0" + item.aFilters[0].oValue1;
+                                }
+                            }
+                        })
+                    }
                 }
 
                 //get styles data for the table
                 var oJSONDataModel = new JSONModel(); 
 
                 oModel.read("/MainSet", {
-                    filters: aFilters,
+                    filters: oSmartFilter,
                     success: function (oData, oResponse) {
                         var vUnassigned = 0, vPartial = 0;
                         // console.log(oData)
@@ -1931,8 +2016,14 @@ sap.ui.define([
                         oJSONDataModel.setData(oData);
                         me.getView().setModel(oJSONDataModel, "mainData");
                         me.closeLoadingDialog();
-                        me.setTableData();
-                        me.applyColFilter();
+                        // me.setTableData();
+                        // me.applyColFilter();
+
+                        me.byId("mainTab").getModel().setProperty("/rows", oData.results);
+                        me.byId("mainTab").bindRows("/rows");
+
+                        if (me.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").getData().items.length > 0) me.setColumnFilters("mainTab");
+                        if (me.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").getData().items.length > 0) me.setColumnSorters("mainTab");
                     },
                     error: function (err) { 
                         // console.log(err)
@@ -2044,6 +2135,7 @@ sap.ui.define([
                                 SHIPTOPLANT: aData.at(item).SHIPTOPLANT,
                                 GMCDESCEN: aData.at(item).GMCDESCEN,
                                 ADDTLDESC: aData.at(item).ADDTLDESC,
+                                POADDTLDESC: "",
                                 DELVDATE: aData.at(item).DELVDATE,
                                 BASEPOQTY: (+aData.at(item).QTY) - (+aData.at(item).ORDEREDQTY), //aData.at(item).QTY,
                                 ORDERPOQTY: (+aData.at(item).QTY) - (+aData.at(item).ORDEREDQTY),
@@ -2057,7 +2149,9 @@ sap.ui.define([
                                 INFORECCHECK: false,
                                 INFOREC: "",
                                 ANDEC: aData.at(item).ANDEC,
-                                GRBASEDIV: false
+                                GRBASEDIV: false,
+                                CHECK: false,
+                                MRPSUPTYP: ""
                             })
                         }
                     })
@@ -2067,15 +2161,19 @@ sap.ui.define([
                         bProceed = true;
 
                         // console.log("before lock");
-                        var bProceed = await this.lock(this);
-                        if (!bProceed) return;
+                        var bProceed = true; //await this.lock(this);
+                        // if (!bProceed) return;
                         // console.log("after lock");
                         
                         this._oModel.read("/ZERPCheckSet", {
                             urlParameters: {
                                 "$filter": "Sbu eq '" + vSBU + "'"
                             },
-                            success: function (oDataCheck, oResponse) {                                
+                            success: function (oDataCheck, oResponse) {
+                                oDataCheck.results.forEach(chk => {
+                                    me._oCreateData.filter(fItem => fItem.MATERIALTYPE === chk.Field2).forEach(item => item.CHECK = true);
+                                })
+
                                 oSelectedIndices.forEach(item => {
                                     if (oDataCheck.results.length > 0) {
                                         if (oDataCheck.results.filter(fItem => fItem.Field2 === aData.at(item).MATERIALTYPE).length === 0) {
@@ -2389,6 +2487,14 @@ sap.ui.define([
     
                                                                 // itemIR.BASEPOQTY = vFinalPOQty;
                                                                 noir.ORDERPOQTY = vFinalPOQty;
+                                                                noir.MRPSUPTYP = oDataNOIR.results[0].Supplytyp;
+
+                                                                if (oDataNOIR.results[0].Supplytyp !== "NOM") {
+                                                                    if (oDataNOIR.results[0].Orderuom === "") { 
+                                                                        noir.UOM = noir.BASEUOM;
+                                                                        noir.ORDERPRICEUNIT = noir.BASEUOM;
+                                                                    }
+                                                                }
                                                             }
                                                             else {
                                                                 noir.ORDERCONVFACTOR = "1";
@@ -2452,13 +2558,13 @@ sap.ui.define([
                                 else if (me._oCreateData.length === 0) {
                                     me.closeLoadingDialog();
                                     sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_NO_RECORD_TO_PROC"]);
-                                    me.unLock();
+                                    // me.unLock();
                                 }
                             },
                             error: function (err) {
                                 me.closeLoadingDialog();
                                 sap.m.MessageBox.information(err);
-                                me.unLock();
+                                // me.unLock();
                             }
                         });
                     }
@@ -2522,10 +2628,12 @@ sap.ui.define([
                                 // console.log(oData);
                                 counter++;
                                 if ((oData.RETURN + "") !== "4") {       
-                                    item.OVERDELTOL = oData.EV_UEBTO;
-                                    item.UNDERDELTOL = oData.EV_UNTTO;
+                                    item.OVERDELTOL = (+oData.EV_UEBTO).toFixed(1);
+                                    item.UNDERDELTOL = (+oData.EV_UNTTO).toFixed(1);
                                     item.UNLI = oData.EV_UNLI === "" ? false : true;
+                                    item.WITHPOTOL = true;
                                 }
+                                else { item.WITHPOTOL = false; }
 
                                 if (counter === oCreatePODtls.length) {
                                     me.navToGenPO(oCreatePOHdr, oCreatePODtls);
@@ -2546,7 +2654,19 @@ sap.ui.define([
                 var oCreatePOHdr = arg1;
                 var oCreatePODtls = arg2;
                 // console.log("oCreatePODtls ", oCreatePODtls);
-                this.getOwnerComponent().getModel("UI_MODEL").setData({sbu: this.getView().getModel("ui").getData().sbu})
+
+                this.getOwnerComponent().getModel("UI_MODEL").setProperty("/sbu", this.getView().getModel("ui").getData().sbu);
+
+                if (this.byId("mainTab").getBinding("rows").aFilters.length > 0) {
+                    this._aColFilters = this.byId("mainTab").getBinding("rows").aFilters;
+                    this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setProperty("/items", this._aColFilters);
+                }
+
+                if (this.byId("mainTab").getBinding("rows").aSorters.length > 0) {
+                    this._aColSorters = this.byId("mainTab").getBinding("rows").aSorters;
+                    this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").setProperty("/items", this._aColSorters);
+                }
+
                 this.getOwnerComponent().getModel("CREATEPO_MODEL").setData({
                     header: oCreatePOHdr,
                     detail: oCreatePODtls
@@ -2587,7 +2707,7 @@ sap.ui.define([
             showCreatePOResult() {
                 // console.log(this._oCreateData)
                 // display pop-up for user selection
-                this.unLock();
+                // this.unLock();
 
                 if (!this._CreatePOResultDialog) {
                     this._CreatePOResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.CreatePOResultDialog", this);
@@ -2714,34 +2834,66 @@ sap.ui.define([
                 var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
                 var oParamLock = {};
                 var sError = "";
-
+                var vCounter = 0;
+                
                 var promise = new Promise((resolve, reject) => {
-                    oParamLock["N_IMPRTAB"] = me._oLock;
-                    oParamLock["iv_count"] = 300;
-                    oParamLock["N_LOCK_MESSAGES"] = []; 
-
-                    oModelLock.create("/Lock_PRSet", oParamLock, {
-                        method: "POST",
-                        success: function(oResultLock) {
-                            // console.log("Lock", oResultLock);
-                            oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
-                                if (item.Type === "E") {
-                                    sError += item.Message + ". ";
+                    me._oLock.forEach(item => {
+                        setTimeout(() => {
+                            var oLockItem = [];
+                            oLockItem.push(item);
+    
+                            oParamLock["N_IMPRTAB"] = oLockItem; //me._oLock;
+                            oParamLock["iv_count"] = 300;
+                            oParamLock["N_LOCK_MESSAGES"] = []; 
+        
+                            oModelLock.create("/Lock_PRSet", oParamLock, {
+                                method: "POST",
+                                success: function(oResultLock) {
+                                    vCounter++;
+                                    // oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
+                                    //     if (item.Type === "E") {
+                                    //         sError += item.Message + ".\r\n ";
+                                    //     }
+                                    // })
+                                    
+                                    // if (sError.length > 0) {
+                                    //     resolve(false);
+                                    //     sap.m.MessageBox.information(sError);
+                                    //     me.closeLoadingDialog();
+                                    // }
+                                    // else resolve(true);
+    
+                                    oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
+                                        if (item.Type === "E") {
+                                            sError += item.Message + ".\r\n ";
+                                        }
+                                    })
+                                    
+                                    if (sError.length > 0) {
+                                        if (vCounter === me._oLock.length) {
+                                            resolve(false);
+                                            sap.m.MessageBox.information(sError);
+                                            me.closeLoadingDialog();
+                                        }
+                                    }
+                                    else {
+                                        if (vCounter === me._oLock.length) {
+                                            me.closeLoadingDialog();
+                                            resolve(true);
+                                        }
+                                    }
+                                },
+                                error: function (err) {
+                                    vCounter++;
+    
+                                    if (vCounter === me._oLock.length) {
+                                        me.closeLoadingDialog();
+                                        resolve(false);
+                                    }
                                 }
-                            })
-                            
-                            if (sError.length > 0) {
-                                resolve(false);
-                                sap.m.MessageBox.information(sError);
-                                me.closeLoadingDialog();
-                            }
-                            else resolve(true);
-                        },
-                        error: function (err) {
-                            me.closeLoadingDialog();
-                            resolve(false);
-                        }
-                    });
+                            });                            
+                        }, 10);
+                    })
                 })
 
                 return await promise;
@@ -2751,18 +2903,42 @@ sap.ui.define([
                 var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
                 var oParamUnLock = {};
                 var me = this;
+                var vCounter = 0;
 
-                oParamUnLock["N_IMPRTAB"] = this._oLock;
-                console.log(oParamUnLock)
-                oModelLock.create("/Unlock_PRSet", oParamUnLock, {
-                    method: "POST",
-                    success: function(oResultLock) {
-                        console.log("Unlock", oResultLock)
-                    },
-                    error: function (err) {
-                        me.closeLoadingDialog();
-                    }
+                this._oLock.forEach(item => { 
+                    setTimeout(() => {
+                        var oLockItem = [];
+                        oLockItem.push(item);
+    
+                        oParamUnLock["N_IMPRTAB"] = oLockItem;
+                        oModelLock.create("/Unlock_PRSet", oParamUnLock, {
+                            method: "POST",
+                            success: function(oResultLock) {
+                                console.log("Unlock", oResultLock)
+                                // vCounter++;
+                            },
+                            error: function (err) {
+                                // vCounter++;
+    
+                                // if (vCounter === me._oLock.length) {
+                                //     me.closeLoadingDialog();
+                                // }
+                            }
+                        })
+                    }, 10);
                 })
+
+                // oParamUnLock["N_IMPRTAB"] = this._oLock;
+
+                // oModelLock.create("/Unlock_PRSet", oParamUnLock, {
+                //     method: "POST",
+                //     success: function(oResultLock) {
+                //         console.log("Unlock", oResultLock)
+                //     },
+                //     error: function (err) {
+                //         me.closeLoadingDialog();
+                //     }
+                // })
 
                 this._oLock = [];
             },
@@ -2772,8 +2948,7 @@ sap.ui.define([
 
                 if (pFilters.length > 0) {
                     var oTable = this.byId("mainTab");
-                    var oColumns = oTable.getColumns();
-                    
+                    var oColumns = oTable.getColumns();                    
     
                     pFilters.forEach(item => {
                         oColumns.filter(fItem => fItem.getFilterProperty() === item.sPath)
@@ -2785,10 +2960,86 @@ sap.ui.define([
             onCloseConfirmDialog: function(oEvent) {
                 this._ConfirmDialog.close();
                 this._AssignVendorManualDialog.close();
+                // this.unLock();
             },  
     
             onCancelConfirmDialog: function(oEvent) {   
                 this._ConfirmDialog.close();
+            },
+
+            filterGlobally: function(oEvent) {
+                var sQuery = oEvent.getParameter("query");
+                this.exeGlobalSearch(sQuery);
+            },
+
+            exeGlobalSearch(arg1) {
+                var oFilter = null;
+                var aFilter = [];
+                var oTable = this.byId("mainTab")
+                var aFilteredData = [];
+
+                if (arg1) {
+                    this.getView().getModel("columns").getData().results.forEach(item => {
+                        if (item.DataType === "BOOLEAN") aFilter.push(new Filter(item.ColumnName, FilterOperator.EQ, arg1));
+                        else aFilter.push(new Filter(item.ColumnName, FilterOperator.Contains, arg1));
+                    })
+
+                    oFilter = new Filter(aFilter, false);
+                }
+    
+                oTable.getBinding("rows").filter(oFilter, "Application");
+
+                if (arg1 !== "") {
+                    var aFilteredIndices = oTable.getBinding("rows").aIndices;
+                    var aData = oTable.getModel().getData().rows;
+
+                    aFilteredIndices.forEach(item => {
+                        aFilteredData.push(aData.at(item));
+                    })
+                }
+                else {
+                    aFilteredData = oTable.getModel().getData().rows;
+                }
+
+                var vUnassigned = 0, vPartial = 0;
+
+                aFilteredData.forEach(item => {
+                    if (item.VENDOR === "") vUnassigned++;
+                    if (item.QTY !== item.ORDEREDQTY && +item.ORDEREDQTY > 0) vPartial++;
+                })
+
+                this._counts.total = aFilteredData.length;
+                this._counts.unassigned = vUnassigned;
+                this._counts.partial = vPartial;
+                this.getView().getModel("counts").setData(this._counts);
+            },
+
+            setColumnFilters(sTable) {
+                if (this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").getData().items.length > 0) {
+                    var oTable = this.byId(sTable);
+                    var oColumns = oTable.getColumns();
+
+                    this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").getData().items.forEach(item => {
+                        oColumns.filter(fItem => fItem.getFilterProperty() === item.sPath)
+                            .forEach(col => {
+                                col.filter(item.oValue1);
+                            })
+                    })
+                } 
+            },
+
+            setColumnSorters(sTable) {
+                if (this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").getData().items.length > 0) {
+                    var oTable = this.byId(sTable);
+                    var oColumns = oTable.getColumns();
+
+                    this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").getData().items.forEach(item => {
+                        oColumns.filter(fItem => fItem.getSortProperty() === item.sPath)
+                            .forEach(col => {
+                                col.sort(item.bDescending);
+                            })
+                    })
+                } 
             },
 
         });

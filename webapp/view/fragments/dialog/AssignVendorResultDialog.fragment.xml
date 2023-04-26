@@ -49,7 +49,7 @@
                         <Text text="{IONUMBER}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="3rem">
+                <uit:Column width="4rem">
                     <Label text="Qty" />
                     <uit:template>
                         <Text text="{QTY}" wrapping="false" />

@@ -40,7 +40,7 @@
                             valueHelpRequest="handleValueHelp"
                             showSuggestion="true" 
                             suggestionItemSelected="handleSuggestionItemSelected"
-                            suggestionItems="{path:'/AssignVendorManuallySet', templateShareable:false}">
+                            suggestionItems="{path:'/AssignVendorManuallySet', templateShareable:false, sorter: { path: 'LIFNR' }}">
                             <suggestionItems>
                                 <core:ListItem text="{LIFNR}" key="{LIFNR}" />
                             </suggestionItems>

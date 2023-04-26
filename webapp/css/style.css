@@ -110,3 +110,11 @@
 .sapMLabelRequired, .sapMLabelRequired::before {
     color: #c75858 !important;
 }
+
+.cursorPointer {
+    cursor: pointer;
+}
+
+.genpo .sapUiLocalBusyIndicatorAnimation {
+    display: none;
+}

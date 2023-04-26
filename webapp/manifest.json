@@ -154,7 +154,13 @@
                     "defaultCountMode": "Inline",
                     "refreshAfterChange": false
                 }
-            }
+            },
+            "COLUMN_FILTER_MODEL": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "COLUMN_SORTER_MODEL": {
+                "type": "sap.ui.model.json.JSONModel"
+            }          
         },
         "resources": {
             "css": [

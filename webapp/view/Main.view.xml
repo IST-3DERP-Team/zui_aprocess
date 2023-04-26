@@ -15,7 +15,7 @@
     <Page id="page" title="{i18n>title}" showHeader="false">
         <content> 
             <VBox fitContainer="true" class="anp">
-                <smartfilterbar:SmartFilterBar id="smartFilterBar" entitySet="ZVB_3DERP_ANP_FILTERS" search="onSearch" persistencyKey="3DERP_ANPPKey">
+                <smartfilterbar:SmartFilterBar id="smartFilterBar" entitySet="ZVB_3DERP_ANP_FILTERS" search="onSearch" persistencyKey="3DERP_ANPPKey" showClearButton="true" showClearOnFB="true">
                     <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="SBU" label="{ddtext>/SBU}" groupId="_BASIC" mandatory="mandatory" width="50px" class="mandatoryFontColor">
                             <smartfilterbar:customControl>
@@ -56,7 +56,7 @@
                     </smartfilterbar:controlConfiguration>
 
                     <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="MATERIALGRP" label="{ddtext>/MATERIALGRP}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
+                        <smartfilterbar:ControlConfiguration key="MATERIALGRP" label="{ddtext>/MATERIALGRP}" groupId="_BASIC" displayBehaviour="descriptionAndId" preventInitialDataFetchInValueHelpDialog="false" />   
                     </smartfilterbar:controlConfiguration>
                     <!-- <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
@@ -149,6 +149,7 @@
                     visibleRowCountMode="Auto"
                     showColumnVisibilityMenu="true"
                     enableColumnFreeze="true"
+                    enableCellFilter="true"
                     selectionMode="MultiToggle"
                     firstVisibleRowChanged="onFirstVisibleRowChanged"
                     cellClick="onCellClick"

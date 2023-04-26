@@ -4,12 +4,21 @@
     xmlns:uiL="sap.ui.layout"
     xmlns:uiT="sap.ui.table"
     xmlns:form="sap.ui.layout.form"
+    xmlns:tnt="sap.tnt"
     xmlns="sap.m"
     xmlns:f="sap.f"
     xmlns:semantic="sap.m.semantic"
+    xmlns:vk="sap.ui.vk"
     displayBlock="true">
-    <Page showHeader="false" title="{ddtext>/GENERATEPO}" showNavButton="true" navButtonPress="onNavBack">
+    <Page showHeader="false" title="{ddtext>/POCREATE}" showNavButton="true" navButtonPress="onNavBack">
         <!-- <content> -->
+            <!-- <vk:Overlay >
+                <vk:areas>
+                    <vk:OverlayArea>
+
+                    </vk:OverlayArea>
+                </vk:areas>
+            </vk:Overlay> -->
             <VBox fitContainer="true" class="genpo"> 
                 <!-- <uiT:Table id="headerTab"
                     rows="{header>/}"
@@ -171,7 +180,21 @@
                 </uiT:Table>  -->
                 <Panel height="195px" class="sapUiNoContentPadding hdrFormBgColor">
                     <Toolbar>
-                        <Title level="H3" text="{ddtext>/GENERATEPO}" class="sapUiTinyMarginBegin createPOTitle" />
+                        <Title id="titlePOCreate" level="H3" text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin createPOTitle cursorPointer" tooltip="Click to view group status" />
+                        <!-- <tnt:InfoLabel text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin" /> -->
+                        <Button id="btnPrevPO" 
+                            type="Transparent"
+                            icon="sap-icon://slim-arrow-left"
+                            press="onPrevPO"
+                            tooltip="{ddtext>/PREVIOUS}"
+                            visible="true"/>
+                        <tnt:InfoLabel text="{ui>/activeGroup} of {ui>/totalGroup}"/>
+                        <Button id="btnNextPO" 
+                            type="Transparent"
+                            icon="sap-icon://slim-arrow-right"
+                            press="onNextPO"
+                            tooltip="{ddtext>/NEXT}"
+                            visible="true"/>
                         <ToolbarSpacer/>
                         <!-- <Button id="btnEditHdr" 
                             icon="sap-icon://edit"
@@ -179,26 +202,36 @@
                             tooltip="{ddtext>/EDIT}"
                             visible="true"/> -->
                         <Button id="btnUpdDate" 
+                            text="{ddtext>/CHANGEDELVDATE}"
                             icon="sap-icon://calendar"
                             press="onUpdDate"
                             tooltip="{ddtext>/CHANGEDELVDATE}"
                             visible="true"/>
                         <Button id="btnFabSpecs" 
+                            text="{ddtext>/FABSPECS}"
                             icon="sap-icon://list"
                             press="onFabSpecs"
                             tooltip="{ddtext>/FABSPECS}"
-                            visible="true"/>
+                            visible="false"/>
                         <Button id="btnHdrTxt" 
+                            text="{ddtext>/HEADERTEXT}"
                             icon="sap-icon://header"
                             press="onHdrText"
                             tooltip="{ddtext>/HEADERTEXT}"
                             visible="true"/>
                         <Button id="btnGenPO" 
+                            text="{ddtext>/GENERATEPO}"
                             icon="sap-icon://add-document"
                             press="onValidateExtendPO"
                             tooltip="{ddtext>/GENERATEPO}"
                             visible="true"/>
-                        <Button id="btnCancelPO" 
+                        <Button id="btnCancelAllPO"
+                            text="{ddtext>/CANCELALL}"
+                            icon="sap-icon://sys-cancel"
+                            press="onCancelAllPO"
+                            tooltip="{ddtext>/CANCELALL}"
+                            visible="true"/>                            
+                        <Button id="btnCancelPO"
                             icon="sap-icon://sys-cancel"
                             press="onCancelPO"
                             tooltip="{ddtext>/CANCEL}"
@@ -220,7 +253,7 @@
                             visible="false"/> -->
                     </Toolbar>
 
-                    <form:Form id="headerForm" editable="true" class="sapUiNoContentPadding">
+                    <form:Form id="headerForm" editable="true" class="sapUiNoContentPadding" busy="false">
                         <form:layout>
                             <form:ResponsiveGridLayout
                                 labelSpanXL="4"
@@ -347,7 +380,11 @@
                                             <Label text="{ddtext>/DESTINATION}" required="true"></Label>
                                         </form:label>
                                         <form:fields>
-                                            <Input value="{grpheader>/0/DESTINATION}" maxLength="28" />
+                                            <Input 
+                                                value="{grpheader>/0/DESTINATION}" 
+                                                maxLength="28" 
+                                                required="true"
+                                                liveChange="onInputLiveChange" />
                                             <!-- <Input type="Text" 
                                                 value="{grpheader>/0/DESTINATION}" 
                                                 showValueHelp="true"
@@ -384,7 +421,7 @@
                                                 </suggestionItems>
                                                 <!-- <customData>
                                                     <core:CustomData key="SHIPMODE" value="{grpheader>/0/SHIPMODE}"/>
-                                                </customData>                                                  -->
+                                                </customData> -->
                                             </Input>                                            
                                         </form:fields>
                                     </form:FormElement>
@@ -396,8 +433,7 @@
                         <FlexItemData baseSize="0%" />
                     </layoutData>
                 </Panel>
-
-                <uiT:Table id="detailTab"
+                <uiT:Table id="detailTab" busy="false"
                     rows="{detail>/}"
                     class="sapUiTinyMargin"
                     visibleRowCountMode="Auto"
@@ -426,6 +462,12 @@
                                 <Text text="{detail>ADDTLDESC}" wrapping="false" tooltip="{detail>ADDTLDESC}" />
                             </uiT:template>
                         </uiT:Column>
+                        <uiT:Column width="300px">
+                            <Text text="{ddtext>/POADDTLDESC}" />
+                            <uiT:template>
+                                <Input value="{detail>POADDTLDESC}" tooltip="{detail>POADDTLDESC}" maxLength="68"/>
+                            </uiT:template>
+                        </uiT:Column>
                         <uiT:Column width="100px">
                             <Text text="{ddtext>/IONUMBER}" />
                             <uiT:template>
@@ -441,10 +483,16 @@
                         <uiT:Column width="125px" hAlign="End">
                             <Text text="{ddtext>/BASEPOQTY}" />
                             <uiT:template>
-                                <Text text="{detail>BASEPOQTY}" wrapping="false" />
+                                <Input value="{detail>BASEPOQTY}" enabled="false" change="onInputChange" />
+                                <!-- <Text text="{detail>BASEPOQTY}" wrapping="false" /> -->
                             </uiT:template>
                         </uiT:Column>
-
+                        <uiT:Column width="100px">
+                            <Text text="{ddtext>/BASEUOM}" />
+                            <uiT:template>
+                                <Text text="{detail>BASEUOM}" wrapping="false" tooltip="{detail>BASEUOM}" />
+                            </uiT:template>
+                        </uiT:Column>
                         <!-- <uiT:Column width="125px" hAlign="End">
                             <Text text="{ddtext>/BASEPOQTY}" />
                             <uiT:template>
@@ -483,15 +531,16 @@
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px">
-                            <Text text="{ddtext>/UOM}" />
+                            <Text text="{ddtext>/ORDUOM}" />
                             <uiT:template>
-                                <Text text="{detail>UOM}" wrapping="false" tooltip="{detail>UOM}" />
+                                <Input value="{detail>UOM}" tooltip="{detail>UOM}" enabled="false" change="onInputChange" />
+                                <!-- <Text text="{detail>UOM}" wrapping="false" tooltip="{detail>UOM}" /> -->
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px" hAlign="End">
                             <Text text="{ddtext>/GROSSPRICE}" />
                             <uiT:template>
-                                <Input value="{detail>GROSSPRICE}" enabled="true" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
+                                <Input value="{detail>GROSSPRICE}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px" hAlign="End">
@@ -509,19 +558,22 @@
                         <uiT:Column width="100px">
                             <Text text="{ddtext>/ORDERPRICEUNIT}" />
                             <uiT:template>
-                                <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" />
+                                <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onInputChange" />
+                                <!-- <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" /> -->
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px" hAlign="End">
                             <Text text="{ddtext>/OVERDELTOL}" />
                             <uiT:template>
-                                <Text text="{detail>OVERDELTOL}" wrapping="false" />
+                                <Input value="{detail>OVERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
+                                <!-- <Text text="{detail>OVERDELTOL}" wrapping="false" /> -->
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px" hAlign="End">
                             <Text text="{ddtext>/UNDERDELTOL}" />
                             <uiT:template>
-                                <Text text="{detail>UNDERDELTOL}" wrapping="false" />
+                                <Input value="{detail>UNDERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
+                                <!-- <Text text="{detail>UNDERDELTOL}" wrapping="false" /> -->
                             </uiT:template>
                         </uiT:Column>
                         <uiT:Column width="100px" hAlign="Center">
@@ -557,7 +609,8 @@
                         <uiT:Column width="100px">
                             <Text text="{ddtext>/SUPPLYTYPE}" />
                             <uiT:template>
-                                <Text text="{detail>SUPPLYTYPE}" wrapping="false" tooltip="{detail>SUPPLYTYPE}" />
+                                <Input value="{detail>SUPPLYTYPE}" tooltip="{detail>SUPPLYTYPE}" enabled="false" change="onValueHelpInputChange" />
+                                <!-- <Text text="{detail>SUPPLYTYPE}" wrapping="false" tooltip="{detail>SUPPLYTYPE}" /> -->
                             </uiT:template>
                         </uiT:Column>                                                
                         <uiT:Column width="100px" hAlign="End">
@@ -572,12 +625,6 @@
                                 <Text text="{detail>BASECONVFACTOR}" wrapping="false"/>
                             </uiT:template>
                         </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/BASEUOM}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEUOM}" wrapping="false" tooltip="{detail>BASEUOM}" />
-                            </uiT:template>
-                        </uiT:Column>                                                
                     </uiT:columns>
                     <!-- <uiT:extension>
                         <Toolbar>

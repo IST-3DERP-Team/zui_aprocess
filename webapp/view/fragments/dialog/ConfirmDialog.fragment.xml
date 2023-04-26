@@ -5,7 +5,7 @@
 		</Panel>
 		<buttons>
 			<Button text="Yes" press="onCloseConfirmDialog"/>
-			<Button text="Cancel" press="onCancelConfirmDialog"/>
+			<Button text="No" press="onCancelConfirmDialog"/>
 		</buttons>
 	</Dialog>
 </core:FragmentDefinition>
