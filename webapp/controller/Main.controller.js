@@ -1,16 +1,20 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
-    "sap/ui/model/json/JSONModel",
-    "sap/m/MessageBox",
-    "../js/Common",
-    "sap/m/Token",
-    "sap/ui/model/Filter",
-	"sap/ui/model/FilterOperator",    
-],
+        "sap/ui/core/mvc/Controller",
+        "sap/ui/model/json/JSONModel",
+        "sap/m/MessageBox",
+        "../js/Common",
+        "sap/m/Token",
+        "sap/ui/model/Filter",
+        "sap/ui/model/FilterOperator",
+        'sap/m/SearchField',
+        'sap/ui/model/type/String',
+        'sap/m/ColumnListItem',
+        'sap/m/Label',
+    ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator) {
+    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator, SearchField, typeString, ColumnListItem, Label) {
         "use strict";
 
         var that;
@@ -253,6 +257,9 @@ sap.ui.define([
                 });
 
                 this._aColFilters = [], this._aColSorters = [];
+
+                this._oMultiInput = this.getView().byId("multiInputMatTyp");
+                this._oMultiInput.addValidator(this._onMultiInputValidate.bind(this));
             },
 
             onExit: function() {
@@ -262,7 +269,9 @@ sap.ui.define([
             onSBUChange: function(oEvent) {
                 this._sbuChange = true;
                 var vSBU = this.getView().byId("cboxSBU").getSelectedKey();
-                // console.log(this.byId('cboxSBU').getSelectedKey());
+                var oModel = this.getOwnerComponent().getModel("ZVB_3DERP_ANP_FILTERS_CDS");
+                var me = this;
+                console.log(oModel);
                 // var vSBU = this.byId('cboxSBU').getSelectedKey();
                 
                 // this.showLoadingDialog('Loading...');
@@ -285,6 +294,29 @@ sap.ui.define([
                     this.byId("btnTabLayout").setEnabled(false);
                     this.byId("btnManualAssign").setEnabled(false);
                 }
+
+                oModel.read("/ZVB_3DERP_MATTYPE_SH", {
+                    urlParameters: {
+                        "$filter": "SBU eq '" + vSBU + "'"
+                    },                    
+                    success: function (oData, oResponse) {
+                        if (oData.results.length > 0){
+                            var aData = new JSONModel({results: oData.results.filter(item => item.SBU === vSBU)});
+                            me.getView().setModel(aData, "materialType");
+                        }
+                        else{
+                            var aData = new JSONModel({results: []});
+                            me.getView().setModel(aData, "materialType");
+                        }
+                        console.log(oData)
+                        console.log(me.getView().getModel("materialType").getData())
+                        console.log(oModel)
+                        /*var oJSONModel = new sap.ui.model.json.JSONModel();
+                        oJSONModel.setData({results: oData.results.filter(item => item.sbu === vSBU)});
+                        _this.getView().setModel(oJSONModel, "reqPlantFilter");*/
+                    },
+                    error: function (err) { }
+                });
                 
                 // var me = this;
                 // var oModel = this.getOwnerComponent().getModel("ZVB_3DERP_ANP_FILTERS_CDS");                
@@ -521,7 +553,8 @@ sap.ui.define([
             setSmartFilterModel: function () {
                 //Model StyleHeaderFilters is for the smartfilterbar
                 var oModel = this.getOwnerComponent().getModel("ZVB_3DERP_ANP_FILTERS_CDS");
-                // console.log(oModel)
+                
+                console.log(oModel)
                 var oSmartFilter = this.getView().byId("smartFilterBar");
                 oSmartFilter.setModel(oModel);
                 // console.log(oSmartFilter)
@@ -641,49 +674,44 @@ sap.ui.define([
                 var oModel = this.getOwnerComponent().getModel();
                 var oJSONDataModel = new JSONModel();     
                 
-                var oSmartFilter = this.getView().byId("smartFilterBar").getFilters();   
+                var oSmartFilter = this.getView().byId("smartFilterBar").getFilters();
+                var aFilters = [];
+                
+                if (oSmartFilter.length > 0)  {
+                    aFilters = oSmartFilter[0].aFilters;
+                }
+
                 // var aFiltersObj = [];
                 
                 // aFiltersObj.push(oSmartFilter);
                 // aFiltersObj = aFiltersObj[0];
                 
-                // if (this.getView().byId("smartFilterBar")) {
+                if (this.getView().byId("smartFilterBar")) {
+                    var oCtrl = this.getView().byId("smartFilterBar").determineControlByName("MATERIALTYPE");
 
-                //     var oCtrl = this.getView().byId("smartFilterBar").determineControlByName("MATERIALTYPE");
-                //     if (oCtrl) {
-                //         oCtrl.getTokens().map(function(oToken) {
-                //             if(aFilters.length === 0){
-                //                 aFiltersObj.push({
-                //                     aFilters: [{
-                //                         sPath: "MATERIALTYPE",
-                //                         sOperator: "EQ",
-                //                         oValue1: oToken.getKey(),
-                //                         _bMultiFilter: false
-                //                     }]
-                //                 })
-                //             }else{
-                //                 aFiltersObj[0].aFilters[parseInt(Object.keys(aFiltersObj[0].aFilters).pop())+1] = ({
-                //                     sPath: "MATERIALTYPE",
-                //                     sOperator: "EQ",
-                //                     oValue1: oToken.getKey(),
-                //                     _bMultiFilter: false
-                //                 })
-                //             }
-                //             // me.getView().byId("smartFilterBar").setFilterData({
-                //             //     _CUSTOM: {
-                //             //         item: {key: oToken.getKey(), text: oToken.getKey()}, 
-                //             //     }
-                            
-                //             // });
-                //         })
-                //     }
-                // }
+                    if (oCtrl) {
+                        var aCustomFilter = [];
+                        oCtrl.getTokens().map(function(oToken) {
+                            // console.log(oToken.getKey())
+                            aCustomFilter.push(new Filter({
+                                path: "MATERIALTYPE",
+                                operator: "EQ",
+                                value1: oToken.getKey()
+                            }));
+                        })
+
+                        aFilters.push(new Filter(aCustomFilter));
+                    }
+                }
                 
-                // console.log(aFiltersObj);
+                if (oSmartFilter.length === 0 && aFilters.length > 0)  {
+                    oSmartFilter.push(aFilters);
+                }
+
                 // console.log(aFilters);
                 if (oSmartFilter.length > 0) {
-                    var aFilters = oSmartFilter[0].aFilters;
-                    console.log(aFilters)
+                    // var aFilters = oSmartFilter[0].aFilters;
+                    // console.log(oSmartFilter)
                     if (aFilters.length === 1) {
                         if (aFilters[0].sPath === 'VENDOR') {
                             if (!isNaN(aFilters[0].oValue1)) {
@@ -3042,5 +3070,156 @@ sap.ui.define([
                 } 
             },
 
+            onCustomSmartFilterValueHelp: function() {
+                this.oColModel = new JSONModel({
+                    "cols": [
+                        {
+                            "label": "Material Type",
+                            "template": "MaterialType",
+                            "width": "10rem",
+                            "sortProperty": "MaterialType"
+                        },
+                        {
+                            "label": "Description",
+                            "template": "Description",
+                            "sortProperty": "Description"
+                        },
+                    ]
+                });
+
+                var aCols = this.oColModel.getData().cols;
+                this._oBasicSearchField = new SearchField({
+                    showSearchButton: false
+                });
+    
+                this._oCustomSmartFilterValueHelpDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.valuehelp.SmartFilterValueHelpDialog", this);
+                this.getView().addDependent(this._oCustomSmartFilterValueHelpDialog);
+    
+                this._oCustomSmartFilterValueHelpDialog.setRangeKeyFields([{
+                    label: "Material Type",
+                    key: "MaterialType",
+                    type: "string",
+                    typeInstance: new typeString({}, {
+                        maxLength: 4
+                    })
+                }]);
+    
+                // this._oCustomSmartFilterValueHelpDialog.getFilterBar().setBasicSearch(this._oBasicSearchField);
+    
+                this._oCustomSmartFilterValueHelpDialog.getTableAsync().then(function (oTable) {
+                    oTable.setModel(this.getView().getModel("materialType"));
+                    oTable.setModel(this.oColModel, "columns");
+                    console.log(oTable)
+                    if (oTable.bindRows) {
+                        oTable.bindAggregation("rows", "/results");
+                    }
+    
+                    if (oTable.bindItems) {
+                        oTable.bindAggregation("items", "/results", function () {
+                            return new ColumnListItem({
+                                cells: aCols.map(function (column) {
+                                    return new Label({ text: "{" + column.template + "}" });
+                                })
+                            });
+                        });
+                    }
+    
+                    this._oCustomSmartFilterValueHelpDialog.update();
+                }.bind(this));
+    
+                
+                this._oCustomSmartFilterValueHelpDialog.setTokens(this._oMultiInput.getTokens());
+                this._oCustomSmartFilterValueHelpDialog.open();
+            },
+
+            onCustomSmartFilterValueHelpOkPress: function (oEvent) {
+                var aTokens = oEvent.getParameter("tokens");
+                console.log("aTokens",aTokens);
+                this._oMultiInput.setTokens(aTokens);
+                this._oCustomSmartFilterValueHelpDialog.close();
+            },
+    
+            onCustomSmartFilterValueHelpCancelPress: function () {
+                this._oCustomSmartFilterValueHelpDialog.close();
+            },
+    
+            onCustomSmartFilterValueHelpAfterClose: function () {
+                this._oCustomSmartFilterValueHelpDialog.destroy();
+            },
+    
+            onFilterBarSearch: function (oEvent) {
+                var sSearchQuery = this._oBasicSearchField.getValue(),
+                    aSelectionSet = oEvent.getParameter("selectionSet");
+                console.log(oEvent.getParameters())
+                var aFilters = aSelectionSet.reduce(function (aResult, oControl) {
+                    if (oControl.getValue()) {
+                        aResult.push(new Filter({
+                            path: oControl.getName(),
+                            operator: FilterOperator.Contains,
+                            value1: oControl.getValue()
+                        }));
+                    }
+
+                    return aResult;
+                }, []);
+                console.log(aFilters)
+                // aFilters.push(new Filter({
+                //     filters: [
+                //         new Filter({ path: "MaterialType", operator: FilterOperator.Contains, value1: sSearchQuery }),
+                //         new Filter({ path: "Description", operator: FilterOperator.Contains, value1: sSearchQuery })
+                //     ],
+                //     and: false
+                // }));
+    
+                this._filterTable(new Filter({
+                    filters: aFilters,
+                    and: true
+                }));
+            },
+
+            _filterTable: function (oFilter) {
+                var oValueHelpDialog = this._oCustomSmartFilterValueHelpDialog;
+    
+                oValueHelpDialog.getTableAsync().then(function (oTable) {
+                    if (oTable.bindRows) {
+                        oTable.getBinding("rows").filter(oFilter);
+                    }
+    
+                    if (oTable.bindItems) {
+                        oTable.getBinding("items").filter(oFilter);
+                    }
+    
+                    oValueHelpDialog.update();
+                });
+            },
+    
+            _onMultiInputValidate: function(oArgs) {
+                var aToken = this._oMultiInput.getTokens();
+                console.log(oArgs)
+                if (oArgs.suggestionObject) {
+                    var oObject = oArgs.suggestionObject.getBindingContext("materialType").getObject(),
+                        oToken = new Token();
+
+                    oToken.setKey(oObject.MaterialType);
+                    oToken.setText(oObject.Description + " (" + oObject.MaterialType + ")");
+                    aToken.push(oToken)
+
+                    this._oMultiInput.setTokens(aToken);
+                    this._oMultiInput.setValueState("None");
+                }
+                else if (oArgs.text !== "") {
+                    this._oMultiInput.setValueState("Error");
+                }
+    
+                return null;
+            },
+
+            onCustomSmartFilterValueHelpChange: function(oEvent) {
+                if (oEvent.getParameter("value") === "") {
+                    this._oMultiInput.setValueState("None");
+                }
+            },
+
         });
-    });
+    }
+);

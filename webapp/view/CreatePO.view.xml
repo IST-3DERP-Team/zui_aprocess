@@ -462,7 +462,7 @@
                                 <Text text="{detail>ADDTLDESC}" wrapping="false" tooltip="{detail>ADDTLDESC}" />
                             </uiT:template>
                         </uiT:Column>
-                        <uiT:Column width="300px">
+                        <uiT:Column width="300px" visible="false">
                             <Text text="{ddtext>/POADDTLDESC}" />
                             <uiT:template>
                                 <Input value="{detail>POADDTLDESC}" tooltip="{detail>POADDTLDESC}" maxLength="68"/>

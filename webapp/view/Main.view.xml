@@ -107,9 +107,42 @@
                         </smartfilterbar:ControlConfiguration>
                     </smartfilterbar:controlConfiguration> -->
 
-                    <smartfilterbar:controlConfiguration>
+                    <!-- <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" />
+                    </smartfilterbar:controlConfiguration> -->
+
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="multiInputMatTyp"
+                                    change="onCustomSmartFilterValueHelpChange"
+                                    valueHelpRequest=".onCustomSmartFilterValueHelp"
+                                    suggestionRows="{
+                                        path: 'materialType>/results',
+                                        sorter: { path: 'MaterialType' },
+                                        length: 1000
+                                    }">
+                                    <suggestionColumns>
+                                        <Column>
+                                            <Label text="Material Type"/>
+                                        </Column>
+                                        <Column>
+                                            <Label text="Description"/>
+                                        </Column>
+                                    </suggestionColumns>
+                                    <suggestionRows>
+                                        <ColumnListItem>
+                                            <cells>
+                                                <Label text="{materialType>MaterialType}" />
+                                                <Label text="{materialType>Description}" />
+                                            </cells>
+                                        </ColumnListItem>
+                                    </suggestionRows>
+                                </MultiInput>
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
                     </smartfilterbar:controlConfiguration>
+
                     <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="IONUMBER" label="{ddtext>/IONUMBER}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" />
                     </smartfilterbar:controlConfiguration>

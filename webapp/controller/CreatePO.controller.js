@@ -1208,7 +1208,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 var oTable = this.byId(sModel + "Tab");
                 var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === oSource.getSelectedKey());
                 var iRowIndex = +sRowPath.split("/")[sRowPath.split("/").length-1];
-                console.log(sRowPath, iRowIndex)
+
                 if (oSupplyType[0].FOC === "X") {
                     //disable gross/net price, set value to zero
                     oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false);
