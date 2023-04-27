@@ -8,17 +8,10 @@
     xmlns="sap.m"
     xmlns:f="sap.f"
     xmlns:semantic="sap.m.semantic"
-    xmlns:vk="sap.ui.vk"
+    height="100%"
     displayBlock="true">
     <Page showHeader="false" title="{ddtext>/POCREATE}" showNavButton="true" navButtonPress="onNavBack">
         <!-- <content> -->
-            <!-- <vk:Overlay >
-                <vk:areas>
-                    <vk:OverlayArea>
-
-                    </vk:OverlayArea>
-                </vk:areas>
-            </vk:Overlay> -->
             <VBox fitContainer="true" class="genpo"> 
                 <!-- <uiT:Table id="headerTab"
                     rows="{header>/}"
@@ -178,7 +171,7 @@
                         <FlexItemData growFactor="0.7" baseSize="0%"/>
                     </uiT:layoutData>                  
                 </uiT:Table>  -->
-                <Panel height="195px" class="sapUiNoContentPadding hdrFormBgColor">
+                <Panel class="sapUiNoContentPadding hdrFormBgColor">
                     <Toolbar>
                         <Title id="titlePOCreate" level="H3" text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin createPOTitle cursorPointer" tooltip="Click to view group status" />
                         <!-- <tnt:InfoLabel text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin" /> -->
@@ -250,7 +243,7 @@
                             icon="sap-icon://sys-cancel"
                             press="onCancelHdr"
                             tooltip="{ddtext>/CANCEL}"
-                            visible="false"/> -->
+                            visible="false"/> -->                           
                     </Toolbar>
 
                     <form:Form id="headerForm" editable="true" class="sapUiNoContentPadding" busy="false">
@@ -428,228 +421,236 @@
                                 </form:formElements>
                             </form:FormContainer>
                         </form:formContainers>
+                        <!-- <form:layoutData>
+                            <FlexItemData growFactor="0" />
+                        </form:layoutData> -->
                     </form:Form>
                     <layoutData>
-                        <FlexItemData baseSize="0%" />
+                        <FlexItemData growFactor="0" />
                     </layoutData>
                 </Panel>
-                <uiT:Table id="detailTab" busy="false"
-                    rows="{detail>/}"
-                    class="sapUiTinyMargin"
-                    visibleRowCountMode="Auto"
-                    showColumnVisibilityMenu="true"
-                    enableColumnFreeze="true"
-                    selectionMode="None"
-                    selectionBehavior="RowOnly"
-                    cellClick="onCellClick"
-                    sort="onSorted">
-                    <uiT:columns>
-                        <uiT:Column width="125px">
-                            <Text text="{ddtext>/MATERIALNO}" />
-                            <uiT:template>
-                                <Text text="{detail>MATERIALNO}" wrapping="false" tooltip="{detail>MATERIALNO}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="300px">
-                            <Text text="{ddtext>/GMCDESCEN}" />
-                            <uiT:template>
-                                <Text text="{detail>GMCDESCEN}" wrapping="false" tooltip="{detail>GMCDESCEN}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="300px">
-                            <Text text="{ddtext>/ADDTLDESC}" />
-                            <uiT:template>
-                                <Text text="{detail>ADDTLDESC}" wrapping="false" tooltip="{detail>ADDTLDESC}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="300px" visible="false">
-                            <Text text="{ddtext>/POADDTLDESC}" />
-                            <uiT:template>
-                                <Input value="{detail>POADDTLDESC}" tooltip="{detail>POADDTLDESC}" maxLength="68"/>
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/IONUMBER}" />
-                            <uiT:template>
-                                <Text text="{detail>IONUMBER}" wrapping="false" tooltip="{detail>IONUMBER}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="140px">
-                            <Text text="{ddtext>/DELVDATE}" />
-                            <uiT:template>
-                                <Text text="{detail>DELVDATE}" wrapping="false" tooltip="{detail>DELVDATE}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="125px" hAlign="End">
-                            <Text text="{ddtext>/BASEPOQTY}" />
-                            <uiT:template>
-                                <Input value="{detail>BASEPOQTY}" enabled="false" change="onInputChange" />
-                                <!-- <Text text="{detail>BASEPOQTY}" wrapping="false" /> -->
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/BASEUOM}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEUOM}" wrapping="false" tooltip="{detail>BASEUOM}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <!-- <uiT:Column width="125px" hAlign="End">
-                            <Text text="{ddtext>/BASEPOQTY}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEPOQTY2}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="125px" hAlign="End">
-                            <Text text="{ddtext>/BASEPOQTY}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEPOQTY3}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="125px" hAlign="End">
-                            <Text text="{ddtext>/BASEPOQTY}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEPOQTY4}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>                        
-                        <uiT:Column width="125px" hAlign="End">
-                            <Text text="{ddtext>/BASEPOQTY}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEPOQTY5}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="125px" hAlign="End">
-                            <Text text="{ddtext>/BASEPOQTY}" />
-                            <uiT:template>
-                                <Text text="{detail>BASEPOQTY6}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column> -->
+                <!-- <VBox fitContainer="true"> -->
+                    <uiT:Table id="detailTab" busy="false"
+                        rows="{detail>/}"
+                        class="sapUiTinyMargin"
+                        visibleRowCountMode="Auto"
+                        showColumnVisibilityMenu="true"
+                        enableColumnFreeze="true"
+                        selectionMode="None"
+                        selectionBehavior="RowOnly"
+                        cellClick="onCellClick"
+                        sort="onSorted">
+                        <uiT:columns>
+                            <uiT:Column width="125px">
+                                <Text text="{ddtext>/MATERIALNO}" />
+                                <uiT:template>
+                                    <Text text="{detail>MATERIALNO}" wrapping="false" tooltip="{detail>MATERIALNO}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="300px">
+                                <Text text="{ddtext>/GMCDESCEN}" />
+                                <uiT:template>
+                                    <Text text="{detail>GMCDESCEN}" wrapping="false" tooltip="{detail>GMCDESCEN}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="300px">
+                                <Text text="{ddtext>/ADDTLDESC}" />
+                                <uiT:template>
+                                    <Text text="{detail>ADDTLDESC}" wrapping="false" tooltip="{detail>ADDTLDESC}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="300px" visible="false">
+                                <Text text="{ddtext>/POADDTLDESC}" />
+                                <uiT:template>
+                                    <Input value="{detail>POADDTLDESC}" tooltip="{detail>POADDTLDESC}" maxLength="68"/>
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/IONUMBER}" />
+                                <uiT:template>
+                                    <Text text="{detail>IONUMBER}" wrapping="false" tooltip="{detail>IONUMBER}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="140px">
+                                <Text text="{ddtext>/DELVDATE}" />
+                                <uiT:template>
+                                    <Text text="{detail>DELVDATE}" wrapping="false" tooltip="{detail>DELVDATE}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="125px" hAlign="End">
+                                <Text text="{ddtext>/BASEPOQTY}" />
+                                <uiT:template>
+                                    <Input value="{detail>BASEPOQTY}" enabled="false" change="onInputChange" />
+                                    <!-- <Text text="{detail>BASEPOQTY}" wrapping="false" /> -->
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/BASEUOM}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASEUOM}" wrapping="false" tooltip="{detail>BASEUOM}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <!-- <uiT:Column width="125px" hAlign="End">
+                                <Text text="{ddtext>/BASEPOQTY}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASEPOQTY2}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="125px" hAlign="End">
+                                <Text text="{ddtext>/BASEPOQTY}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASEPOQTY3}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="125px" hAlign="End">
+                                <Text text="{ddtext>/BASEPOQTY}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASEPOQTY4}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>                        
+                            <uiT:Column width="125px" hAlign="End">
+                                <Text text="{ddtext>/BASEPOQTY}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASEPOQTY5}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="125px" hAlign="End">
+                                <Text text="{ddtext>/BASEPOQTY}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASEPOQTY6}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column> -->
 
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/ORDERPOQTY}" />
-                            <uiT:template>
-                                <Text text="{detail>ORDERPOQTY}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/ORDUOM}" />
-                            <uiT:template>
-                                <Input value="{detail>UOM}" tooltip="{detail>UOM}" enabled="false" change="onInputChange" />
-                                <!-- <Text text="{detail>UOM}" wrapping="false" tooltip="{detail>UOM}" /> -->
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/GROSSPRICE}" />
-                            <uiT:template>
-                                <Input value="{detail>GROSSPRICE}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/NETPRICE}" />
-                            <uiT:template>
-                                <Text text="{detail>NETPRICE}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/PER}" />
-                            <uiT:template>
-                                <Text text="{detail>PER}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/ORDERPRICEUNIT}" />
-                            <uiT:template>
-                                <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onInputChange" />
-                                <!-- <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" /> -->
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/OVERDELTOL}" />
-                            <uiT:template>
-                                <Input value="{detail>OVERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
-                                <!-- <Text text="{detail>OVERDELTOL}" wrapping="false" /> -->
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/UNDERDELTOL}" />
-                            <uiT:template>
-                                <Input value="{detail>UNDERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
-                                <!-- <Text text="{detail>UNDERDELTOL}" wrapping="false" /> -->
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="Center">
-                            <Text text="{ddtext>/UNLI}" />
-                            <uiT:template>
-                                <CheckBox selected="{detail>UNLI}" editable="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/TAXCODE}" />
-                            <uiT:template>
-                                <Text text="{detail>TAXCODE}" wrapping="false" tooltip="{detail>TAXCODE}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="Center">
-                            <Text text="{ddtext>/GRBASEDIV}" />
-                            <uiT:template>
-                                <CheckBox selected="{detail>GRBASEDIV}" editable="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PRNUMBER}" />
-                            <uiT:template>
-                                <Text text="{detail>PRNUMBER}" wrapping="false" tooltip="{detail>PRNUMBER}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PRITEMNO}" />
-                            <uiT:template>
-                                <Text text="{detail>PRITEMNO}" wrapping="false" tooltip="{detail>PRITEMNO}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/SUPPLYTYPE}" />
-                            <uiT:template>
-                                <Input value="{detail>SUPPLYTYPE}" tooltip="{detail>SUPPLYTYPE}" enabled="false" change="onValueHelpInputChange" />
-                                <!-- <Text text="{detail>SUPPLYTYPE}" wrapping="false" tooltip="{detail>SUPPLYTYPE}" /> -->
-                            </uiT:template>
-                        </uiT:Column>                                                
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/ORDERCONVFACTOR}" />
-                            <uiT:template>
-                                <Text text="{detail>ORDERCONVFACTOR}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px" hAlign="End">
-                            <Text text="{ddtext>/BASECONVFACTOR}" />
-                            <uiT:template>
-                                <Text text="{detail>BASECONVFACTOR}" wrapping="false"/>
-                            </uiT:template>
-                        </uiT:Column>
-                    </uiT:columns>
-                    <!-- <uiT:extension>
-                        <Toolbar>
-                            <ToolbarSpacer/>
-                            <Button id="btnEditDtl" 
-                                icon="sap-icon://edit"
-                                press="onEditDtl"
-                                tooltip="{ddtext>/EDIT}"
-                                visible="true"/>
-                            <Button id="btnSaveDtl" 
-                                icon="sap-icon://save"
-                                press="onSaveDtl"
-                                tooltip="{ddtext>/SAVE}"
-                                visible="false"/>
-                            <Button id="btnCancelDtl" 
-                                icon="sap-icon://sys-cancel"
-                                press="onCancelDtl"
-                                tooltip="{ddtext>/CANCEL}"
-                                visible="false"/>                                                                
-                        </Toolbar>  
-                    </uiT:extension> -->
-                    <uiT:layoutData>
-                        <FlexItemData growFactor="1" baseSize="0%"/>
-                    </uiT:layoutData>                  
-                </uiT:Table> 
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/ORDERPOQTY}" />
+                                <uiT:template>
+                                    <Text text="{detail>ORDERPOQTY}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/ORDUOM}" />
+                                <uiT:template>
+                                    <Input value="{detail>UOM}" tooltip="{detail>UOM}" enabled="false" change="onValueHelpInputChange" />
+                                    <!-- <Text text="{detail>UOM}" wrapping="false" tooltip="{detail>UOM}" /> -->
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/GROSSPRICE}" />
+                                <uiT:template>
+                                    <Input value="{detail>GROSSPRICE}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/NETPRICE}" />
+                                <uiT:template>
+                                    <Text text="{detail>NETPRICE}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/PER}" />
+                                <uiT:template>
+                                    <Text text="{detail>PER}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/ORDERPRICEUNIT}" />
+                                <uiT:template>
+                                    <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onInputChange" />
+                                    <!-- <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" /> -->
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/OVERDELTOL}" />
+                                <uiT:template>
+                                    <Input value="{detail>OVERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
+                                    <!-- <Text text="{detail>OVERDELTOL}" wrapping="false" /> -->
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/UNDERDELTOL}" />
+                                <uiT:template>
+                                    <Input value="{detail>UNDERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
+                                    <!-- <Text text="{detail>UNDERDELTOL}" wrapping="false" /> -->
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="Center">
+                                <Text text="{ddtext>/UNLI}" />
+                                <uiT:template>
+                                    <CheckBox selected="{detail>UNLI}" editable="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/TAXCODE}" />
+                                <uiT:template>
+                                    <Text text="{detail>TAXCODE}" wrapping="false" tooltip="{detail>TAXCODE}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="Center">
+                                <Text text="{ddtext>/GRBASEDIV}" />
+                                <uiT:template>
+                                    <CheckBox selected="{detail>GRBASEDIV}" editable="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/PRNUMBER}" />
+                                <uiT:template>
+                                    <Text text="{detail>PRNUMBER}" wrapping="false" tooltip="{detail>PRNUMBER}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/PRITEMNO}" />
+                                <uiT:template>
+                                    <Text text="{detail>PRITEMNO}" wrapping="false" tooltip="{detail>PRITEMNO}" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px">
+                                <Text text="{ddtext>/SUPPLYTYPE}" />
+                                <uiT:template>
+                                    <Input value="{detail>SUPPLYTYPE}" tooltip="{detail>SUPPLYTYPE}" enabled="false" change="onValueHelpInputChange" />
+                                    <!-- <Text text="{detail>SUPPLYTYPE}" wrapping="false" tooltip="{detail>SUPPLYTYPE}" /> -->
+                                </uiT:template>
+                            </uiT:Column>                                                
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/ORDERCONVFACTOR}" />
+                                <uiT:template>
+                                    <Text text="{detail>ORDERCONVFACTOR}" wrapping="false" />
+                                </uiT:template>
+                            </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End">
+                                <Text text="{ddtext>/BASECONVFACTOR}" />
+                                <uiT:template>
+                                    <Text text="{detail>BASECONVFACTOR}" wrapping="false"/>
+                                </uiT:template>
+                            </uiT:Column>
+                        </uiT:columns>
+                        <!-- <uiT:extension>
+                            <Toolbar>
+                                <ToolbarSpacer/>
+                                <Button id="btnEditDtl" 
+                                    icon="sap-icon://edit"
+                                    press="onEditDtl"
+                                    tooltip="{ddtext>/EDIT}"
+                                    visible="true"/>
+                                <Button id="btnSaveDtl" 
+                                    icon="sap-icon://save"
+                                    press="onSaveDtl"
+                                    tooltip="{ddtext>/SAVE}"
+                                    visible="false"/>
+                                <Button id="btnCancelDtl" 
+                                    icon="sap-icon://sys-cancel"
+                                    press="onCancelDtl"
+                                    tooltip="{ddtext>/CANCEL}"
+                                    visible="false"/>                                                                
+                            </Toolbar>  
+                        </uiT:extension> -->
+                        <uiT:layoutData>
+                            <FlexItemData growFactor="0.98" baseSize="0%"/>
+                        </uiT:layoutData> 
+                    </uiT:Table>  
+                    <!-- <layoutData>
+                        <FlexItemData growFactor="1" />
+                    </layoutData>               
+                </VBox> -->
             </VBox>
         <!-- </content> -->
     </Page>

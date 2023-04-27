@@ -271,7 +271,7 @@ sap.ui.define([
                 var vSBU = this.getView().byId("cboxSBU").getSelectedKey();
                 var oModel = this.getOwnerComponent().getModel("ZVB_3DERP_ANP_FILTERS_CDS");
                 var me = this;
-                console.log(oModel);
+                // console.log(oModel);
                 // var vSBU = this.byId('cboxSBU').getSelectedKey();
                 
                 // this.showLoadingDialog('Loading...');
@@ -308,9 +308,9 @@ sap.ui.define([
                             var aData = new JSONModel({results: []});
                             me.getView().setModel(aData, "materialType");
                         }
-                        console.log(oData)
-                        console.log(me.getView().getModel("materialType").getData())
-                        console.log(oModel)
+                        // console.log(oData)
+                        // console.log(me.getView().getModel("materialType").getData())
+                        // console.log(oModel)
                         /*var oJSONModel = new sap.ui.model.json.JSONModel();
                         oJSONModel.setData({results: oData.results.filter(item => item.sbu === vSBU)});
                         _this.getView().setModel(oJSONModel, "reqPlantFilter");*/
@@ -554,7 +554,7 @@ sap.ui.define([
                 //Model StyleHeaderFilters is for the smartfilterbar
                 var oModel = this.getOwnerComponent().getModel("ZVB_3DERP_ANP_FILTERS_CDS");
                 
-                console.log(oModel)
+                // console.log(oModel)
                 var oSmartFilter = this.getView().byId("smartFilterBar");
                 oSmartFilter.setModel(oModel);
                 // console.log(oSmartFilter)
@@ -741,7 +741,7 @@ sap.ui.define([
 
                 // console.log(this.byId('mainTab').getColumns());
                 // this.addDateFilters(aFilters); //date not automatically added to filters
-                console.log(oSmartFilter);
+                // console.log(oSmartFilter);
                 oModel.read("/MainSet", { 
                     filters: oSmartFilter,
                     success: function (oData, oResponse) {

@@ -17,7 +17,7 @@
             rows="{/items}"
             selectionMode="None"
             visibleRowCount="{/rowCount}"
-            paste="onPaste">
+            cellClick="onCreatePOGroupCellClick">
             <uit:columns>
                 <uit:Column width="5rem">
                     <Label text="GROUP" />

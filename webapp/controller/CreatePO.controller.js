@@ -78,7 +78,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             this.getView().setModel(new JSONModel(oDataDetail), "detail");
             this.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
             this.byId("detailTab").bindRows({path: "detail>/"});
-            console.log(this.byId("detailTab").getModel("detail").getData())
+            // console.log(this.byId("detailTab").getModel("detail").getData())
             
             // var oJSONModel = new JSONModel();
             var oHeaderData = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().header;
@@ -1175,7 +1175,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var oSource = oEvent.getSource();
             var isInvalid = !oSource.getSelectedKey() && oSource.getValue().trim();
             oSource.setValueState(isInvalid ? "Error" : "None");
-            console.log(oSource)
+
             // var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
             var sRowPath = "";
             var sModel = oSource.getBindingInfo("value").parts[0].model;
@@ -1203,7 +1203,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 sRowPath = oSource.oParent.getBindingContext(sModel).sPath;
                 this.getView().getModel(sModel).setProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path, oSource.getSelectedKey());
             }
-            
+
             if (oSource.getBindingInfo("value").parts[0].path === "SUPPLYTYPE") {
                 var oTable = this.byId(sModel + "Tab");
                 var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === oSource.getSelectedKey());
@@ -1221,8 +1221,30 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     else { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", true); }
                 }
             }
-            // this.getView().getModel(sModel).setProperty(sRowPath + '/Edited', true);
-            // console.log(this.getView().getModel(sModel));
+            else if (oSource.getBindingInfo("value").parts[0].path === "UOM") {
+                var oUOM = this.getView().getModel("uom").getData().filter(fItem => fItem.MSEHI === oSource.getSelectedKey());
+                var vOrderUOMANDEC = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERUOMANDEC');
+
+                if (vOrderUOMANDEC !== oUOM[0].ANDEC) {
+                    var vBasePOQty = this.getView().getModel(sModel).getProperty(sRowPath + '/BASEPOQTY');
+                    var vBaseConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/BASECONVFACTOR');
+                    var vOrderConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERCONVFACTOR');
+                    var vPer = this.getView().getModel(sModel).getProperty(sRowPath + '/PER');
+
+                    var sOrderConvFactor = vOrderConvFactor === "" || vOrderConvFactor === "0" ? "1" : vOrderConvFactor;
+                    var sBaseConvFactor = vBaseConvFactor === "" || vBaseConvFactor === "0" ? "1" : vBaseConvFactor;
+                    var sPer = vPer === "" ? "1" : vPer;
+                    var vComputedPOQty = +vBasePOQty / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
+                    var vFinalPOQty = "0";
+
+                    if (oUOM[0].ANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
+                    else vFinalPOQty = vComputedPOQty.toFixed(oUOM[0].ANDEC);
+
+                    this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERUOMANDEC', oUOM[0].ANDEC);
+                    this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERPOQTY', vFinalPOQty);
+                }                
+            }
+
             this._bHeaderChanged = true;
         },
 
@@ -2152,7 +2174,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
             var bProceed = true;
             var iNew = 0;
-            // console.log(activeTab)
+            console.log(activeTab)
 
             if (activeTab === "remarks") {
                 sap.ui.getCore().byId("btnAddHdrTxt").setVisible(true);
@@ -2161,7 +2183,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     iNew = this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
                 }
 
-                if (this._bPackInsChanged || iNew > 0) {
+                if (this._bPackInsChanged) {
                     bProceed = false;
 
                     oData = {
@@ -2169,7 +2191,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                         Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                     }
                 }
-                else if (this._bFabSpecsChanged || iNew > 0) {
+                else if (this._bFabSpecsChanged) {
                     bProceed = false;
 
                     oData = {
@@ -2185,7 +2207,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     iNew = this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
                 }
 
-                if (this._bRemarksChanged || iNew > 0) {
+                if (this._bRemarksChanged) {
                     bProceed = false;
 
                     oData = {
@@ -2193,7 +2215,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                         Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                     }
                 }
-                else if (this._bFabSpecsChanged || iNew > 0) {
+                else if (this._bFabSpecsChanged) {
                     bProceed = false;
 
                     oData = {
@@ -2206,10 +2228,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 sap.ui.getCore().byId("btnAddHdrTxt").setVisible(false);
                 
                 if (this._HeaderTextDialog.getModel().getData().fs !== undefined) {
-                    iNew = this._HeaderTextDialog.getModel().getData().fs.filter(item => item.STATUS === "NEW").length;
+                    iNew = this._HeaderTextDialog.getModel().getData().fs.filter(item => item.STATUS === "UPDATED").length;
                 }
 
-                if (this._bRemarksChanged || iNew > 0) {
+                if (this._bRemarksChanged) {
                     bProceed = false;
 
                     oData = {
@@ -2217,7 +2239,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                         Text: this.getView().getModel("ddtext").getData()["CONF_DISCARD_CHANGE"]
                     }
                 }
-                else if (this._bPackInsChanged || iNew > 0) {
+                else if (this._bPackInsChanged) {
                     bProceed = false;
 
                     oData = {
@@ -2786,9 +2808,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                                                                 if (oHeaderData.length >= ((+item.GROUP) + 1)) {
                                                                     //next group
                                                                     // me.closeLoadingDialog();
-                                                                    MessageBox.information(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message);
+                                                                    // MessageBox.information(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message);
                                                                     // me.showMessage(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message, 500);
-                                                                    me.onNextGroup(((+item.GROUP) + 1 ) + "");
+                                                                    // me.onNextGroup(((+item.GROUP) + 1 ) + "");
+
+                                                                    MessageBox.information(oRetMsgs[0].Type + ": " + oRetMsgs[0].Message, {
+                                                                        onClose: function(oAction) { me.onNextGroup(((+item.GROUP) + 1 ) + "");  }
+                                                                    });
                                                                 }
                                                                 else {
                                                                     // console.log("showGeneratePOResult");
@@ -3205,8 +3231,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
 
                     if (oHeaderData.length >= ((+oCurrHeaderData[0].GROUP) + 1)) {
                         //next group
-                        MessageBox.information(sRetMessage);
-                        me.onNextGroup(((+oCurrHeaderData[0].GROUP) + 1 ) + "");
+                        MessageBox.information(sRetMessage, {
+                            onClose: function(oAction) { me.onNextGroup(((+oCurrHeaderData[0].GROUP) + 1 ) + ""); }
+                        });                        
                     }
                     else {
                         // console.log("showGeneratePOResult");
@@ -3232,16 +3259,20 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var oHeaderData = this.getView().getModel("header").getData();
             var vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
             var vMin = "0";
+            var vMax = oHeaderData.length + "";
             
             oHeaderData.forEach(item => {
-                if (item.STATUS === "NEW" && vMin === "0") { vMin = item.GROUP }
+                if (item.STATUS === "NEW") {
+                    if ( vMin === "0") { vMin = item.GROUP }
+                    vMax = item.GROUP;
+                }
             })
 
             if (vNextGrp === +vMin && vStatus === "NEW") {
                 this.onNextGroup(vNextGrp+"");
             }
             else {
-                while (vStatus === "CREATED") {
+                while (vStatus !== "NEW") {
                     vNextGrp++;
                     vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
                 }
@@ -3249,13 +3280,18 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 this.onNextGroup(vNextGrp+"");
             }
 
-            console.log(vNextGrp)
-
-            if (vNextGrp === +vMin || vNextGrp === 1) {
+            if (+vMin === vNextGrp || vNextGrp === 1) { 
                 this.byId("btnPrevPO").setEnabled(false); 
-                this.byId("btnNextPO").setEnabled(true); 
+
+                if (+vMax === vNextGrp || vNextGrp === oHeaderData.length) { this.byId("btnNextPO").setEnabled(false); }
+                else { this.byId("btnNextPO").setEnabled(true); }
             }
-            else { this.byId("btnPrevPO").setEnabled(true); }
+            else if (+vMax === vNextGrp || vNextGrp === oHeaderData.length) { 
+                this.byId("btnNextPO").setEnabled(false); 
+
+                if (+vMin === vNextGrp || vNextGrp === 1) { this.byId("btnPrevPO").setEnabled(false); }
+                else { this.byId("btnPrevPO").setEnabled(true); }
+            }
         },
 
         onNextPO: function(oEvent) {
@@ -3264,16 +3300,20 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var oHeaderData = this.getView().getModel("header").getData();
             var vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
             var vMax = oHeaderData.length + "";
+            var vMin = "0";
             
             oHeaderData.forEach(item => {
-                if (item.STATUS === "NEW") { vMax = item.GROUP }
+                if (item.STATUS === "NEW") {
+                    if ( vMin === "0") { vMin = item.GROUP }
+                    vMax = item.GROUP;
+                }
             })
 
             if (vNextGrp === +vMax && vStatus === "NEW") {
                 this.onNextGroup(vNextGrp+"");
             }
             else {
-                while (vStatus === "CREATED") {
+                while (vStatus !== "NEW") {
                     vNextGrp++;
                     vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
                 }
@@ -3281,11 +3321,18 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 this.onNextGroup(vNextGrp+"");
             }
 
-            if (vNextGrp === +vMax || vNextGrp === oHeaderData.length) {
+            if (+vMax === vNextGrp || vNextGrp === oHeaderData.length) { 
                 this.byId("btnNextPO").setEnabled(false); 
-                this.byId("btnPrevPO").setEnabled(true);
+
+                if (+vMin === vNextGrp || vNextGrp === 1) { this.byId("btnPrevPO").setEnabled(false); }
+                else { this.byId("btnPrevPO").setEnabled(true); }
             }
-            else { this.byId("btnNextPO").setEnabled(true); }
+            else if (+vMin === vNextGrp || vNextGrp === 1) { 
+                this.byId("btnPrevPO").setEnabled(false); 
+
+                if (+vMax === vNextGrp || vNextGrp === oHeaderData.length) { this.byId("btnNextPO").setEnabled(false); }
+                else { this.byId("btnNextPO").setEnabled(true); }
+            }
         }, 
         
         onNextGroup(arg) {
@@ -3384,16 +3431,21 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                     });
                 }
 
-                me._GeneratePOGroupDialog.close(); 
+                if (me._GeneratePOGroupDialog) me._GeneratePOGroupDialog.close(); 
+                if (me._GeneratePOResultDialog) me._GeneratePOResultDialog.close(); 
                 me.closeLoadingDialog();
             }, 500);
         },
 
         onCancelPO: function(oEvent) {
+            var me = this;
             var oHeaderData = this.getView().getModel("header").getData();
             var aHeaderData = this.getView().getModel("grpheader").getData();
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup; 
-
+            var vMax = oHeaderData.length + "";
+            var vNextGrp = (+sActiveGroup) + 1;
+            var vMin = "0";
+            
             this._aCreatePOResult.forEach((item, index) => {
                 if (item.GROUP === sActiveGroup) {
                     this._aCreatePOResult.splice(index, 1);
@@ -3408,16 +3460,75 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                 STATUS: "CANCELLED",
                 REMARKS: "Generate PO cancelled."
             })
-            
-            if (oHeaderData.length >= ((+sActiveGroup) + 1)) {
-                //next group
-                MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"]); 
-                this.onNextGroup(((+sActiveGroup) + 1 ) + "");
-            }
-            else {
-                // console.log("showGeneratePOResult");
+
+            oHeaderData.forEach(item => {
+                if (item.GROUP === sActiveGroup) { item.STATUS = "CANCELLED" }
+            })
+
+            oHeaderData.forEach(item => {
+                if (item.STATUS === "NEW") { vMax = item.GROUP }
+            })
+
+            if (oHeaderData.filter(fItem => fItem.STATUS === "NEW").length === 0) {
                 this.showGeneratePOResult();
             }
+            else if (vNextGrp > oHeaderData.length || vNextGrp > (+vMax)) {
+                oHeaderData.forEach(item => {
+                    if (item.STATUS === "NEW" && vMin === "0") { vMin = item.GROUP }
+                })
+
+                if (vMin === "0") { this.showGeneratePOResult(); }
+                else { 
+                    vNextGrp = (+vMin);
+                    MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"], {
+                        onClose: function(oAction) { me.onNextGroup(vMin);  }
+                    });
+                }
+            }
+            else if (vNextGrp === (+vMax)) {
+                MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"], {
+                    onClose: function(oAction) { me.onNextGroup(vNextGrp+""); }
+                });
+            }
+            else {
+                var vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
+
+                if (vStatus === "NEW") {
+                    MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"], {
+                        onClose: function(oAction) { me.onNextGroup(vNextGrp+"");  }
+                    });
+                }
+                else {
+                    while (vStatus !== "NEW") {
+                        vNextGrp++;
+                        vStatus = oHeaderData.filter(fItem => +fItem.GROUP === vNextGrp)[0].STATUS;
+                    }
+    
+                    MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"], {
+                        onClose: function(oAction) { me.onNextGroup(vNextGrp+"");  }
+                    });
+                }
+            }
+
+            if (vNextGrp === (+vMax)) {
+                this.byId("btnNextPO").setEnabled(false); 
+            }
+            else { this.byId("btnNextPO").setEnabled(true); }
+
+            if (vNextGrp === (+vMin)) {
+                this.byId("btnPrevPO").setEnabled(false);
+            }
+            else { this.byId("btnPrevPO").setEnabled(true); }
+
+            // if (oHeaderData.length >= ((+sActiveGroup) + 1)) {
+            //     //next group
+            //     MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"]); 
+            //     this.onNextGroup(((+sActiveGroup) + 1 ) + "");
+            // }
+            // else {
+            //     // console.log("showGeneratePOResult");
+            //     this.showGeneratePOResult();
+            // }
         },
 
         onCancelAllPO: function(oEvent) {
@@ -3442,6 +3553,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
                         REMARKS: "Generate PO cancelled."
                     })
                 }
+
+                item.STATUS = "CANCELLED"
             })
 
             this.showGeneratePOResult();
@@ -3463,6 +3576,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
         },
 
         showGeneratePOGroups() {
+            this._aCreatePOResult = this._aCreatePOResult.sort((a,b) => (a.GROUP > b.GROUP ? 1 : -1));
+
             if (!this._GeneratePOGroupDialog) {
                 this._GeneratePOGroupDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.GeneratePOGroupDialog", this);
 
@@ -3491,6 +3606,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
         showGeneratePOResult() {
             // console.log(this._aCreatePOResult)
             // display pop-up for user selection
+            this._aCreatePOResult = this._aCreatePOResult.sort((a,b) => (a.GROUP > b.GROUP ? 1 : -1));
+            
             if (!this._GeneratePOResultDialog) {
                 this._GeneratePOResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.GeneratePOResultDialog", this);
 
@@ -3742,25 +3859,29 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, NavigationHa
             var vMin = "0";
 
             oHeaderData.forEach(item => {
-                if (item.STATUS !== "CREATED") {
+                if (item.STATUS === "NEW") {
                     if (vMin === "0") { vMin = item.GROUP; }
                     vMax = item.GROUP;
-                }
+                }                
             })
 
-            if (vGroup !== vCurrGrp && vStatus !== "CREATED") {
+            if ((vGroup !== vCurrGrp && vStatus !== "CREATED") || (vGroup === vCurrGrp && (vStatus === "CANCELLED" || vStatus === "ERROR"))) {
                 this.onLoadGroup(vGroup);
 
-                if (vMin === vGroup) { 
+                if (vMin === "0") {
+                    this.byId("btnPrevPO").setEnabled(false); 
+                    this.byId("btnNextPO").setEnabled(false);
+                }
+                else if (vMin === vGroup || vGroup === "1") { 
                     this.byId("btnPrevPO").setEnabled(false); 
 
-                    if (vMax === vGroup) { this.byId("btnNextPO").setEnabled(false); }
+                    if (vMax === vGroup || vGroup === oHeaderData.length + "") { this.byId("btnNextPO").setEnabled(false); }
                     else { this.byId("btnNextPO").setEnabled(true); }
                 }
-                else if (vMax === vGroup) { 
+                else if (vMax === vGroup || vGroup === oHeaderData.length + "") { 
                     this.byId("btnNextPO").setEnabled(false); 
 
-                    if (vMin === vGroup) { this.byId("btnPrevPO").setEnabled(false); }
+                    if (vMin === vGroup || vGroup === "1") { this.byId("btnPrevPO").setEnabled(false); }
                     else { this.byId("btnPrevPO").setEnabled(true); }
                 }
             }

@@ -35,7 +35,7 @@
                                         <Text text="{ITEM}" />
                                     </uiT:template>
                                 </uiT:Column>
-                                <uiT:Column width="600px">
+                                <uiT:Column width="1000px">
                                     <Text text="Remarks" />
                                     <uiT:template>
                                         <Input value="{REMARKS}" maxLength="132" change="onRemarksChange" liveChange="onRemarksChange" />
@@ -59,7 +59,7 @@
                                         <Text text="{ITEM}" />
                                     </uiT:template>
                                 </uiT:Column>
-                                <uiT:Column width="600px">
+                                <uiT:Column width="1000px">
                                     <Text text="Packing Instruction" />
                                     <uiT:template>
                                         <Input value="{PACKINS}" maxLength="132" change="onPackInsChange" liveChange="onPackInsChange" />
