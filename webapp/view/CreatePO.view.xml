@@ -338,10 +338,10 @@
                                             <Input type="Text" 
                                                 value="{grpheader>/0/PAYTERMS}" 
                                                 showValueHelp="true"
-                                                valueHelpRequest="handleValueHelp" 
+                                                valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 suggestionItems="{path: 'payterm>/', length: 10000, templateShareable: false}" 
-                                                change="onValueHelpInputChange">
+                                                change="onFormValueHelpInputChange">
                                                 <suggestionItems>
                                                     <core:Item key="{payterm>ZTERM}" text="{payterm>ZTERM}" />
                                                 </suggestionItems>
@@ -355,17 +355,24 @@
                                         <form:fields>
                                             <!-- <Input value="{grpheader>/0/INCOTERMS}" /> -->
                                             <Input type="Text" 
-                                                value="{grpheader>/0/INCOTERMS}" 
+                                                value="{ 
+                                                    parts: [{ path: 'grpheader>/0/INCOTERMS' }, { value: 'incoterm' }, { value: 'INCO1' }, { value: 'DESC' }, { value: 'ValueKey' }],
+                                                    formatter: '.formatValueHelp'
+                                                }" 
+                                                textFormatMode="ValueKey"
                                                 showValueHelp="true"
-                                                valueHelpRequest="handleValueHelp" 
+                                                valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 suggestionItems="{path: 'incoterm>/', length: 10000, templateShareable: false}" 
-                                                maxSuggestionWidth="150px"
-                                                change="onValueHelpInputChange">
+                                                maxSuggestionWidth="160px"
+                                                change="onFormValueHelpInputChange">
                                                 <suggestionItems>
-                                                    <core:ListItem key="{incoterm>INCO1}" text="{incoterm>INCO1}" additionalText="{incoterm>DESC}" />
+                                                    <core:ListItem key="{incoterm>INCO1}" text="{incoterm>DESC}" additionalText="{incoterm>INCO1}" />
                                                 </suggestionItems>
-                                            </Input>                                            
+                                                <!-- <customData>
+                                                    <core:CustomData key="SHIPMODE" value="{grpheader>/0/SHIPMODE}"/>
+                                                </customData> -->
+                                            </Input>
                                         </form:fields>
                                     </form:FormElement>
                                     <form:FormElement>
@@ -404,11 +411,11 @@
                                                 }" 
                                                 textFormatMode="ValueKey"
                                                 showValueHelp="true"
-                                                valueHelpRequest="handleValueHelp" 
+                                                valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 suggestionItems="{path: 'shipmode>/', length: 10000, templateShareable: false}" 
                                                 maxSuggestionWidth="160px"
-                                                change="onValueHelpInputChange">
+                                                change="onFormValueHelpInputChange">
                                                 <suggestionItems>
                                                     <core:ListItem key="{shipmode>SHIPMODE}" text="{shipmode>DESC}" additionalText="{shipmode>SHIPMODE}" />
                                                 </suggestionItems>
@@ -459,7 +466,7 @@
                                     <Text text="{detail>ADDTLDESC}" wrapping="false" tooltip="{detail>ADDTLDESC}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="300px" visible="false">
+                            <uiT:Column width="300px">
                                 <Text text="{ddtext>/POADDTLDESC}" />
                                 <uiT:template>
                                     <Input value="{detail>POADDTLDESC}" tooltip="{detail>POADDTLDESC}" maxLength="68"/>
@@ -487,7 +494,12 @@
                             <uiT:Column width="100px">
                                 <Text text="{ddtext>/BASEUOM}" />
                                 <uiT:template>
-                                    <Text text="{detail>BASEUOM}" wrapping="false" tooltip="{detail>BASEUOM}" />
+                                    <Text 
+                                        text="{ 
+                                                parts: [{ path: 'detail>BASEUOM' }, { value: 'uom' }, { value: 'MSEHI' }, { value: 'MSEHL' }, { value: 'ValueKey' }],
+                                                formatter: '.formatValueHelp'
+                                            }"
+                                        wrapping="false" tooltip="{detail>BASEUOM}" />
                                 </uiT:template>
                             </uiT:Column>
                             <!-- <uiT:Column width="125px" hAlign="End">
@@ -527,11 +539,23 @@
                                     <Text text="{detail>ORDERPOQTY}" wrapping="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column width="150px">
                                 <Text text="{ddtext>/ORDUOM}" />
                                 <uiT:template>
                                     <Input value="{detail>UOM}" tooltip="{detail>UOM}" enabled="false" change="onValueHelpInputChange" />
-                                    <!-- <Text text="{detail>UOM}" wrapping="false" tooltip="{detail>UOM}" /> -->
+                                    <!-- <Input type="Text" 
+                                        value="{detail>UOM}" 
+                                        tooltip="{detail>UOM}"
+                                        showValueHelp="true"
+                                        valueHelpRequest="handleFormValueHelp" 
+                                        showSuggestion="true" 
+                                        suggestionItems="{path: 'uom>/', length: 10000, templateShareable: false}" 
+                                        enabled="false"
+                                        change="onValueHelpInputChange">
+                                        <suggestionItems>
+                                            <core:Item key="{uom>MSEHI}" text="{uom>MSEHI}" />
+                                        </suggestionItems>
+                                    </Input> -->
                                 </uiT:template>
                             </uiT:Column>
                             <uiT:Column width="100px" hAlign="End">
@@ -540,22 +564,22 @@
                                     <Input value="{detail>GROSSPRICE}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="End">
+                            <!-- <uiT:Column width="100px" hAlign="End">
                                 <Text text="{ddtext>/NETPRICE}" />
                                 <uiT:template>
                                     <Text text="{detail>NETPRICE}" wrapping="false" />
                                 </uiT:template>
-                            </uiT:Column>
+                            </uiT:Column> -->
                             <uiT:Column width="100px" hAlign="End">
                                 <Text text="{ddtext>/PER}" />
                                 <uiT:template>
                                     <Text text="{detail>PER}" wrapping="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column width="150px">
                                 <Text text="{ddtext>/ORDERPRICEUNIT}" />
                                 <uiT:template>
-                                    <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onInputChange" />
+                                    <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onValueHelpInputChange" />
                                     <!-- <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
@@ -603,11 +627,28 @@
                                     <Text text="{detail>PRITEMNO}" wrapping="false" tooltip="{detail>PRITEMNO}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column width="300px">
                                 <Text text="{ddtext>/SUPPLYTYPE}" />
                                 <uiT:template>
                                     <Input value="{detail>SUPPLYTYPE}" tooltip="{detail>SUPPLYTYPE}" enabled="false" change="onValueHelpInputChange" />
                                     <!-- <Text text="{detail>SUPPLYTYPE}" wrapping="false" tooltip="{detail>SUPPLYTYPE}" /> -->
+                                    <!-- <Input type="Text" 
+                                        value="{ 
+                                            parts: [{ path: 'detail>SUPPLYTYPE' }, { value: 'supplyType' }, { value: 'SUPPLYTYP' }, { value: 'SHORTTEXT' }, { value: 'ValueKey' }],
+                                            formatter: '.formatValueHelp'
+                                        }" 
+                                        textFormatMode="ValueKey"
+                                        showValueHelp="true"
+                                        valueHelpRequest="handleFormValueHelp" 
+                                        showSuggestion="true" 
+                                        suggestionItems="{path: 'supplyType>/', length: 10000, templateShareable: false}" 
+                                        maxSuggestionWidth="160px"
+                                        enabled="false"
+                                        change="onValueHelpInputChange">
+                                        <suggestionItems>
+                                            <core:ListItem key="{supplyType>SUPPLYTYP}" text="{supplyType>SHORTTEXT}" additionalText="{supplyType>SUPPLYTYP}" />
+                                        </suggestionItems>
+                                    </Input>                                     -->
                                 </uiT:template>
                             </uiT:Column>                                                
                             <uiT:Column width="100px" hAlign="End">

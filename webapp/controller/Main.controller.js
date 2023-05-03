@@ -10,11 +10,12 @@ sap.ui.define([
         'sap/ui/model/type/String',
         'sap/m/ColumnListItem',
         'sap/m/Label',
+        "../js/TableFilter",
     ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator, SearchField, typeString, ColumnListItem, Label) {
+    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator, SearchField, typeString, ColumnListItem, Label, TableFilter) {
         "use strict";
 
         var that;
@@ -25,7 +26,11 @@ sap.ui.define([
 
             onInit: function () {
                 that = this;
+                var me = this;
                 this._oModel = this.getOwnerComponent().getModel();
+                this._tableFilter = TableFilter;
+                this._aColumns = [];
+                this._colFilters = {};
 
                 if (sap.ui.getCore().byId("backBtn") !== undefined) {
                     this._fBackButton = sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction;
@@ -39,9 +44,9 @@ sap.ui.define([
                                 that.refreshTableData();
                             }
                             
-                            // if (that._oLock.length > 0) {
-                            //     that.unLock();
-                            // }
+                            if (that._oLock.length > 0) {
+                                that.unLock();
+                            }
                         }
                     }, oView);
                 }
@@ -201,6 +206,8 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "POADDTLDESC"});
                 oDDTextParam.push({CODE: "PREVIOUS"});
                 oDDTextParam.push({CODE: "NEXT"});
+                oDDTextParam.push({CODE: "ZTERM"});
+
 
                 oModel.create("/CaptionMsgSet", { CaptionMsgItems: oDDTextParam  }, {
                     method: "POST",
@@ -260,6 +267,81 @@ sap.ui.define([
 
                 this._oMultiInput = this.getView().byId("multiInputMatTyp");
                 this._oMultiInput.addValidator(this._onMultiInputValidate.bind(this));
+
+                this._oModel.read("/IncoTermsSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "incoterm");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/incoterm", oData.results);
+                    },
+                    error: function (err) { }
+                });      
+                
+                this._oModel.read("/SupplyTypeRscSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "supplyType");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/supplyType", oData.results);
+                    },
+                    error: function (err) { }
+                });
+    
+                this._oModel.read("/UOMSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "uom");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/uom", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/CurrencyRscSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "currency");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/currency", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/CompanyRscSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "company");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/company", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/PlantRscSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "plant");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/plant", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/PurchGrpRscSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "purchgrp");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/purchgrp", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/PurchOrgSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "purchorg");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/purchorg", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/PayTermsSet", {
+                    urlParameters: {
+                        "$filter": "LIFNR eq 'ABCXYZ' and EKORG eq 'ABCD'"
+                    },
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "payterm"); 
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/payterm", oData.results);
+                    },
+                    error: function (err) { }
+                });
             },
 
             onExit: function() {
@@ -364,6 +446,7 @@ sap.ui.define([
                         oJSONColumnsModel.setData(oData);
                         // me.oJSONModel.setData(oData);
                         me.getView().setModel(oJSONColumnsModel, "columns"); //set the view model
+                        me._aColumns["main"] = oData.results;
 
                         if (oData.results.length > 0) {
                             if (arg === "AUTO_INIT") {
@@ -490,7 +573,7 @@ sap.ui.define([
                             template: me.columnTemplate(sColumnId, sColumnType),
                             width: sColumnWidth + 'px',
                             sortProperty: sColumnId,
-                            filterProperty: sColumnId,
+                            // filterProperty: sColumnId,
                             autoResizable: true,
                             visible: sColumnVisible,
                             sorted: sColumnSorted,                        
@@ -512,7 +595,7 @@ sap.ui.define([
                             template: me.columnTemplate(sColumnId, sColumnType),
                             width: sColumnWidth + 'px',
                             sortProperty: sColumnId,
-                            filterProperty: sColumnId,
+                            // filterProperty: sColumnId,
                             autoResizable: true,
                             visible: sColumnVisible,
                             sorted: sColumnSorted,                        
@@ -521,6 +604,8 @@ sap.ui.define([
                         });
                     }
                 });
+
+                TableFilter.updateColumnMenu("mainTab", this);
             },
             
             columnTemplate: function (sColumnId, sColumnType) {
@@ -637,16 +722,28 @@ sap.ui.define([
             },
 
             onSearch: function () {
-                //trigger search, reselect styles                
+                //trigger search, reselect styles 
                 // console.log(this.getView().byId("smartFilterBar").getFilterData());
                 // console.log(this.getView().byId("smartFilterBar").getFilters());
-                var vSBU = this.getView().byId("cboxSBU").getSelectedKey();
+                var me = this;
+                var vSBU = this.getView().byId("cboxSBU").getSelectedKey();                
                 this.byId("searchFieldMain").setProperty("value", "");
                 this.showLoadingDialog('Loading...');
                 this.getView().getModel("ui").setProperty("/currsbu", vSBU);
 
                 if (this.getView().getModel("ui").getData().sbu === '' || this._sbuChange) {
                     this.getColumns('MANUAL_INIT');
+
+                    this._oModel.read("/ShipModeSet", {
+                        urlParameters: {
+                            "$filter": "SBU eq '" + vSBU + "'"
+                        },
+                        success: function (oData, oResponse) {
+                            me.getView().setModel(new JSONModel(oData.results), "shipmode");
+                            me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/shipmode", oData.results);
+                        },
+                        error: function (err) { }
+                    });
                 }
                 else {
                     // this.getView().getModel("ui").setProperty("/sbu", vSBU);
@@ -675,75 +772,92 @@ sap.ui.define([
                 var oJSONDataModel = new JSONModel();     
                 
                 var oSmartFilter = this.getView().byId("smartFilterBar").getFilters();
-                var aFilters = [];
+                var aFilters = [],
+                    aFilter = [],
+                    aCustomFilter = [],
+                    aSmartFilter = [];
                 
                 if (oSmartFilter.length > 0)  {
-                    aFilters = oSmartFilter[0].aFilters;
-                }
+                    // aFilters = oSmartFilter[0].aFilters;
+                    oSmartFilter[0].aFilters.forEach(item => {
+                        // console.log(item)
+                        if (item.aFilters === undefined) {
+                            aFilter.push(new Filter(item.sPath, item.sOperator, item.oValue1));
+                        }
+                        else {
+                            aFilters.push(item);
+                        }
+                    })
 
-                // var aFiltersObj = [];
-                
-                // aFiltersObj.push(oSmartFilter);
-                // aFiltersObj = aFiltersObj[0];
-                
+                    if (aFilter.length > 0) { aFilters.push(new Filter(aFilter, false)); }
+                }
+                // console.log(aFilters)
                 if (this.getView().byId("smartFilterBar")) {
                     var oCtrl = this.getView().byId("smartFilterBar").determineControlByName("MATERIALTYPE");
 
                     if (oCtrl) {
+                        // console.log(oCtrl.getTokens())
                         var aCustomFilter = [];
-                        oCtrl.getTokens().map(function(oToken) {
-                            // console.log(oToken.getKey())
-                            aCustomFilter.push(new Filter({
-                                path: "MATERIALTYPE",
-                                operator: "EQ",
-                                value1: oToken.getKey()
-                            }));
-                        })
 
-                        aFilters.push(new Filter(aCustomFilter));
-                    }
-                }
-                
-                if (oSmartFilter.length === 0 && aFilters.length > 0)  {
-                    oSmartFilter.push(aFilters);
-                }
+                        if (oCtrl.getTokens().length === 1) {
+                            oCtrl.getTokens().map(function(oToken) {
+                                aFilters.push(new Filter("MATERIALTYPE", FilterOperator.EQ, oToken.getKey()))
+                            })
+                            
+                            // console.log(aFilters)
+                        }
+                        else if (oCtrl.getTokens().length > 1) {
+                            oCtrl.getTokens().map(function(oToken) {
+                                aCustomFilter.push(new Filter("MATERIALTYPE", FilterOperator.EQ, oToken.getKey()))
+                            })
 
-                // console.log(aFilters);
-                if (oSmartFilter.length > 0) {
-                    // var aFilters = oSmartFilter[0].aFilters;
-                    // console.log(oSmartFilter)
-                    if (aFilters.length === 1) {
-                        if (aFilters[0].sPath === 'VENDOR') {
-                            if (!isNaN(aFilters[0].oValue1)) {
-                                while (aFilters[0].oValue1.length < 10) aFilters[0].oValue1 = "0" + aFilters[0].oValue1;
-                            }
+                            aFilters.push(new Filter(aCustomFilter));
                         }
                     }
-                    else {
-                        aFilters.forEach(item => {
-                            if (item.aFilters !== undefined) {
-                                if (item.aFilters[0].sPath === 'VENDOR') {
-                                    if (!isNaN(item.aFilters[0].oValue1)) {
-                                        while (item.aFilters[0].oValue1.length < 10) item.aFilters[0].oValue1 = "0" + item.aFilters[0].oValue1;
-                                    }
-                                }
-                            }
-                            else {
-                                if (item.sPath === 'VENDOR') {
-                                    if (!isNaN(item.oValue1)) {
-                                        while (item.oValue1.length < 10) item.oValue1 = "0" + item.oValue1;
-                                    }
-                                }
-                            }
-                        })
-                    }
                 }
 
-                // console.log(this.byId('mainTab').getColumns());
-                // this.addDateFilters(aFilters); //date not automatically added to filters
-                // console.log(oSmartFilter);
+                aSmartFilter.push(new Filter(aFilters, true));
+                
+                // if (oSmartFilter.length === 0 && aFilters.length > 0)  {
+                //     oSmartFilter.push(aFilters);
+                // }
+
+                // console.log(aFilters);
+                // if (oSmartFilter.length > 0) {
+                //     // var aFilters = oSmartFilter[0].aFilters;
+                //     // console.log(oSmartFilter)
+                //     if (aFilters.length === 1) {
+                //         if (aFilters[0].sPath === 'VENDOR') {
+                //             if (!isNaN(aFilters[0].oValue1)) {
+                //                 while (aFilters[0].oValue1.length < 10) aFilters[0].oValue1 = "0" + aFilters[0].oValue1;
+                //             }
+                //         }
+                //     }
+                //     else {
+                //         aFilters.forEach(item => {
+                //             // console.log(item)
+                //             if (item.aFilters !== undefined) {
+                //                 // console.log(item.aFilters)
+                //                 if (item.aFilters[0].sPath === 'VENDOR') {
+                //                     if (!isNaN(item.aFilters[0].oValue1)) {
+                //                         while (item.aFilters[0].oValue1.length < 10) item.aFilters[0].oValue1 = "0" + item.aFilters[0].oValue1;
+                //                     }
+                //                 }
+                //             }
+                //             else {
+                //                 if (item.sPath === 'VENDOR') {
+                //                     if (!isNaN(item.oValue1)) {
+                //                         while (item.oValue1.length < 10) item.oValue1 = "0" + item.oValue1;
+                //                     }
+                //                 }
+                //             }
+                //         })
+                //     }
+                // }
+
+                console.log(aSmartFilter);
                 oModel.read("/MainSet", { 
-                    filters: oSmartFilter,
+                    filters: aSmartFilter,
                     success: function (oData, oResponse) {
                         var vUnassigned = 0, vPartial = 0;
                         // console.log(oData.results)
@@ -812,7 +926,6 @@ sap.ui.define([
                             })
 
                             oSelectedIndices = oTmpSelectedIndices;
-                            // console.log(oSelectedIndices)
                             oSelectedIndices.forEach((item, index) => {
                                 if (oDataCheck.results.length > 0) {
                                     if (oDataCheck.results.filter(fItem => fItem.Field2 === aData.at(item).MATERIALTYPE).length === 0) {
@@ -886,10 +999,8 @@ sap.ui.define([
                             if (oParamData.length > 0) {
                                 me.showLoadingDialog('Processing...');
 
-                                // console.log("before lock");
-                                var bProceed = true; //await me.lock(me);
-                                // if (!bProceed) return;
-                                // console.log("after lock");
+                                var bProceed = await me.lock(me);
+                                if (!bProceed) return;
 
                                 oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg && item.PurGroup === value.PurGroup) === index) ;
                                 oParam['N_GetInfoRecMatParam'] = oParamData;
@@ -1070,12 +1181,12 @@ sap.ui.define([
                                         else {
                                             me.closeLoadingDialog();
                                             me.showAssignVendorResult("assign");
-                                            // me.unLock();
+                                            me.unLock();
                                         }
                                     },
                                     error: function() {
                                         me.closeLoadingDialog();
-                                        // me.unLock();
+                                        me.unLock();
                                     }
                                 }); 
                             }
@@ -1215,7 +1326,7 @@ sap.ui.define([
                             },
                             error: function() {
                                 // alert("Error");
-                                // me.unLock();
+                                me.unLock();
                             }
                         });                        
                     }
@@ -1243,10 +1354,10 @@ sap.ui.define([
 
             onAssignVendorClose: function(oEvent) {
                 if (this._refresh) { 
-                    if (this.byId("mainTab").getBinding("rows").aFilters.length > 0) {
-                        this._aColFilters = this.byId("mainTab").getBinding("rows").aFilters;
-                        this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setProperty("/items", this._aColFilters);
-                    }
+                    // if (this.byId("mainTab").getBinding("rows").aFilters.length > 0) {
+                    //     this._aColFilters = this.byId("mainTab").getBinding("rows").aFilters;
+                    //     this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setProperty("/items", this._aColFilters);
+                    // }
 
                     if (this.byId("mainTab").getBinding("rows").aSorters.length > 0) {
                         this._aColSorters = this.byId("mainTab").getBinding("rows").aSorters;
@@ -1269,7 +1380,7 @@ sap.ui.define([
             showAssignVendorResult(arg) {
                 // console.log(this._oAssignVendorData)
                 // display pop-up for user selection
-                // this.unLock();
+                this.unLock();
 
                 if (!this._AssignVendorResultDialog) {
                     this._AssignVendorResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.AssignVendorResultDialog", this);
@@ -1398,9 +1509,9 @@ sap.ui.define([
                             }
                             else if (me._oAssignVendorData.length > 0) {
                                 me.showLoadingDialog('Processing...');
-                                // console.log(me._oAssignVendorData)
-                                var bProceed = true; //await me.lock(me);
-                                // if (!bProceed) return;
+
+                                var bProceed = await me.lock(me);
+                                if (!bProceed) return;
 
                                 me.closeLoadingDialog();
                                 me.showManualVendorAssignment(); 
@@ -1616,7 +1727,7 @@ sap.ui.define([
                                 },
                                 error: function() {
                                     // alert("Error");
-                                    // me.unLock();
+                                    me.unLock();
                                 }
                             }); 
                         }
@@ -1723,7 +1834,7 @@ sap.ui.define([
                                 },
                                 error: function() {
                                     // alert("Error");
-                                    // me.unLock();
+                                    me.unLock();
                                 }
                             });
                         }
@@ -1943,10 +2054,8 @@ sap.ui.define([
                     if (oParamData.length > 0) {
                         this.showLoadingDialog('Processing...');
                         
-                        // console.log("before lock");
-                        var bProceed = true; //await this.lock(this);
-                        // if (!bProceed) return;
-                        // console.log("after lock");
+                        var bProceed = await this.lock(this);
+                        if (!bProceed) return;
 
                         oParam['N_ChangePRParam'] = oParamData;
                         oParam['N_ChangePRReturn'] = [];
@@ -1991,6 +2100,7 @@ sap.ui.define([
             },
 
             refreshTableData: function () {
+                console.log("refresh");
                 this.showLoadingDialog('Loading...');
                 this.byId("searchFieldMain").setProperty("value", "");
 
@@ -2050,8 +2160,9 @@ sap.ui.define([
                         me.byId("mainTab").getModel().setProperty("/rows", oData.results);
                         me.byId("mainTab").bindRows("/rows");
 
-                        if (me.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").getData().items.length > 0) me.setColumnFilters("mainTab");
+                        // if (me.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").getData().items.length > 0) me.setColumnFilters("mainTab");
                         if (me.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").getData().items.length > 0) me.setColumnSorters("mainTab");
+                        TableFilter.applyColFilters(me);
                     },
                     error: function (err) { 
                         // console.log(err)
@@ -2188,10 +2299,8 @@ sap.ui.define([
                         this.showLoadingDialog('Processing...');
                         bProceed = true;
 
-                        // console.log("before lock");
-                        var bProceed = true; //await this.lock(this);
-                        // if (!bProceed) return;
-                        // console.log("after lock");
+                        var bProceed = await this.lock(this);
+                        if (!bProceed) return;
                         
                         this._oModel.read("/ZERPCheckSet", {
                             urlParameters: {
@@ -2586,13 +2695,13 @@ sap.ui.define([
                                 else if (me._oCreateData.length === 0) {
                                     me.closeLoadingDialog();
                                     sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_NO_RECORD_TO_PROC"]);
-                                    // me.unLock();
+                                    me.unLock();
                                 }
                             },
                             error: function (err) {
                                 me.closeLoadingDialog();
                                 sap.m.MessageBox.information(err);
-                                // me.unLock();
+                                me.unLock();
                             }
                         });
                     }
@@ -2685,10 +2794,10 @@ sap.ui.define([
 
                 this.getOwnerComponent().getModel("UI_MODEL").setProperty("/sbu", this.getView().getModel("ui").getData().sbu);
 
-                if (this.byId("mainTab").getBinding("rows").aFilters.length > 0) {
-                    this._aColFilters = this.byId("mainTab").getBinding("rows").aFilters;
-                    this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setProperty("/items", this._aColFilters);
-                }
+                // if (this.byId("mainTab").getBinding("rows").aFilters.length > 0) {
+                //     this._aColFilters = this.byId("mainTab").getBinding("rows").aFilters;
+                //     this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setProperty("/items", this._aColFilters);
+                // }
 
                 if (this.byId("mainTab").getBinding("rows").aSorters.length > 0) {
                     this._aColSorters = this.byId("mainTab").getBinding("rows").aSorters;
@@ -2735,7 +2844,7 @@ sap.ui.define([
             showCreatePOResult() {
                 // console.log(this._oCreateData)
                 // display pop-up for user selection
-                // this.unLock();
+                this.unLock();
 
                 if (!this._CreatePOResultDialog) {
                     this._CreatePOResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.CreatePOResultDialog", this);
@@ -2956,18 +3065,6 @@ sap.ui.define([
                     }, 10);
                 })
 
-                // oParamUnLock["N_IMPRTAB"] = this._oLock;
-
-                // oModelLock.create("/Unlock_PRSet", oParamUnLock, {
-                //     method: "POST",
-                //     success: function(oResultLock) {
-                //         console.log("Unlock", oResultLock)
-                //     },
-                //     error: function (err) {
-                //         me.closeLoadingDialog();
-                //     }
-                // })
-
                 this._oLock = [];
             },
 
@@ -2988,7 +3085,7 @@ sap.ui.define([
             onCloseConfirmDialog: function(oEvent) {
                 this._ConfirmDialog.close();
                 this._AssignVendorManualDialog.close();
-                // this.unLock();
+                this.unLock();
             },  
     
             onCancelConfirmDialog: function(oEvent) {   
@@ -3195,7 +3292,7 @@ sap.ui.define([
     
             _onMultiInputValidate: function(oArgs) {
                 var aToken = this._oMultiInput.getTokens();
-                console.log(oArgs)
+                // console.log(oArgs)
                 if (oArgs.suggestionObject) {
                     var oObject = oArgs.suggestionObject.getBindingContext("materialType").getObject(),
                         oToken = new Token();
@@ -3218,6 +3315,46 @@ sap.ui.define([
                 if (oEvent.getParameter("value") === "") {
                     this._oMultiInput.setValueState("None");
                 }
+            },
+
+            //******************************************* */
+            // Column Filtering
+            //******************************************* */
+
+            onColFilterClear: function(oEvent) {
+                TableFilter.onColFilterClear(oEvent, this);
+            },
+
+            onColFilterCancel: function(oEvent) {
+                TableFilter.onColFilterCancel(oEvent, this);
+            },
+
+            onColFilterConfirm: function(oEvent) {
+                TableFilter.onColFilterConfirm(oEvent, this);
+            },
+
+            onFilterItemPress: function(oEvent) {
+                TableFilter.onFilterItemPress(oEvent, this);
+            },
+
+            onFilterValuesSelectionChange: function(oEvent) {
+                TableFilter.onFilterValuesSelectionChange(oEvent, this);
+            },
+
+            onSearchFilterValue: function(oEvent) {
+                TableFilter.onSearchFilterValue(oEvent, this);
+            },
+
+            onCustomColFilterChange: function(oEvent) {
+                TableFilter.onCustomColFilterChange(oEvent, this);
+            },
+
+            onSetUseColFilter: function(oEvent) {
+                TableFilter.onSetUseColFilter(oEvent, this);
+            },
+
+            onRemoveColFilter: function(oEvent) {
+                TableFilter.onRemoveColFilter(oEvent, this);
             },
 
         });

@@ -23,7 +23,8 @@
                                     selectedKey="{ui>/sbu}"
                                     change="onSBUChange"
                                     items="{
-                                        path: '/ZVB_3DERP_SBU_SH'
+                                        path: '/ZVB_3DERP_SBU_SH',
+                                        templateShareable: false
                                     }">
                                     <core:Item key="{SBU}" text="{SBU}" />
                                 </ComboBox>                                  
@@ -115,12 +116,14 @@
                         <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" >
                             <smartfilterbar:customControl>
                                 <MultiInput id="multiInputMatTyp"
+                                    
                                     change="onCustomSmartFilterValueHelpChange"
                                     valueHelpRequest=".onCustomSmartFilterValueHelp"
                                     suggestionRows="{
                                         path: 'materialType>/results',
                                         sorter: { path: 'MaterialType' },
-                                        length: 1000
+                                        length: 1000,
+                                        templateShareable: false
                                     }">
                                     <suggestionColumns>
                                         <Column>

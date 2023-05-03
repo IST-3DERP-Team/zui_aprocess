@@ -146,6 +146,9 @@
             "CAPTION_MSGS_MODEL": {
                 "type": "sap.ui.model.json.JSONModel"
             },
+            "LOOKUP_MODEL": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
             "ZGW_3DERP_LOCK_SRV": {
                 "dataSource": "ZGW_3DERP_LOCK_SRV",
                 "preload": true,
