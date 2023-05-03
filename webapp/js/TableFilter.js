@@ -743,7 +743,7 @@ sap.ui.define([
         },
 
         onCustomColFilterChange: function(oEvent, oThis) {
-            var me = this;
+            var me = oThis;
             var oDialog = me._GenericFilterDialog;
 
             if (!(oEvent.getSource().getSelectedKey() === undefined || oEvent.getSource().getSelectedKey() === "")) {
