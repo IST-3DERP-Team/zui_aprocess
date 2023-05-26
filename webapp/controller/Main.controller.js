@@ -253,7 +253,7 @@ sap.ui.define([
                 this.byId("mainTab").addEventDelegate(oTableEventDelegate);
                 this._tableRendered = "";
                 this._refresh = false;
-                this._colFilters = [];
+                // this._colFilters = [];
 
                 this._oModel.read("/UOMSet", {
                     success: function (oData, oResponse) {
@@ -539,7 +539,14 @@ sap.ui.define([
                 });
 
                 var oTable = this.getView().byId("mainTab");
-                oTable.setModel(oModel);
+                // oTable.setModel(oModel);
+
+                if (oTable.getColumns().length === 0) {
+                    oTable.setModel(oModel);
+                }
+                else {
+                    oTable.getModel().setProperty("/rows", oData);
+                }
 
                 //bind the data to the table
                 oTable.bindRows("/rows");
@@ -744,10 +751,10 @@ sap.ui.define([
                         },
                         error: function (err) { }
                     });
+
+                    this._sbuChange = false;
                 }
                 else {
-                    // this.getView().getModel("ui").setProperty("/sbu", vSBU);
-                    
                     if (this.getView().getModel("columns") === undefined) {
                         this.getColumns('SEARCH');
                     }
@@ -855,7 +862,6 @@ sap.ui.define([
                 //     }
                 // }
 
-                console.log(aSmartFilter);
                 oModel.read("/MainSet", { 
                     filters: aSmartFilter,
                     success: function (oData, oResponse) {
@@ -2971,6 +2977,63 @@ sap.ui.define([
                 var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
                 var oParamLock = {};
                 var sError = "";
+                
+                var promise = new Promise((resolve, reject) => {
+                    oParamLock["N_IMPRTAB"] = me._oLock;
+                    oParamLock["iv_count"] = 300;
+                    oParamLock["N_LOCK_MESSAGES"] = []; 
+
+                    oModelLock.create("/Lock_PRSet", oParamLock, {
+                        method: "POST",
+                        success: function(oResultLock) {
+                            // console.log(oResultLock)
+                            oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
+                                if (item.Type === "E") {
+                                    sError += item.Message + ".\r\n ";
+                                }
+                            })
+                            
+                            if (sError.length > 0) {
+                                resolve(false);
+                                sap.m.MessageBox.information(sError);
+                                me.closeLoadingDialog();
+                                me.unLock();
+                            }
+                            else resolve(true);
+                        },
+                        error: function (err) {
+                            me.closeLoadingDialog();
+                            resolve(false);
+                            me.unLock();
+                        }
+                    });
+                })
+
+                return await promise;
+            },
+
+            unLock() {
+                var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+                var oParamUnLock = {};
+
+                oParamUnLock["N_IMPRTAB"] = this._oLock;
+                oModelLock.create("/Unlock_PRSet", oParamUnLock, {
+                    method: "POST",
+                    success: function(oResultLock) {
+                        console.log("Unlock", oResultLock)
+                    },
+                    error: function (err) { 
+                        console.log("Unlock", err)
+                    }
+                })
+
+                this._oLock = [];
+            },
+
+            singlelock: async (me) => {
+                var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+                var oParamLock = {};
+                var sError = "";
                 var vCounter = 0;
                 
                 var promise = new Promise((resolve, reject) => {
@@ -3036,7 +3099,7 @@ sap.ui.define([
                 return await promise;
             },
 
-            unLock() {
+            singleunLock() {
                 var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
                 var oParamUnLock = {};
                 var me = this;
