@@ -940,7 +940,7 @@ sap.ui.define([
                                                 Vendor: aData.at(item).VENDOR,
                                                 Material: aData.at(item).MATERIALNO,
                                                 PurchOrg: aData.at(item).PURCHORG,
-                                                PurGroup: aData.at(item).PURCHGRP,
+                                                PurGroup: '', //aData.at(item).PURCHGRP,
                                                 Plant: ''
                                                 // Plant: aData.at(item).PURCHPLANT
                                             })
@@ -974,7 +974,7 @@ sap.ui.define([
                                             Vendor: aData.at(item).VENDOR,
                                             Material: aData.at(item).MATERIALNO,
                                             PurchOrg: aData.at(item).PURCHORG,
-                                            PurGroup: aData.at(item).PURCHGRP,
+                                            PurGroup: '', //aData.at(item).PURCHGRP,
                                             Plant: ''
                                             // Plant: aData.at(item).PURCHPLANT
                                         })
@@ -1008,7 +1008,7 @@ sap.ui.define([
                                 var bProceed = await me.lock(me);
                                 if (!bProceed) return;
 
-                                oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg && item.PurGroup === value.PurGroup) === index) ;
+                                oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg) === index) ;
                                 oParam['N_GetInfoRecMatParam'] = oParamData;
                                 oParam['N_GetInfoRecReturn'] = [];
                                 console.log(oParam)
@@ -1018,14 +1018,14 @@ sap.ui.define([
                                         var oManualAssignVendorData = [];
                                         oParamData = [];
                                         oParam = {};
-            
+                                        console.log(oResult)
                                         oSelectedIndices.forEach(selItemIdx => {
                                             var returnData = jQuery.extend(true, [], oResult.N_GetInfoRecReturn.results);
                                             // console.log(oResult.N_GetInfoRecReturn.results)
                                             if (aData.at(selItemIdx).VENDOR !== '') returnData = returnData.filter(fItem => fItem.Vendor === aData.at(selItemIdx).VENDOR);
                                             if (aData.at(selItemIdx).MATERIALNO !== '') returnData = returnData.filter(fItem => fItem.Material === aData.at(selItemIdx).MATERIALNO);
                                             // if (aData.at(selItemIdx).PURCHPLANT !== '') returnData = returnData.filter(fItem => fItem.Plant === aData.at(selItemIdx).PURCHPLANT);
-                                            if (aData.at(selItemIdx).PURCHGRP !== '') returnData = returnData.filter(fItem => fItem.PurGroup === aData.at(selItemIdx).PURCHGRP);
+                                            // if (aData.at(selItemIdx).PURCHGRP !== '') returnData = returnData.filter(fItem => fItem.PurGroup === aData.at(selItemIdx).PURCHGRP);
                                             if (aData.at(selItemIdx).PURCHORG !== '') returnData = returnData.filter(fItem => fItem.PurchOrg === aData.at(selItemIdx).PURCHORG);
                                             // console.log(returnData)
                                             if (returnData.length > 0) {
@@ -1096,7 +1096,7 @@ sap.ui.define([
                                                         me._oAssignVendorData.forEach(item => {
                                                             // var oRetMsg = oResultCPR.N_ChangePRReturn.results.filter(fItem => fItem.PreqNo === item.PRNUMBER && fItem.PreqItem === item.PRITEMNO);
                                                             var oRetMsg = oResultCPR.N_ChangePRReturn.results.filter(fItem => fItem.PreqNo === item.PRNUMBER);
-                                                            
+                                                            console.log(oResultCPR)
                                                             if (oRetMsg.length > 0) {
                                                                 if (oRetMsg[0].Type === 'S') {
                                                                     oParamData.filter(fItem => fItem.PreqNo === item.PRNUMBER && fItem.PreqItem === item.PRITEMNO)
@@ -1387,6 +1387,7 @@ sap.ui.define([
                 // console.log(this._oAssignVendorData)
                 // display pop-up for user selection
                 this.unLock();
+                var vRowCount = this._oAssignVendorData.length > 7 ? this._oAssignVendorData : 7;
 
                 if (!this._AssignVendorResultDialog) {
                     this._AssignVendorResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.AssignVendorResultDialog", this);
@@ -1394,7 +1395,7 @@ sap.ui.define([
                     this._AssignVendorResultDialog.setModel(
                         new JSONModel({
                             items: this._oAssignVendorData,
-                            rowCount: this._oAssignVendorData.length
+                            rowCount: vRowCount
                         })
                     )
 
@@ -1402,7 +1403,7 @@ sap.ui.define([
                 }
                 else {
                     this._AssignVendorResultDialog.getModel().setProperty("/items", this._oAssignVendorData);
-                    this._AssignVendorResultDialog.getModel().setProperty("/rowCount", this._oAssignVendorData.length);
+                    this._AssignVendorResultDialog.getModel().setProperty("/rowCount", vRowCount);
                 }
 
                 if (arg === "assign") this._AssignVendorResultDialog.setTitle("Assign Vendor Result");
@@ -1555,13 +1556,15 @@ sap.ui.define([
                     item.EDITED = false;
                 })
 
+                var vRowCount = oData.length.length > 7 ? oData.length : 7;
+
                 if (!me._AssignVendorManualDialog) {
                     me._AssignVendorManualDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.AssignVendorManualDialog", me);
                     
                     me._AssignVendorManualDialog.setModel(
                         new JSONModel({
                             rows: oData,
-                            rowCount: oData.length
+                            rowCount: vRowCount
                         })
                     )
 
@@ -1594,7 +1597,7 @@ sap.ui.define([
                 }
                 else {
                     me._AssignVendorManualDialog.getModel().setProperty("/rows", oData);
-                    me._AssignVendorManualDialog.getModel().setProperty("/rowCount", oData.length);
+                    me._AssignVendorManualDialog.getModel().setProperty("/rowCount", vRowCount);
                 }
 
                 me._AssignVendorManualDialog.setTitle(me.getView().getModel("ddtext").getData()["MANUALASSIGNVENDOR"]);
@@ -1631,7 +1634,7 @@ sap.ui.define([
 
                             if (me._AssignVendorManualDialog.getModel().getData().rows.length === (index + 1)) {
                                 me.getView().setModel(new JSONModel(oVendorSource), "vendor");
-                                console.log(me.getView().getModel("vendor").getData())
+                                // console.log(me.getView().getModel("vendor").getData())
                             }
                         },
                         error: function (err) { }
@@ -2324,8 +2327,8 @@ sap.ui.define([
                                                 Vendor: aData.at(item).VENDOR,
                                                 Material: aData.at(item).MATERIALNO,
                                                 PurchOrg: aData.at(item).PURCHORG,
-                                                PurGroup: aData.at(item).PURCHGRP,
-                                                Plant: aData.at(item).PURCHPLANT
+                                                PurGroup: '', //aData.at(item).PURCHGRP,
+                                                Plant: '' //aData.at(item).PURCHPLANT
                                             })
                                         }
                                     }
@@ -2334,8 +2337,8 @@ sap.ui.define([
                                             Vendor: aData.at(item).VENDOR,
                                             Material: aData.at(item).MATERIALNO,
                                             PurchOrg: aData.at(item).PURCHORG,
-                                            PurGroup: aData.at(item).PURCHGRP,
-                                            Plant: aData.at(item).PURCHPLANT
+                                            PurGroup: '', //aData.at(item).PURCHGRP,
+                                            Plant: '' //aData.at(item).PURCHPLANT
                                         })
                                     }
                                 })
@@ -2343,7 +2346,7 @@ sap.ui.define([
                                 // console.log(me._oCreateData)
                                 if (oParamData.length > 0) {
                                     //get valid info record
-                                    oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg && item.PurGroup === value.PurGroup && item.Plant === value.Plant) === index) ;
+                                    oParamData = oParamData.filter((value, index, self) => self.findIndex(item => item.Vendor === value.Vendor && item.Material === value.Material && item.PurchOrg === value.PurchOrg) === index) ;
             
                                     oParam['N_GetInfoRecMatParam'] = oParamData;
                                     oParam['N_GetInfoRecReturn'] = [];
@@ -2356,9 +2359,9 @@ sap.ui.define([
                                             oParamData.forEach(item => {
                                                 var returnData = jQuery.extend(true, [], oResult.N_GetInfoRecReturn.results);
 
-                                                returnData = returnData.filter(fItem => fItem.Vendor === item.Vendor && fItem.PurchOrg === item.PurchOrg && fItem.PurGroup === item.PurGroup && fItem.Material === item.Material);
+                                                returnData = returnData.filter(fItem => fItem.Vendor === item.Vendor && fItem.PurchOrg === item.PurchOrg && fItem.Material === item.Material);
                                                 // console.log(me._oCreateData)
-                                                me._oCreateData.filter(fItem => fItem.VENDOR === item.Vendor && fItem.PURCHORG === item.PurchOrg && fItem.PURCHGRP === item.PurGroup && fItem.MATERIALNO === item.Material && fItem.PURCHPLANT === item.Plant)
+                                                me._oCreateData.filter(fItem => fItem.VENDOR === item.Vendor && fItem.PURCHORG === item.PurchOrg && fItem.MATERIALNO === item.Material)
                                                     .forEach(itemIR => {
                                                         itemIR.INFORECCHECK = true;
 
@@ -2982,11 +2985,11 @@ sap.ui.define([
                     oParamLock["N_IMPRTAB"] = me._oLock;
                     oParamLock["iv_count"] = 300;
                     oParamLock["N_LOCK_MESSAGES"] = []; 
-
+                    console.log("lock", oParamLock)
                     oModelLock.create("/Lock_PRSet", oParamLock, {
                         method: "POST",
                         success: function(oResultLock) {
-                            // console.log(oResultLock)
+                            console.log(oResultLock)
                             oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
                                 if (item.Type === "E") {
                                     sError += item.Message + ".\r\n ";
@@ -3017,21 +3020,25 @@ sap.ui.define([
                 var oParamUnLock = {};
 
                 oParamUnLock["N_IMPRTAB"] = this._oLock;
-                oModelLock.create("/Unlock_PRSet", oParamUnLock, {
-                    method: "POST",
-                    success: function(oResultLock) {
-                        console.log("Unlock", oResultLock)
-                    },
-                    error: function (err) { 
-                        console.log("Unlock", err)
-                    }
-                })
 
-                this._oLock = [];
+                setTimeout(() => {
+                    oModelLock.create("/Unlock_PRSet", oParamUnLock, {
+                        method: "POST",
+                        success: function(oResultLock) {
+                            console.log("Unlock", oResultLock)
+                        },
+                        error: function (err) { 
+                            console.log("Unlock", err)
+                        }
+                    })
+    
+                    this._oLock = [];                    
+                }, 10);
             },
 
             singlelock: async (me) => {
                 var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+                oModelLock.setUseBatch(true);
                 var oParamLock = {};
                 var sError = "";
                 var vCounter = 0;
@@ -3041,6 +3048,7 @@ sap.ui.define([
                         setTimeout(() => {
                             var oLockItem = [];
                             oLockItem.push(item);
+                            console.log(oLockItem)
     
                             oParamLock["N_IMPRTAB"] = oLockItem; //me._oLock;
                             oParamLock["iv_count"] = 300;
@@ -3050,19 +3058,7 @@ sap.ui.define([
                                 method: "POST",
                                 success: function(oResultLock) {
                                     vCounter++;
-                                    // oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
-                                    //     if (item.Type === "E") {
-                                    //         sError += item.Message + ".\r\n ";
-                                    //     }
-                                    // })
-                                    
-                                    // if (sError.length > 0) {
-                                    //     resolve(false);
-                                    //     sap.m.MessageBox.information(sError);
-                                    //     me.closeLoadingDialog();
-                                    // }
-                                    // else resolve(true);
-    
+                                    console.log(oResultLock)
                                     oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
                                         if (item.Type === "E") {
                                             sError += item.Message + ".\r\n ";
@@ -3092,7 +3088,7 @@ sap.ui.define([
                                     }
                                 }
                             });                            
-                        }, 10);
+                        }, 1);
                     })
                 })
 

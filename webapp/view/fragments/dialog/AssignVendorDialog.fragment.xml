@@ -6,7 +6,7 @@
         id="fragment-1" 
         fragmentName="fragment1">
     <Dialog contentWidth="1000px"
-        contentHeight="300px"
+        contentHeight="285px"
         title="Assign Vendor"
         resizable="true"
         draggable="true">
