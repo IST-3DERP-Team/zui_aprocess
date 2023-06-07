@@ -207,7 +207,12 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "PREVIOUS"});
                 oDDTextParam.push({CODE: "NEXT"});
                 oDDTextParam.push({CODE: "ZTERM"});
-
+                oDDTextParam.push({CODE: "PURGRP"});
+                oDDTextParam.push({CODE: "INFORECORD"});
+                oDDTextParam.push({CODE: "PRICE"});
+                oDDTextParam.push({CODE: "PRICEUNIT"});
+                oDDTextParam.push({CODE: "CONVNUM"});
+                oDDTextParam.push({CODE: "CONVDEN"});
 
                 oModel.create("/CaptionMsgSet", { CaptionMsgItems: oDDTextParam  }, {
                     method: "POST",
@@ -339,6 +344,14 @@ sap.ui.define([
                     success: function (oData, oResponse) {
                         me.getView().setModel(new JSONModel(oData.results), "payterm"); 
                         me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/payterm", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
+                this._oModel.read("/VendorSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "vendor");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/vendor", oData.results);
                     },
                     error: function (err) { }
                 });
@@ -1073,6 +1086,16 @@ sap.ui.define([
                                                         item.SEASON = aData.at(selItemIdx).SEASON;
                                                         item.SHORTTEXT = aData.at(selItemIdx).SHORTTEXT;
                                                         item.PURCHPLANT = aData.at(selItemIdx).PURCHPLANT;
+                                                        
+                                                        var oVendor = me.getView().getModel("vendor").getData().filter(fItem => fItem.LIFNR === item.Vendor);
+                                                        if (oVendor.length > 0) { 
+                                                            item.VENDORNAME = oVendor[0].NAME1;
+                                                            item.VENDORCDNAME = oVendor[0].NAME1 + " (" + item.Vendor + ")";
+                                                        }
+                                                        else { 
+                                                            item.VENDORNAME = "" ;
+                                                            item.VENDORCDNAME = item.Vendor;
+                                                        }
             
                                                         oManualAssignVendorData.push(item);
                                                     });
@@ -1139,7 +1162,7 @@ sap.ui.define([
                                                             me._AssignVendorDialog.setModel(
                                                                 new JSONModel({
                                                                     items: oManualAssignVendorData,
-                                                                    rowCount: oManualAssignVendorData.length
+                                                                    rowCount: oManualAssignVendorData.length > 6 ? oManualAssignVendorData.length : 6
                                                                 })
                                                             )
             
@@ -1147,7 +1170,7 @@ sap.ui.define([
                                                         }
                                                         else {
                                                             me._AssignVendorDialog.getModel().setProperty("/items", oManualAssignVendorData);
-                                                            me._AssignVendorDialog.getModel().setProperty("/rowCount", oManualAssignVendorData.length);
+                                                            me._AssignVendorDialog.getModel().setProperty("/rowCount", oManualAssignVendorData.length > 6 ? oManualAssignVendorData.length : 6);
                                                         }
             
                                                         me._AssignVendorDialog.open();
@@ -1171,17 +1194,17 @@ sap.ui.define([
                                                 me._AssignVendorDialog.setModel(
                                                     new JSONModel({
                                                         items: oManualAssignVendorData,
-                                                        rowCount: oManualAssignVendorData.length
+                                                        rowCount: oManualAssignVendorData.length > 6 ? oManualAssignVendorData.length : 6
                                                     })
                                                 )
-            
+                                                
                                                 me.getView().addDependent(me._AssignVendorDialog);
                                             }
                                             else {
                                                 me._AssignVendorDialog.getModel().setProperty("/items", oManualAssignVendorData);
-                                                me._AssignVendorDialog.getModel().setProperty("/rowCount", oManualAssignVendorData.length);
+                                                me._AssignVendorDialog.getModel().setProperty("/rowCount", oManualAssignVendorData.length > 6 ? oManualAssignVendorData.length : 6);
                                             }
-            
+                                            console.log(me._AssignVendorDialog.getModel().getData())
                                             me._AssignVendorDialog.open();
                                         }
                                         else {
@@ -3016,24 +3039,26 @@ sap.ui.define([
             },
 
             unLock() {
-                var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
-                var oParamUnLock = {};
-
-                oParamUnLock["N_IMPRTAB"] = this._oLock;
-
-                setTimeout(() => {
-                    oModelLock.create("/Unlock_PRSet", oParamUnLock, {
-                        method: "POST",
-                        success: function(oResultLock) {
-                            console.log("Unlock", oResultLock)
-                        },
-                        error: function (err) { 
-                            console.log("Unlock", err)
-                        }
-                    })
+                // if (this._oLock.length > 0) {
+                    var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+                    var oParamUnLock = {};
     
-                    this._oLock = [];                    
-                }, 10);
+                    oParamUnLock["N_IMPRTAB"] = this._oLock;
+    
+                    setTimeout(() => {
+                        oModelLock.create("/Unlock_PRSet", oParamUnLock, {
+                            method: "POST",
+                            success: function(oResultLock) {
+                                console.log("Unlock", oResultLock)
+                            },
+                            error: function (err) { 
+                                console.log("Unlock", err)
+                            }
+                        })
+        
+                        this._oLock = [];                    
+                    }, 10);
+                // }
             },
 
             singlelock: async (me) => {

@@ -22,104 +22,104 @@
             visibleRowCount="{/rowCount}"
             paste="onPaste">
             <uit:columns>
-                <uit:Column width="10rem">
-                    <Label text="PR NUMBER" />
+                <uit:Column width="7rem">
+                    <Label text="{ddtext>/PRNUMBER}" wrapping="true" />
                     <uit:template>
                         <Text text="{PRNUMBER}" wrapping="false" />
                     </uit:template>
                 </uit:Column>                
-                <uit:Column width="10rem">
-                    <Label text="PR ITEM NO" />
+                <uit:Column width="5rem">
+                    <Label text="{ddtext>/PRITEMNO}" wrapping="true"/>
                     <uit:template>
                         <Text text="{PRITEMNO}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="10rem">
-                    <Label text="INFO REC" />
+                <uit:Column width="7rem">
+                    <Label text="{ddtext>/INFORECORD}" wrapping="true" />
                     <uit:template>
                         <Text text="{InfoRec}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="VENDOR" />
+                <uit:Column width="25rem">
+                    <Label text="{ddtext>/VENDOR}" wrapping="true" />
                     <uit:template>
-                        <Text text="{Vendor}" wrapping="false" />
+                        <Text text="{VENDORCDNAME}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="MATERIAL" />
+                <uit:Column width="8rem">
+                    <Label text="{ddtext>/MATERIALNO}" wrapping="true" />
                     <uit:template>
                         <Text text="{Material}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="PURCH ORG" />
+                <uit:Column width="5em">
+                    <Label text="{ddtext>/PURCHORG}" wrapping="true" />
                     <uit:template>
                         <Text text="{PurchOrg}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="PLANT" />
+                <uit:Column width="5rem">
+                    <Label text="{ddtext>/PURCHPLANT}" wrapping="true" />
                     <uit:template>
                         <Text text="{PURCHPLANT}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="PUR GROUP" />
+                <uit:Column width="5rem">
+                    <Label text="{ddtext>/PURGRP}" wrapping="true" />
                     <uit:template>
                         <Text text="{PurGroup}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="CURR" />
+                <uit:Column width="5rem">
+                    <Label text="{ddtext>/CURR}" wrapping="true" />
                     <uit:template>
                         <Text text="{Currency}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="PRICE" />
+                <uit:Column width="6rem" hAlign="End">
+                    <Label text="{ddtext>/PRICE}" wrapping="true" />
                     <uit:template>
                         <Text text="{NetPrice}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="PRICE UNIT" />
+                <uit:Column width="6rem" hAlign="End">
+                    <Label text="{ddtext>/PRICEUNIT}" wrapping="true" />
                     <uit:template>
                         <Text text="{PriceUnit}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="UOM" />
+                <uit:Column width="5rem">
+                    <Label text="{ddtext>/UOM}" wrapping="true" />
                     <uit:template>
                         <Text text="{PoUnit}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="CONV NUM" />
+                <uit:Column width="6rem" hAlign="End">
+                    <Label text="{ddtext>/CONVNUM}" wrapping="true" />
                     <uit:template>
                         <Text text="{ConvNum1}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="CONV DEN" />
+                <uit:Column width="7rem" hAlign="End">
+                    <Label text="{ddtext>/CONVDEN}" wrapping="true" />
                     <uit:template>
                         <Text text="{ConvDen1}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="TAX CODE" />
+                <uit:Column width="5rem">
+                    <Label text="{ddtext>/TAXCODE}" wrapping="true" />
                     <uit:template>
                         <Text text="{TaxCode}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
-                <uit:Column width="15rem">
-                    <Label text="INCO TERMS1" />
+                <uit:Column width="6rem">
+                    <Label text="{ddtext>/INCO1}" wrapping="true" />
                     <uit:template>
                         <Text text="{Incoterms1}" wrapping="false" />
                     </uit:template>
                 </uit:Column>                
-                <uit:Column width="15rem">
-                    <Label text="INCO TERMS2" />
+                <uit:Column width="6rem">
+                    <Label text="{ddtext>/INCO2}" wrapping="true" />
                     <uit:template>
                         <Text text="{Incoterms2}" wrapping="false" />
                     </uit:template>
