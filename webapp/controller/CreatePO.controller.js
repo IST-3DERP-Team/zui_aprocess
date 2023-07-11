@@ -64,10 +64,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             if (this.getView().getModel("packins") !== undefined) this.getView().getModel("packins").destroy();
             if (this.getView().getModel("fabspecs") !== undefined) this.getView().getModel("fabspecs").destroy();
             if (this.getView().getModel("potol") !== undefined) this.getView().getModel("potol").destroy();
-            // console.log(this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail)
             // var oJSONModelDtl = new JSONModel();
 
-            console.log(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData())
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().shipmode), "shipmode");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().incoterm), "incoterm");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().supplyType), "supplyType");
@@ -79,7 +77,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().supplyType), "plant");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().uom), "purchorg");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().payterm), "purchgrp");
-
 
             this._oModel.read("/IncoTermsSet", {
                 success: function (oData, oResponse) {
@@ -261,13 +258,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     STATUS: ""
                 });
 
-                aDataRemItems.push({
-                    GROUP: item.GROUP,
-                    ITEM: "1",
-                    REMARKS: "",
-                    STATUS: ""
-                });
-
                 oDataRem[item.GROUP] = aDataRemItems;
 
                 aDataPackInsItems.push({
@@ -317,7 +307,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 // oDataPOTolerance[item.GROUP] = aDataPOTolerance;
 
                 // aDataPOTolerance = [], 
-                aDataPackInsItems = [], aDataFabSpecsItems = [];
+                aDataRemItems = [], aDataPackInsItems = [], aDataFabSpecsItems = [];
 
                 if (aDataDocType.filter(fItem => fItem.Podoctyp === item.DOCTYPE).length === 0) {
                     me._oModel.read("/PODocTypInfoSet('" + item.DOCTYPE + "')", {
@@ -2012,17 +2002,17 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
 
+            // //GET UNIQ OBJ, just for double checking
+            // var mapRemarks = new Map(this.getView().getModel("remarks").getData()[sActiveGroup].map(pos => [pos.ITEM, pos]).reverse());
+            // var uniqRemarks = [...mapRemarks.values()].reverse();
+            // this.getView().getModel("remarks").setProperty('/' + sActiveGroup, uniqRemarks);
+
+            // var mapPackIns = new Map(this.getView().getModel("packins").getData()[sActiveGroup].map(pos => [pos.ITEM, pos]).reverse());
+            // var uniqPackIns = [...mapPackIns.values()].reverse();
+            // this.getView().getModel("packins").setProperty('/' + sActiveGroup, uniqPackIns);
+
             if (!this._HeaderTextDialog) {
                 this._HeaderTextDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.HeaderTextDialog", this);
-
-                //GET UNIQ OBJ, just for double checking
-                var mapRemarks = new Map(this.getView().getModel("remarks").getData()[sActiveGroup].map(pos => [pos.ITEM, pos]).reverse());
-                var uniqRemarks = [...mapRemarks.values()].reverse();
-                this.getView().getModel("remarks").setProperty('/' + sActiveGroup, uniqRemarks);
-
-                var mapPackIns = new Map(this.getView().getModel("packins").getData()[sActiveGroup].map(pos => [pos.ITEM, pos]).reverse());
-                var uniqPackIns = [...mapPackIns.values()].reverse();
-                this.getView().getModel("packins").setProperty('/' + sActiveGroup, uniqPackIns);
 
                 this._HeaderTextDialog.setModel(
                     new JSONModel({
@@ -2032,8 +2022,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     })
                 )
 
-                // console.log(this.getView().getModel("remarks").getData()[this.getView().getModel("header").getData()[0].GROUP]);
-                // this._HeaderTextDialog.setModel(this.getView().getModel("remarks").getData()[this.getView().getModel("header").getData()[0].GROUP]);
                 this.getView().addDependent(this._HeaderTextDialog);
             }
             else {
@@ -2049,7 +2037,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._HeaderTextDialog.setTitle(this.getView().getModel("ddtext").getData()["HEADERTEXT"]);
             this._HeaderTextDialog.open(); 
 
-            var oHeaderData = this.getView().getModel("header").getData();
+            var oHeaderData = this.getView().getModel("grpheader").getData();
             var oHdrTxtTab = sap.ui.getCore().byId("ITB1");
             oHdrTxtTab.setSelectedKey("remarks");
 
@@ -2293,7 +2281,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
             var bProceed = true;
             var iNew = 0;
-            console.log(activeTab)
 
             if (activeTab === "remarks") {
                 sap.ui.getCore().byId("btnAddHdrTxt").setVisible(true);
@@ -2866,8 +2853,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                                                         Zzreq2: oFabSpecs[0].ZZREQ2,
                                                                         Zzshrq: oFabSpecs[0].ZZSHRQ,
                                                                         Zzshda: sapDateFormat.format(new Date(oFabSpecs[0].ZZSHDA)) + "T00:00:00",
-                                                                        Zzprmo: oFabSpecs[0].PLANMONTH.slice(0,2),
-                                                                        Zzpryr: oFabSpecs[0].PLANMONTH.slice(3,7),
+                                                                        Zzprmo: oFabSpecs[0].PLANMONTH.slice(5,7),
+                                                                        Zzpryr: oFabSpecs[0].PLANMONTH.slice(0,4),
                                                                         Zzmakt: poitem.POADDTLDESC
                                                                     })
                                                                 }
@@ -2885,8 +2872,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                                                         Zzreq1: oFabSpecs[0].ZZREQ1,
                                                                         Zzreq2: oFabSpecs[0].ZZREQ2,
                                                                         Zzshrq: oFabSpecs[0].ZZSHRQ,
-                                                                        Zzprmo: oFabSpecs[0].PLANMONTH.slice(0,2),
-                                                                        Zzpryr: oFabSpecs[0].PLANMONTH.slice(3,7),
+                                                                        Zzprmo: oFabSpecs[0].PLANMONTH.slice(5,7),
+                                                                        Zzpryr: oFabSpecs[0].PLANMONTH.slice(0,4),
                                                                         Zzmakt: poitem.POADDTLDESC
                                                                     })
                                                                 }
@@ -3331,7 +3318,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         Evers     : resultExtendPop[0][0].EVERS,
                         Uebto     : item.OVERDELTOL,
                         Untto     : item.UNDERDELTOL,
-                        Uebtk     : item.UNLI
+                        Uebtk     : item.UNLI,
+                        Charg     : item.IONUMBER,
                         // Elikz     : resultExtendPop[0][x].ELIKZ,
                         // DeleteRec : resultExtendPop[0][x].LOEKZ
                     });
@@ -3357,6 +3345,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 // return;
                 var bSuccess = "", sRetMessage = "";
                 var oCurrHeaderData = me.getView().getModel("grpheader").getData();
+                // var sActiveGroup = me.getView().getModel("ui").getData().activeGroup;
 
                 this.showLoadingDialog('Processing...');
                 promiseResult = new Promise((resolve, reject)=>{
@@ -3381,6 +3370,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                     else if (msg.Msgtyp === "E") {
                                         sRetMSg = sRetMSg + msg.Msgtyp + ": " +  msg.Msgv1 + "\r\n";
                                     }
+                                })
+
+                                me._aCreatePOResult.forEach((item, index) => {
+                                    if (item.GROUP === oCurrHeaderData[0].GROUP) {
+                                        me._aCreatePOResult.splice(index, 1);
+                                    } 
                                 })
 
                                 me._aCreatePOResult.push({

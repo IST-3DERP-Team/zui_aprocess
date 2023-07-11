@@ -215,6 +215,7 @@
                                 placeholder="Search"
                                 value=""
                                 search="filterGlobally"
+                                visible="false"
                                 width="15rem"/>
                             <ToolbarSeparator />
                             <Button id="btnAssign" 
@@ -237,7 +238,7 @@
                                 visible="true"/>
                             <Button id="btnCreatePO" 
                                 text="{ddtext>/CREATEPO}"
-                                icon="sap-icon://document"
+                                icon="sap-icon://add-document"
                                 press="onCreatePO" 
                                 tooltip="{ddtext>/CREATEPO}"
                                 visible="true" />

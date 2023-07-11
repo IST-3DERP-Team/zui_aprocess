@@ -140,7 +140,7 @@
                                                 <!-- <Input id="ZZSHDA" value="{fabspecs>/ZZSHDA}" change="onHeaderChange" liveChange="onHeaderChange"/> -->
                                             </form:fields>
                                         </form:FormElement>
-                                        <form:FormElement label="{i18n>Prod Month/Year}">
+                                        <form:FormElement label="{i18n>Prod Year/Month}">
                                             <form:fields>
                                                 <Text id="PLANMONTH1" text="{/fs/0/PLANMONTH}" />
                                             </form:fields>
