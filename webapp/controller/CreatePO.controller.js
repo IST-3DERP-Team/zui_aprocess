@@ -32,16 +32,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             };
 
             this.byId("titlePOCreate").addEventDelegate(oEventDelegate);
-            this._tableValueHelp = TableValueHelp;
-            // window.onhashchange = function() {
-            //     console.log("browser back is clicked!");
-            //     var oRouter = sap.ui.core.UIComponent.getRouterFor(me);
-            //     oRouter.navTo("RouteMain", {}, true /*no history*/);
-            // } 
+            this._tableValueHelp = TableValueHelp; 
         },
         
         onPatternMatched: function() {  
-            // console.log("onPatternMatched")         
             var me = this;
             this._oModel = this.getOwnerComponent().getModel();
             this._aColumns = [];            
@@ -54,7 +48,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 }
             }
 
-            // console.log(this.getOwnerComponent().getModel("UI"))
             var vSBU = this.getOwnerComponent().getModel("UI_MODEL").getData().sbu;
 
             if (this.getView().getModel("payterms") !== undefined) this.getView().getModel("payterms").destroy();
@@ -81,7 +74,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._oModel.read("/IncoTermsSet", {
                 success: function (oData, oResponse) {
                     me.getView().getModel("incoterm").setProperty("/", oData.results);
-                    // me.getView().setModel(new JSONModel(oData.results), "incoterm");
                 },
                 error: function (err) { }
             });      
@@ -89,7 +81,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._oModel.read("/SupplyTypeRscSet", {
                 success: function (oData, oResponse) {
                     me.getView().getModel("supplyType").setProperty("/", oData.results);
-                    // me.getView().setModel(new JSONModel(oData.results), "supplyType");
                 },
                 error: function (err) { }
             });
@@ -97,13 +88,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._oModel.read("/UOMSet", {
                 success: function (oData, oResponse) {
                     me.getView().getModel("uom").setProperty("/", oData.results);
-                    // me.getView().setModel(new JSONModel(oData.results), "uom");
                 },
                 error: function (err) { }
             });
 
             var oDataDetail = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail.filter(fItem => fItem.GROUP === "1");
-            // oJSONModelDtl.setData(oDataDetail);
+
             oDataDetail.forEach(item => {
                 item.BASEPOQTY2 = item.BASEPOQTY;
                 item.BASEPOQTY3 = item.BASEPOQTY;
@@ -114,14 +104,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this.getView().setModel(new JSONModel(oDataDetail), "detail");
             this.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
             this.byId("detailTab").bindRows({path: "detail>/"});
-            // console.log(this.byId("detailTab").getModel("detail").getData())
-            
-            // var oJSONModel = new JSONModel();
+
             var oHeaderData = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().header;
             var oDataRem = {}, oDataPackIns = {}, oDataFabSpecs = {}; //, oDataPOTolerance = {};
             var aDataRemItems = [], aDataPackInsItems = [], aDataFabSpecsItems = [], aDataDocType = []; //, aDataPOTolerance = [];
-            // var oJSONModelPT = new JSONModel();
-            // var oJSONModelSM = new JSONModel();
             var iCounter = 0, iCounter2 = 0;
             var mData = {};
 
@@ -190,66 +176,15 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         }
 
                         if (iCounter === oHeaderData.length) {
-                            // oJSONModelPT.setData(mData);
                             me.getView().setModel(new JSONModel(mData), "payterms");
-
-                            // oJSONModel.setData(oHeaderData);
                             me.getView().setModel(new JSONModel(oHeaderData), "header");
                             me.getView().setModel(new JSONModel(oHeaderData.filter(grp => grp.GROUP === "1")), "grpheader");
-                            // console.log(me.getView().getModel("header").getData())
                         } 
                     },
                     error: function (err) {
                         iCounter++;
                     }
                 });
-
-                // me._oModel.read("/ShipModeSet", {
-                //     urlParameters: {
-                //         "$filter": "SBU eq '" + vSBU + "'"
-                //     },
-                //     success: function (oDataSM, oResponse) {
-                //         // oJSONModelSM.setData(oDataSM.results);
-                //         me.getView().setModel(new JSONModel(oDataSM.results), "shipmode");
-                        
-                //         if (oDataSM.results.length === 1) {
-                //             item.SHIPMODE = oDataSM.results[0].SHIPMODE;
-                //         }
-
-                //         setTimeout(() => {
-                //             me._oModel.read("/PayTermsSet", {
-                //                 urlParameters: {
-                //                     "$filter": "LIFNR eq '" + sVendor + "' and EKORG eq '" + item.PURCHORG + "'"
-                //                 },
-                //                 success: function (oData, oResponse) {
-                //                     iCounter++;                                
-                //                     mData[item.GROUP] = oData.results;
-        
-                //                     if (oData.results.length > 0) {
-                //                         item.PAYTERMS = oData.results[0].ZTERM;
-                //                         item.INCOTERMS = oData.results[0].INCO1;
-                //                         item.DESTINATION = oData.results[0].INCO2;
-                //                         item.CURR = oData.results[0].WAERS;
-                //                     }
-        
-                //                     if (iCounter === oHeaderData.length) {
-                //                         // oJSONModelPT.setData(mData);
-                //                         me.getView().setModel(new JSONModel(mData), "payterms");
-        
-                //                         // oJSONModel.setData(oHeaderData);
-                //                         me.getView().setModel(new JSONModel(oHeaderData), "header");
-                //                         me.getView().setModel(new JSONModel(oHeaderData.filter(grp => grp.GROUP === "1")), "grpheader");
-                //                         // console.log(me.getView().getModel("header").getData())
-                //                     } 
-                //                 },
-                //                 error: function (err) {
-                //                     iCounter++;
-                //                 }
-                //             }); 
-                //         }, 100);                         
-                //     },
-                //     error: function (err) { }
-                // });
 
                 aDataRemItems.push({
                     GROUP: item.GROUP,
@@ -291,22 +226,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
                 oDataFabSpecs[item.GROUP] = aDataFabSpecsItems;
 
-                // aDataPOTolerance.push({
-                //     GROUP: item.GROUP,
-                //     WEMNG: "0",
-                //     FOCQTY: "0",
-                //     TOLALLOWEDIT: "",
-                //     QTYMIN: "0",
-                //     QTYMAX: "0",
-                //     UNTTOMIN: "0",
-                //     UNTTOMAX: "0",
-                //     UEBTOMIN: "0",
-                //     UEBTOMAX: "0"
-                // });
-
-                // oDataPOTolerance[item.GROUP] = aDataPOTolerance;
-
-                // aDataPOTolerance = [], 
                 aDataRemItems = [], aDataPackInsItems = [], aDataFabSpecsItems = [];
 
                 if (aDataDocType.filter(fItem => fItem.Podoctyp === item.DOCTYPE).length === 0) {
@@ -342,23 +261,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 totalGroup: oHeaderData.length + ""
             }), "ui");
 
-            // var oJSONModelRem = new JSONModel();
-            // var oJSONModelPackIns = new JSONModel();
-            // var oJSONModelFabSpecs = new JSONModel();
-
-            // oJSONModelRem.setData(oDataRem);
             this.getView().setModel(new JSONModel(oDataRem), "remarks");
-
-            // oJSONModelPackIns.setData(oDataPackIns);
             this.getView().setModel(new JSONModel(oDataPackIns), "packins");            
-
-            // oJSONModelFabSpecs.setData(oDataFabSpecs);
             this.getView().setModel(new JSONModel(oDataFabSpecs), "fabspecs");
-
-            // this.getView().setModel(new JSONModel(oDataPOTolerance), "potol");
-            
-            // var oJSONModelDDText = new JSONModel();
-            // oJSONModelDDText.setData(this.getOwnerComponent().getModel("CAPTION_MSGS_MODEL").getData().text);
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("CAPTION_MSGS_MODEL").getData().text), "ddtext");
             this.getOwnerComponent().getModel("UI_MODEL").setProperty("/flag", false);
             this.setFormInputValueHelp();
@@ -371,19 +276,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this.getColumnProp();
         },
 
-        onAfterRendering: function(oEvent) {
-            console.log("onAfterRendering")
-        },
-
         onNavBack: function(oEvent) {
             var oData = {
                 Process: "po-cancel",
                 Text: this.getView().getModel("ddtext").getData()["CONF_CANCEL_CREATEPO"]
             }
 
-            // var oJSONModel = new JSONModel();
-            // oJSONModel.setData(oData);
-            // console.log(oData)
             if (!this._ConfirmDialog) {
                 this._ConfirmDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ConfirmDialog", this);
 
@@ -457,7 +355,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this.byId("btnCancelHdr").setVisible(true);
 
             this._aHeaderDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("header").getData());
-            // console.log(this._aHeaderDataBeforeChange)
         },
 
         onCancelHdr: function(oEvent) {
@@ -656,10 +553,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 else if (col.mAggregations.template.mBindingInfos.value !== undefined) {
                     sColName = col.mAggregations.template.mBindingInfos.value.parts[0].path;
                 }
-                // console.log(this._aColumns[arg])
+
                 this._aColumns[arg].filter(item => item.name === sColName)
                     .forEach(ci => {
-                        // console.log(ci)
                         if (ci.ValueHelp["show"]) {
                             var bValueFormatter = false;
                             var sSuggestItemText = ci.ValueHelp["SuggestionItems"].text;
@@ -714,28 +610,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 });
                             }
 
-                            col.setTemplate(oInput);                            
-                            // col.setTemplate(new sap.m.Input({
-                            //     type: "Text",
-                            //     value: "{" + arg + ">" + sColName + "}",
-                            //     // maxLength: +ci.length,
-                            //     showValueHelp: true,
-                            //     valueHelpRequest: this.handleValueHelp.bind(this),
-                            //     showSuggestion: true,
-                            //     maxSuggestionWidth: ci.valueHelp["suggestionItems"].additionalText !== undefined ? ci.valueHelp["suggestionItems"].maxSuggestionWidth : "1px",
-                            //     suggestionItems: {
-                            //         path: ci.valueHelp["suggestionItems"].path,
-                            //         length: 10000,
-                            //         template: new sap.ui.core.ListItem({
-                            //             key: ci.valueHelp["suggestionItems"].text, 
-                            //             text: ci.valueHelp["suggestionItems"].text,
-                            //             additionalText: ci.valueHelp["suggestionItems"].additionalText !== undefined ? ci.valueHelp["suggestionItems"].additionalText : '',
-                            //         }),
-                            //         templateShareable: false
-                            //     },
-                            //     // suggest: this.handleSuggestion.bind(this),
-                            //     change: this.onValueHelpInputChange.bind(this)
-                            // }));
+                            col.setTemplate(oInput);
                         }
                         else if (ci.type === "NUMBER") {
                             col.setTemplate(new sap.m.Input({
@@ -747,64 +622,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 liveChange: this.onNumberLiveChange.bind(this), 
                                 enabled: true
                             }));
-                            // var oStepInput = new sap.m.StepInput({
-                            //     value: "{" + arg + ">" + sColName + "}",
-                            //     min: 0,
-                            //     change: this.onStepInputChange.bind(this),
-                            //     validationMode: "LiveChange"
-                            // }); 
-                            // oStepInput.addEventDelegate({
-                            //     onfocusin: function(oEvent) {
-                            //         // console.log(oEvent)
-                            //         // console.log(oEvent.srcControl.oParent.getDisplayValuePrecision())
-                            //         // if (oEvent.srcControl.getDisplayValuePrecision() ) {
-                            //             oEvent.srcControl.oParent.setDisplayValuePrecision(0);
-                            //         // }
-                            //         // me.setValuePrecision(oEvent);
-                            //         // console.log()
-                            //         // console.log("setDisplayValuePrecision")
-                            //     }
-                            //   });
-                            // col.setTemplate(oStepInput);
-                            // if (sColName === "BASEPOQTY" || sColName === "BASEPOQTY2") {
-                            //     col.setTemplate(new sap.m.Input({
-                            //         type: sap.m.InputType.Number,
-                            //         textAlign: sap.ui.core.TextAlign.Right,
-                            //         // value: "{" + arg + ">" + sColName + "}",
-                            //         value: "{path:'" + arg + ">" + sColName + "', formatOptions:{ minFractionDigits:" + ci.scale + ", maxFractionDigits:" + ci.scale + " }, constraints:{ precision:" + ci.precision + ", scale:" + ci.scale + " }}",
-                            //         // change: this.onNumberChange.bind(this),
-                            //         liveChange: this.onNumberLiveChange.bind(this), 
-                            //         enabled: true
-                            //     }));
-                            // } 
-                            // else if (sColName === "BASEPOQTY3") {
-                            //     col.setTemplate(new sap.m.StepInput({
-                            //         value: "{" + arg + ">" + sColName + "}",
-                            //         min: 0,
-                            //         displayValuePrecision: 0
-                            //     }));
-                            // }                            
-                            // else if (sColName === "BASEPOQTY4") {
-                            //     col.setTemplate(new sap.m.StepInput({
-                            //         value: "{" + arg + ">" + sColName + "}",
-                            //         min: 0,
-                            //         displayValuePrecision: 3
-                            //     }));
-                            // }
-                            // else if (sColName === "BASEPOQTY5") {
-                            //     col.setTemplate(new sap.m.MaskInput({
-                            //         value: "{" + arg + ">" + sColName + "}",
-                            //         textAlign: "End",
-                            //         mask: "9999"
-                            //     }));
-                            // }
-                            // else if (sColName === "BASEPOQTY6") {
-                            //     col.setTemplate(new sap.m.MaskInput({
-                            //         value: "{" + arg + ">" + sColName + "}",
-                            //         textAlign: "End",
-                            //         mask: "9999.999"
-                            //     }));
-                            // }
                         }
                         else if (ci.type === "DATE") {
                             col.setTemplate(new sap.m.DatePicker({
@@ -827,7 +644,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         }
                     }) 
 
-                    // console.log(sColName)
                     if (sColName === "GROSSPRICE") col.getLabel().addStyleClass("sapMLabelRequired");                    
             })
 
@@ -893,8 +709,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             }
 
             oSource.setDisplayValuePrecision(+vDecPlaces);
-            console.log(+vDecPlaces);
-            console.log(oSource)
         },
 
         setFormInputValueHelp: function(oEvent) {
@@ -983,11 +797,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var sGroup = oInputCtx.getModel().getProperty(sRowPath + '/GROUP');
 
             if (sInputField === "PAYTERMS" || sInputField === "INCOTERMS" || sInputField === "DESTINATION") {
-                // console.log(oInput.getSuggestionItems())
                 if (oInput.getSuggestionItems().length === 0) { 
                     var oData = me.getView().getModel("payterms").getData()[sGroup];
                     var sKey = "";
-                    // console.log(oData);
+
                     if (sInputField === "PAYTERMS") { 
                         sKey = "ZTERM";
                     }
@@ -1029,7 +842,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         handleValueHelp: function(oEvent) {
             var oModel = this.getOwnerComponent().getModel();
             var oSource = oEvent.getSource();
-            // console.log(oSource)
             var sModel = oSource.getBindingInfo("value").parts[0].model;
             var me = this;
 
@@ -1129,7 +941,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 if (!isNaN(sVendor)) {
                     while (sVendor.length < 10) sVendor = "0" + sVendor;
                 }
-                // console.log(sVendor, sPurchOrg)
+
                 oModel.read("/PayTermsSet", {
                     urlParameters: {
                         "$filter": "LIFNR eq '" + sVendor + "' and EKORG eq '" + sPurchOrg + "'"
@@ -1313,15 +1125,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 var oTable = this.byId(sModel + "Tab");
                 var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === oSource.getSelectedKey());
                 var iRowIndex = +sRowPath.split("/")[sRowPath.split("/").length-1];
-                // console.log(oSupplyType)
+
                 if (oSupplyType[0].FOC === "X") {
                     //disable gross/net price, set value to zero                    
                     oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false);
-                    // console.log(sModel, sRowPath)
+
                     this.getView().getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
                     oTable.getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
-                    // this.getView().getModel(sModel).setProperty(sRowPath + '/NETPRICE', "0");
-                    // console.log(this.getView().getModel(sModel).getData());
                 }
                 else {
                     var vInfoRecCheck = this.getView().getModel(sModel).getProperty(sRowPath + '/INFORECCHECK');
@@ -1494,7 +1304,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
         onNumberLiveChange: function(oEvent) {
             if (this._validationErrors === undefined) this._validationErrors = [];
-            // console.log("ok")
+
             var oSource = oEvent.getSource();
             var sModel = oSource.getBindingInfo("value").parts[0].model;
             var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
@@ -1555,8 +1365,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
                         .forEach((item, idx) => {
                             if (idx.toString() === sRowPath.replace("/","")) { 
-                                // console.log(item.BASEPOQTY)
-                                // console.log(oEvent.getParameters().value);
                                 item.BASEPOQTY = oEvent.getParameters().value;
     
                                 var sOrderConvFactor = item.ORDERCONVFACTOR === "" || item.ORDERCONVFACTOR === "0" ? "1" : item.ORDERCONVFACTOR;
@@ -1584,15 +1392,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)
                         .forEach((item, idx) => {
                             if (idx.toString() === sRowPath.replace("/","")) { 
-                                // console.log(item.GROSSPRICE)
                                 item.GROSSPRICE = oEvent.getParameters().value;
                                 item.NETPRICE = item.GROSSPRICE;
                                 this.byId("detailTab").getModel("detail").setProperty(sRowPath + '/NETPRICE', item.GROSSPRICE);
                             }
                     })
-        
-                    // this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
-                    // this.byId("detailTab").bindRows({path: "detail>/"});
                 }
             }
         },
@@ -1613,7 +1417,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             if (this._validationErrors === undefined) this._validationErrors = [];
             
             var oSource = oEvent.getSource();
-            console.log(oSource)
             var aHeaderData = this.getView().getModel("grpheader").getData();
             var vDelvDate = oEvent.getParameters().value;
             var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
@@ -1636,8 +1439,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     var vRetDate = sapDateFormat.format(new Date(oData["N_GetFtyCalDateReturn"].results[0].Date));
                     var vParamDate = sapDateFormat.format(new Date(oData["N_GetFtyCalDateParam"].results[0].Date));
                     var vPrevDateVal = me._prevDelvDate;
-                    // console.log(vRetDate, vParamDate)
-                    // console.log(me._prevDelvDate)
+
                     if (vRetDate !== vParamDate) {
                         var oData = {
                             Process: "delvdate-update",
@@ -1660,51 +1462,16 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                             
                         me._ConfirmDialog.open();                        
                     }
-                    // else {
-                    //     me.updateDelvDate(oSource, vDelvDate);
-                    // }
                 },
                 error: function (err) { }
             });
 
-            //check date if invalid
-            // if (oEvent.getParameters().value.split(".").length > 1) {
-            //     if (oEvent.getParameters().value.split(".")[1].length > 3) {
-            //         // console.log("invalid");
-            //         oEvent.getSource().setValueState("Error");
-            //         oEvent.getSource().setValueStateText("Enter a number with a maximum of 3 decimal places.");
-            //         this._validationErrors.push(oEvent.getSource().getId());
-            //     }
-            //     else {
-            //         oEvent.getSource().setValueState("None");
-            //         this._validationErrors.forEach((item, index) => {
-            //             if (item === oEvent.getSource().getId()) {
-            //                 this._validationErrors.splice(index, 1)
-            //             }
-            //         })
-            //     }
-            // }
-            // else {
-            //     oEvent.getSource().setValueState("None");
-            //     this._validationErrors.forEach((item, index) => {
-            //         if (item === oEvent.getSource().getId()) {
-            //             this._validationErrors.splice(index, 1)
-            //         }
-            //     })
-            // }
-           
-            // var oSource = oEvent.getSource();
-            // var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
-            // var sModel = oSource.getBindingInfo("value").parts[0].model;
-            // this.getView().getModel(sModel).setProperty(sRowPath + '/Edited', true);
             this._bDetailsChanged = false;
         },
 
         onClickDate: function(oEvent) {
-            // console.log("onClickDate")
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
             this._prevDelvDate = this.getView().getModel("detail").getData().filter(fItem => fItem.GROUP === sActiveGroup)[0].DELVDATE;
-            // console.log(this._prevDelvDate)
         },
 
         onUpdDate: function(oEvent) {
@@ -1745,7 +1512,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             }]
 
             oParam["N_GetFtyCalDateReturn"] = [];
-            // console.log(oParam)
+
             oModel.create("/GetFtyCalDateSet", oParam, {
                 method: "POST",
                 success: function(oData, oResponse) {
@@ -1892,12 +1659,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 // item.EBELP = sap.ui.getCore().byId("EBELP").getValue();
                 // item.EBELN = sap.ui.getCore().byId("EBELN").getValue();
             });
-            // console.log(this.getView().getModel("ddtext").getData())
 
             MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_FABSPECS_SAVED"])
-            // this._FabSpecsDialog.close();
+
             this._bFabSpecsChanged = false;
-            // console.log(this._HeaderTextDialog.getModel().getData().fs)
         },
 
         onDeleteFabSpecs: function(oEvent) {
@@ -1923,7 +1688,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         clearFabSpecs() {
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
             var oData = this.getView().getModel("fabspecs").getData()[sActiveGroup];
-            // console.log(oData);
 
             Object.keys(oData[0]).forEach(key => {
                 oData[0][key] = "";
@@ -2216,7 +1980,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var oData;
             var bProceed = true;
             var iNew = 0;
-            console.log(activeTab)
+
             if (activeTab === "fabspecs") {
                 this.onCloseFabSpecs();
             }
@@ -2413,10 +2177,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 oData = oData.filter(function (value, index) {
                     return selected.indexOf(index) === -1;
                 })
-                // console.log(oData)
-                // oTableModel.setData(oData);
+
                 oTable.clearSelection();
-                // oTable.getBinding("rows").refresh();
+
                 this._HeaderTextDialog.getModel().setProperty("/rem_items", oData);
                 this.getView().getModel("remarks").setProperty("/" + sActiveGroup,  oData);
 
@@ -2449,10 +2212,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "remarks-cancel") {
                 this._bRemarksChanged = false;
-
-                // var oTable = sap.ui.getCore().byId("remarksTab");
-                // var oTableModel = oTable.getModel("remarks");
-                // oTableModel.setData(this._aRemarksDataBeforeChange);
                 this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._aRemarksDataBeforeChange);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "packins-cancel") {
@@ -2505,20 +2264,15 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 if (sap.ui.core.routing.History !== undefined) {
                     oHistory = sap.ui.core.routing.History.getInstance();
                     sPreviousHash = oHistory.getPreviousHash();
-
-                    console.log(oHistory);
                 }
     
                 if (sPreviousHash !== undefined) {
-                    console.log(window.history)
-                    // window.history.go(-1);
                     window.history.go(-1);
                 } else { 
                     var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
                     oRouter.navTo("RouteMain", {}, true /*no history*/);
                 }
     
-                // this.setRowReadMode("header");
                 this.setRowReadMode("detail");
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "batchdelvdate-update") {
@@ -2553,8 +2307,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
         onGeneratePO: function(oEvent) {
             if (this._validationErrors.length === 0) {
-                // this._aCreatePOResult = [];
-                // console.log(this.getView().getModel("remarks").getData())
                 var me = this;
                 var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
                 var vSBU = this.getOwnerComponent().getModel("UI_MODEL").getData().sbu;
@@ -2576,12 +2328,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
                     })
                 })
-
-                // this.getView().getModel("grpheader").getData().forEach(item => {
-                //     if (item.PAYTERMS === "" || item.INCOTERMS == "" || item.DESTINATION == "" || item.SHIPMODE == "") {
-                //         bProceed = false;
-                //     }
-                // })
     
                 if (bProceed) {
                     this.getView().getModel("detail").getData().forEach(item => {
@@ -2596,20 +2342,15 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     var iCounter = 0;
     
                     this.getView().getModel("grpheader").getData().forEach(item => {
-                        console.log(item);
-                        // console.log(vSBU, item.DOCTYPE, item.COMPANY)
-    
                         setTimeout(() => {
                             this._oModel.read("/GetNoRangeCodeSet", {
                                 urlParameters: {
                                     "$filter": "SBU eq '" + vSBU + "' and DOCTYP eq '" + item.DOCTYPE + "' and COMPANY eq '" +  item.COMPANY + "'"
                                 },
-                                // async: false,
                                 success: function (oData, oResponse) {
-                                    // console.log(oData)
                                     if (oData.results.length === 0) {
                                         iCounter++;
-                                        // me.showMessage("No number range code retrieve.");
+
                                         me._aCreatePOResult.push({
                                             GROUP: item.GROUP,
                                             VENDOR: item.VENDOR,
@@ -2638,8 +2379,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                         oModel.create("/GetNumberSet", oParam, {
                                             method: "POST",
                                             success: function(oResult, oResponse) {
-                                                // console.log(oResult)
-                                                // console.log(oResult.EReturnno)               
                                                 if (oResult.EReturnno === "") {
                                                     iCounter++;
                                                     // me.showMessage(oResult.N_GetNumberReturn[0].Type + " " + oResult.N_GetNumberReturn[0].Message);
@@ -2709,54 +2448,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                                             })
                                                         }) 
                                                         
-                                                    var oParamCPOAddtlDtlsData = [];
-                                                    // me.getView().getModel("fabspecs").getData()[item.GROUP].filter(fItem => fItem.STATUS === "UPDATED")
-                                                    // .forEach(fs => {
-                                                    //     if (fs.ZZSHDA !== "") {
-                                                    //         oParamCPOAddtlDtlsData.push({
-                                                    //             PoNumber: oResult.EReturnno,
-                                                    //             PoItem: "00010",
-                                                    //             Zzhafe: fs.ZZHAFE,
-                                                    //             Zzshnk: fs.ZZSHNK,
-                                                    //             Zzcfwa: fs.ZZCFWA,
-                                                    //             Zzchng: fs.ZZCHNG,
-                                                    //             Zzstan: fs.ZZSTAN,
-                                                    //             Zzcfcw: fs.ZZCFCW,
-                                                    //             Zzdry: fs.ZZDRY,
-                                                    //             Zzreq1: fs.ZZREQ1,
-                                                    //             Zzreq2: fs.ZZREQ2,
-                                                    //             Zzshrq: fs.ZZSHRQ,
-                                                    //             Zzshda: sapDateFormat.format(new Date(fs.ZZSHDA)) + "T00:00:00",
-                                                    //             Zzprmo: fs.PLANMONTH.slice(0,2),
-                                                    //             Zzpryr: fs.PLANMONTH.slice(3,7)
-                                                    //             // Zzmakt: fs.ZZMAKT
-                                                    //         })
-                                                    //     }
-                                                    //     else {
-                                                    //         oParamCPOAddtlDtlsData.push({
-                                                    //             PoNumber: oResult.EReturnno,
-                                                    //             PoItem: "00010",
-                                                    //             Zzhafe: fs.ZZHAFE,
-                                                    //             Zzshnk: fs.ZZSHNK,
-                                                    //             Zzcfwa: fs.ZZCFWA,
-                                                    //             Zzchng: fs.ZZCHNG,
-                                                    //             Zzstan: fs.ZZSTAN,
-                                                    //             Zzcfcw: fs.ZZCFCW,
-                                                    //             Zzdry: fs.ZZDRY,
-                                                    //             Zzreq1: fs.ZZREQ1,
-                                                    //             Zzreq2: fs.ZZREQ2,
-                                                    //             Zzshrq: fs.ZZSHRQ,
-                                                    //             Zzprmo: fs.PLANMONTH.slice(0,2),
-                                                    //             Zzpryr: fs.PLANMONTH.slice(3,7)
-                                                    //             // Zzmakt: fs.ZZMAKT
-                                                    //         })
-                                                    //     }
-                                                    // })
-                                                                                                        
+                                                    var oParamCPOAddtlDtlsData = [];                                                                                                        
                                                     var oParamCPOItemData = [];
                                                     var oParamCPOItemSchedData = [];
                                                     var oParamCPOClosePRData = [];
-                                                    // var oParamCPOTolData = [];
                                                         
                                                     var oPODocTypeInfo = me.getView().getModel("doctype").getData().filter(fItem => fItem.Podoctyp === item.DOCTYPE);
                                                     var bGRInd = false, bIRInd = false, bGRBasedIV = false;
@@ -2986,34 +2681,17 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                                                     });
                                                                 }
                                                                 else {
-                                                                    // console.log("showGeneratePOResult");
                                                                     me.showGeneratePOResult();
                                                                 }
                                                             }
                                                             else {
                                                                 MessageBox.error(sRetMSg);
                                                             }
-    
-                                                            // if (iCounter === me.getView().getModel("header").getData().length) {
-                                                            //     me.showGeneratePOResult();
-                                                            // }
                                                         },
                                                         error: function(err) {
                                                             iCounter++;
-                                                            // console.log(err);
                                                             me.closeLoadingDialog();
                                                             MessageBox.information(err);
-                                                            // me._aCreatePOResult.push({
-                                                            //     GROUP: item.GROUP,
-                                                            //     VENDOR: item.VENDOR,
-                                                            //     PURCHORG: item.PURCHORG,
-                                                            //     PURCHGRP: item.PURCHGRP,
-                                                            //     REMARKS: err
-                                                            // })
-        
-                                                            // if (iCounter === me.getView().getModel("header").getData().length) {
-                                                            //     me.showGeneratePOResult();
-                                                            // }
                                                         }
                                                     });
                                                 }
@@ -3058,7 +2736,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     })
                 }
                 else {
-                    // console.log(this.getView().getModel("ddtext").getData()["INFO_CREATE_PO_CHECK_REQD"])
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_CREATEPO_CHECK_REQD"]);
                 }
             }
@@ -3125,7 +2802,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 }
                                 var PODate = sapDateFormat.format(new Date(item.PODATE)) + "T00:00:00";
                                 var filter = encodeURIComponent("(VENDOR='"+item.VENDOR+"',PURCHGRP='" + item.PURCHGRP +"',PURCHORG='"+ item.PURCHORG +"',SHIPTOPLANT='"+ item.SHIPTOPLANT +"',PURCHPLANT='"+ item.PURCHPLANT +"',PODT=datetime'"+ PODate +"')")
-                                console.log(extendPOEntitySet+filter)
+
                                 extendPOModel.read(extendPOEntitySet+filter , {
                                     success: function (oData, oResponse) {
                                         console.log(oData)
@@ -3211,12 +2888,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                             if (item.BEDAT !== null)
                                 item.BEDAT = dateFormat.format(new Date(item.BEDAT));
                         })
+
                         resultExtendPop.push(oData.results);
-                        console.log(resultExtendPop);
                         resolve();
                     },
                     error: function(error) {
-                        console.log(error);
                         resolve();
                     }
                 });
@@ -3243,7 +2919,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 }
 
                 for(var x = 0; x < resultExtendPop[0].length; x++) {
-                    // console.log(resultExtendPop[0])
                     oParamDataPO.push({
                         Bedat     : sapDateFormat.format(new Date(resultExtendPop[0][x].BEDAT)) + "T00:00:00",
                         Bsart     : resultExtendPop[0][x].BSART,
@@ -3284,8 +2959,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         Bnfpo: resultExtendPop[0][x].BNFPO
                     })
                 }
-                
-                // console.log(this.byId("detailTab").getModel("detail").getData());
+
                 this.byId("detailTab").getModel("detail").getData().forEach(item => {
                     oParamDataPO.push({
                         Bedat     : sapDateFormat.format(new Date(resultExtendPop[0][0].BEDAT)) + "T00:00:00",
@@ -3341,10 +3015,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 oParam['N_ChangePOReturn'] = [];
 
                 console.log(oParam);
-                // return;
+
                 var bSuccess = "", sRetMessage = "";
                 var oCurrHeaderData = me.getView().getModel("grpheader").getData();
-                // var sActiveGroup = me.getView().getModel("ui").getData().activeGroup;
 
                 this.showLoadingDialog('Processing...');
                 promiseResult = new Promise((resolve, reject)=>{
@@ -3353,9 +3026,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         success: function(oData, oResponse) {
                             console.log(oData)
                             if(oData.N_ChangePOReturn.results.length > 0){
-                                // message = oData.N_ChangePOReturn.results[0].Msgv1;
                                 me.closeLoadingDialog();
-                                // MessageBox.information(message);
                                 sRetMessage = oData.N_ChangePOReturn.results[0].Msgv1;
                                 me.loadExtendPODialog.close();
                                 me._poCreated = true;
@@ -3413,7 +3084,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         });                        
                     }
                     else {
-                        // console.log("showGeneratePOResult");
                         me.showGeneratePOResult();
                     }                    
                 }
@@ -3698,16 +3368,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 this.byId("btnPrevPO").setEnabled(false);
             }
             else { this.byId("btnPrevPO").setEnabled(true); }
-
-            // if (oHeaderData.length >= ((+sActiveGroup) + 1)) {
-            //     //next group
-            //     MessageBox.information(this.getView().getModel("ddtext").getData()["GENPOCANCEL"]); 
-            //     this.onNextGroup(((+sActiveGroup) + 1 ) + "");
-            // }
-            // else {
-            //     // console.log("showGeneratePOResult");
-            //     this.showGeneratePOResult();
-            // }
         },
 
         onCancelAllPO: function(oEvent) {
@@ -3744,8 +3404,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 this._LoadingDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.LoadingDialog", this);
                 this.getView().addDependent(this._LoadingDialog);
             }
-            // jQuery.sap.syncStyleClass("sapUiSizeCompact", this.getView(), this._LoadingDialog);
-            // console.log(this._LoadingDialog)
+
             this._LoadingDialog.setText(arg);
             this._LoadingDialog.open();
         },
@@ -3783,7 +3442,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },
 
         showGeneratePOResult() {
-            // console.log(this._aCreatePOResult)
             // display pop-up for user selection
             this._aCreatePOResult = this._aCreatePOResult.sort((a,b) => (a.GROUP > b.GROUP ? 1 : -1));
             
@@ -3810,9 +3468,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
         onCreatePOResultClose: function(oEvent) {
             this._GeneratePOResultDialog.close();
-            // this._poCreated = true;
+
             if (this._poCreated) this.getOwnerComponent().getModel("UI_MODEL").setProperty("/flag", true);
-            console.log(this._poCreated)
+
             var oHistory, sPreviousHash;
             
             if (sap.ui.core.routing.History !== undefined) {
@@ -3827,7 +3485,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 oRouter.navTo("RouteMain", {}, true /*no history*/);
             }
 
-            // this.setRowReadMode("header");
             this.setRowReadMode("detail");            
         },
 
@@ -3845,9 +3502,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },
 
         onNewStyle: function (oEvent) {
-            // var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            // oRouter.navTo("RouteStyles");
-            // console.log()
             var me = this;
             var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
 
@@ -3891,7 +3545,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             oModel.create("/Get_POTolSet", oParam, {
                 method: "POST",
                 success: function(oData, oResponse) {
-                    // console.log(oData);
                     var sActiveGroup = me.getView().getModel("ui").getData().activeGroup;
                     var sRowPath = arg1;
 
@@ -3963,10 +3616,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                             })
                         }
                     }
-
-                    // me.byId("detailTab").setModel(new JSONModel(me.getView().getModel("detail").getData()), "detail");
-                    // me.byId("detailTab").bindRows({path: "detail>/"});
-                    // console.log(me._oParamCPOTolData);
                 },
                 error: function (err) { }
             })
@@ -3998,7 +3647,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     })                    
                 }
             })
-            // console.log(this._oParamCPOTolData)
+
             this._oParamCPOTolData.forEach(tol => {
                 this._oModel.create("/PODataSet", tol, mParameters);
             })
@@ -4011,7 +3660,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },
 
         formatValueHelp: function(sValue, sPath, sKey, sText, sFormat) {
-            // console.log(sValue, sPath, sKey, sText, sFormat);
             var oValue = this.getView().getModel(sPath).getData().filter(v => v[sKey] === sValue);
 
             if (oValue && oValue.length > 0) {
@@ -4070,7 +3718,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },
 
         handleFormValueHelp: function (oEvent) {
-            //open product type value help
             TableValueHelp.handleFormValueHelp(oEvent, this);
         },
 
@@ -4093,31 +3740,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
                 this.getView().getModel(sModel).setProperty(sPath, oSource.getSelectedKey());
 
-                // if (sPath === "/SOLDTOCUST") {
-                //     var oSoldToCust = this.getView().getModel("shiptocust").getData().filter(fItem => fItem.CUSTOMER === oSource.getSelectedKey());
-
-                //     if (this.getView().getModel(sModel).getProperty("/CUSTGRP") !== oSoldToCust[0].CUSTGRP) {
-                //         this.getView().getModel(sModel).setProperty("/CUSTGRP", oSoldToCust[0].CUSTGRP);
-                //         this.getView().getModel(sModel).setProperty("/CONSIGN", "");
-                //         this.getView().getModel(sModel).setProperty("/MESSRS", "");
-
-                //         this._oModel.read("/ConsignSHSet", {
-                //             urlParameters: {
-                //                 "$filter": "CUSTGRP eq '" + oSoldToCust[0].CUSTGRP + "'"
-                //             },
-                //             success: function (oData, oResponse) {
-                //                 me.getView().getModel("consign").setProperty("/", oData.results);
-                //                 // me.getView().setModel(new JSONModel(oData.results), "consign");
-                //             },
-                //             error: function (err) { }
-                //         });
-                //     }
-                // }
-                // else if (sPath === "/SALESTERM") {
-                //     var oSalesTerm = this.getView().getModel("salesterm").getData().filter(fItem => fItem.SALESTERM === oSource.getSelectedKey());
-                //     this.getView().getModel(sModel).setProperty("/SALESTERMTEXT", oSalesTerm[0].DESCRIPTION);
-                // }
-
                 this._validationErrors.forEach((item, index) => {
                     if (item === oEvent.getSource().getId()) {
                         this._validationErrors.splice(index, 1)
@@ -4125,23 +3747,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 })
             }
 
-            // this.getView().getModel(sModel).setProperty(sRowPath + '/Edited', true);
-            // console.log(this._validationErrors);
             this._bHeaderChanged = true;
         },
-
-        // onBrowserBack: function(oEvent) {
-        //     var me = this;
-
-        //     window.onhashchange = function() {
-        //         console.log("browser back is clicked!");
-        //         var oRouter = sap.ui.core.UIComponent.getRouterFor(me);
-        //         oRouter.navTo("RouteMain", {}, true /*no history*/);
-        //     }
-        // },
-
-        // onBack: function(oEvent) {
-        //     console.log("back")
-        // }
     })
 })
