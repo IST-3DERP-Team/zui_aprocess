@@ -9,7 +9,7 @@
         {"name": "SHIPMODE", "label": "Ship Mode", "type": "STRING", "required": true, "length": "2", "TextFormatMode": "ValueKey",
             "valueHelp": {"show": true, "items": {"path": "shipmode", "value": "SHIPMODE", "text": "DESC"},
             "suggestionItems": {"path": "shipmode>/", "text": "{shipmode>SHIPMODE}", "additionalText": "{shipmode>DESC}", "maxSuggestionWidth": "160px"}}} 
-        ],
+    ],
     "detail": [
         {"name": "DELVDATE", "label": "Delv Date", "type": "DATE", "required": true, "length": "10",
             "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
@@ -36,7 +36,7 @@
                 "columns": "tvh_supplytype"
             }
         }              
-        ],
+    ],
     "grpheader": [
         {"ColumnName": "SHIPMODE", "TextFormatMode": "ValueKey",
             "ValueHelp": {"show": true, "items": {"path": "shipmode", "value": "UOM", "text": "DESC"},
@@ -84,5 +84,22 @@
         {"ColumnName": "MSEHI", "DataType": "STRING", "ColumnWidth": "150px", "Visible": true, "Key": true, "Value": false},
         {"ColumnName": "MSEHL", "DataType": "STRING", "ColumnWidth": "250px", "Visible": true, "Key": false, "Value": true},
         {"ColumnName": "ANDEC", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false}
+    ],
+    "assignVendorManual": [
+        {"ColumnName": "VENDOR", "TextFormatMode": "Key",
+            "ValueHelp": {"show": true, "items": {"path": "vendors", "value": "LIFNR", "text": "NAME1"},
+                "columns": "tvh_vendor"
+            }
+        }
+    ],
+    "tvh_vendor": [
+        {"ColumnName": "LIFNR", "DataType": "STRING", "ColumnWidth": "100px", "Visible": true, "Key": true, "Value": true},
+        {"ColumnName": "NAME1", "DataType": "STRING", "ColumnWidth": "300px", "Visible": true, "Key": false, "Value": false},
+        {"ColumnName": "EKORG", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "INCO1", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "INCO2", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "MATNO", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "WAERS", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "ZTERM", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false}
     ]
 }

@@ -11,11 +11,12 @@ sap.ui.define([
         'sap/m/ColumnListItem',
         'sap/m/Label',
         "../js/TableFilter",
+        "../js/TableValueHelp"
     ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator, SearchField, typeString, ColumnListItem, Label, TableFilter) {
+    function (Controller, JSONModel, MessageBox, Common, Token, Filter, FilterOperator, SearchField, typeString, ColumnListItem, Label, TableFilter, TableValueHelp) {
         "use strict";
 
         var that;
@@ -29,6 +30,8 @@ sap.ui.define([
                 var me = this;
                 this._oModel = this.getOwnerComponent().getModel();
                 this._tableFilter = TableFilter;
+                this._tableValueHelp = TableValueHelp;
+                this._oModelColumns = [];
                 this._aColumns = [];
                 this._colFilters = {};
 
@@ -352,9 +355,12 @@ sap.ui.define([
                     success: function (oData, oResponse) {
                         me.getView().setModel(new JSONModel(oData.results), "vendor");
                         me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/vendor", oData.results);
+                        console.log(me.getView().getModel("vendor").getData())
                     },
                     error: function (err) { }
                 });
+
+                this.getColumnProp();
             },
 
             onExit: function() {
@@ -435,6 +441,16 @@ sap.ui.define([
                 //     },
                 //     error: function (err) { }
                 // });
+            },
+
+            getColumnProp: async function() {
+                var sPath = jQuery.sap.getModulePath("zuiaprocess", "/model/columns.json");
+    
+                var oModelColumns = new JSONModel();
+                await oModelColumns.loadData(sPath);
+    
+                // this._aColumns = oModelColumns.getData();
+                this._oModelColumns = oModelColumns.getData();
             },
 
             getColumns(arg) {
@@ -1631,6 +1647,7 @@ sap.ui.define([
             beforeOpenAVM: function(oEvent) {
                 var me = this;
                 var oVendorSource = {};
+                var oTable = sap.ui.getCore().byId("assignVendorManualTab");
 
                 this._AssignVendorManualDialog.getModel().getData().rows.forEach((item, index) => {
                     var vMatNo = item.MATERIALNO;
@@ -1644,16 +1661,17 @@ sap.ui.define([
                             oVendorSource[vMatNo] = oData.results;                            
                             // console.log(oData)
 
-                            sap.ui.getCore().byId("assignVendorManualTab").getRows()[index].getCells()[1].bindAggregation("suggestionItems", {
+                            oTable.getRows()[index].getCells()[1].bindAggregation("suggestionItems", {
                                 path: "vendor>/" + vMatNo,
                                 length: 10000,
                                 template: new sap.ui.core.ListItem({
+                                    key: "{vendor>LIFNR}",
                                     text: "{vendor>LIFNR}",
-                                    key: "{vendor>LIFNR}"
+                                    additionalText: "{vendor>NAME1}"
                                 })
                             });
 
-                            sap.ui.getCore().byId("assignVendorManualTab").getRows()[index].getCells()[1].setValueState("None");
+                            oTable.getRows()[index].getCells()[1].setValueState("None");
 
                             if (me._AssignVendorManualDialog.getModel().getData().rows.length === (index + 1)) {
                                 me.getView().setModel(new JSONModel(oVendorSource), "vendor");
@@ -1906,15 +1924,16 @@ sap.ui.define([
    
                 var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
                 var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
-                var vh = this.getView().getModel("vendor").getData()[vMatNo];
-
+                var vh = this.getView().getModel("vendor").getData()[vMatNo];                
+                this.getView().setModel(new JSONModel(vh), "vendors");
+                
                 vh.forEach(item => {
                     item.VHTitle = item.LIFNR;
                     item.VHSelected = (item.LIFNR === this._inputValue);
                 })
 
                 vh.sort((a,b) => (a.VHTitle > b.VHTitle ? 1 : -1));
-
+                
                 var oVHModel = new JSONModel({
                     items: vh,
                     title: "Vendor"
@@ -1992,18 +2011,19 @@ sap.ui.define([
             },
 
             handleSuggestionItemSelected: function (oEvent) {
+                var oSource = oEvent.getSource();
                 var oSelectedItem = oEvent.getParameter("selectedItem");
-                var sRowPath = oEvent.getSource().getBindingInfo("value").binding.oContext.sPath;
+                var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
                 
                 if (oSelectedItem !== null) {
                     var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
-                    var vh = this.getView().getModel("vendor").getData()[vMatNo].filter(fItem => fItem.LIFNR === oSelectedItem.getKey());
+                    var oVendor = this.getView().getModel("vendor").getData()[vMatNo].filter(fItem => fItem.LIFNR === oSelectedItem.getKey());
                     
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', vh[0].NAME1);                           
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', vh[0].WAERS);
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', vh[0].ZTERM);                           
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', vh[0].INCO1);
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', vh[0].INCO2);
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', oVendor[0].NAME1);                           
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', oVendor[0].WAERS);
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', oVendor[0].ZTERM);                           
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', oVendor[0].INCO1);
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', oVendor[0].INCO2);
                 }
                 else {
                     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
@@ -2015,6 +2035,83 @@ sap.ui.define([
 
                 this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/EDITED', true);
                 this._bAssignVendorManualChanged = true;
+            },
+
+            handleStaticValueHelp: function(oEvent) {
+                var oSource = oEvent.getSource();
+   
+                this._inputId = oSource.getId();
+                this._inputValue = oSource.getValue();
+                this._inputSource = oSource;
+                this._inputField = oSource.getBindingInfo("value").parts[0].path;
+
+                var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
+                var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");                
+                this.getView().setModel(new JSONModel(this.getView().getModel("vendor").getData()[vMatNo]), "vendors");
+
+                TableValueHelp.handleStaticTableValueHelp(oEvent, this);
+            },
+
+            onStaticValueHelpInputChange: function(oEvent) {
+                var oSource = oEvent.getSource();
+                var isInvalid = !oSource.getSelectedKey() && oSource.getValue().trim();
+                var sPath = oSource.getBindingInfo("value").parts[0].path;
+                var sRowPath = oSource.oParent.getBindingContext().sPath;
+                console.log(oSource.getSelectedKey())
+                oSource.setValueState(isInvalid ? "Error" : "None");
+
+                oSource.getSuggestionItems().forEach(item => {
+                    if (item.getProperty("key") === oSource.getValue().trim()) {
+                        isInvalid = false;
+                        oSource.setValueState(isInvalid ? "Error" : "None");
+                    }
+                })
+    
+                oSource.getSuggestionItems().forEach(item => {
+                    if (item.getProperty("key") === oSource.getValue().trim()) {
+                        isInvalid = false;
+                        oSource.setValueState(isInvalid ? "Error" : "None");
+                    }
+                })
+    
+                if (isInvalid) { 
+                    this._validationErrors.push(oEvent.getSource().getId());
+
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
+                }
+                else {
+                    this._AssignVendorManualDialog.getModel().setProperty(sPath, oSource.getSelectedKey());
+
+                    if (oSource.getSelectedKey() === "") {
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
+                    }
+                    else {
+                        var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
+                        var oVendor = this.getView().getModel("vendor").getData()[vMatNo].filter(fItem => fItem.LIFNR === oSource.getSelectedKey());
+                        
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', oVendor[0].NAME1);                           
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', oVendor[0].WAERS);
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', oVendor[0].ZTERM);                           
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', oVendor[0].INCO1);
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', oVendor[0].INCO2);
+                    }
+
+                    console.log(this._AssignVendorManualDialog.getModel().getData())
+    
+                    this._validationErrors.forEach((item, index) => {
+                        if (item === oEvent.getSource().getId()) {
+                            this._validationErrors.splice(index, 1)
+                        }
+                    })
+                }
             },
 
             onUnassign: async function() {
@@ -3399,6 +3496,27 @@ sap.ui.define([
                 if (oEvent.getParameter("value") === "") {
                     this._oMultiInput.setValueState("None");
                 }
+            },
+
+            formatValueHelp: function(sValue, sPath, sKey, sText, sFormat) {
+                // console.log(sValue, sPath, sKey, sText, sFormat);
+                var oValue = this.getView().getModel(sPath).getData().filter(v => v[sKey] === sValue);
+                // console.log(sValue, sFormat, oValue)
+                if (oValue && oValue.length > 0) {
+                    if (sFormat === "Value") {
+                        return oValue[0][sText];
+                    }
+                    else if (sFormat === "ValueKey") {
+                        return oValue[0][sText] + " (" + sValue + ")";
+                    }
+                    else if (sFormat === "KeyValue") {
+                        return sValue + " (" + oValue[0][sText] + ")";
+                    }
+                    else {
+                        return sValue;
+                    }
+                }
+                else return sValue;
             },
 
             //******************************************* */

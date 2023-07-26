@@ -1284,8 +1284,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             // var sRowPath = oSource.getBindingInfo("value").binding.oContext.sPath;
             var sRowPath = "";
             var sModel = oSource.getBindingInfo("value").parts[0].model;
-            console.log(oSource)
-            console.log(sModel)
+
             oSource.getSuggestionItems().forEach(item => {
                 if (item.getProperty("key") === oSource.getValue().trim()) {
                     isInvalid = false;
