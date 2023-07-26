@@ -1444,7 +1444,7 @@ sap.ui.define([
                     item.EDITED = false;
                 })
 
-                var vRowCount = oData.length.length > 7 ? oData.length : 7;
+                var vRowCount = oData.length.length > 10 ? oData.length : 10;
 
                 if (!me._AssignVendorManualDialog) {
                     me._AssignVendorManualDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.AssignVendorManualDialog", me);

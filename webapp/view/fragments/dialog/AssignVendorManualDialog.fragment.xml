@@ -6,7 +6,7 @@
         id="fragment-assignvendormanual" 
         fragmentName="assignvendormanual">
     <Dialog contentWidth="826px"
-        contentHeight="500px"
+        contentHeight="395px"
         title="Assign Vendor Manually"
         beforeOpen="beforeOpenAVM"
         resizable="true"
@@ -15,7 +15,7 @@
             <uit:Table id="assignVendorManualTab"
                 rows="{/rows}"
                 selectionMode="MultiToggle"
-                visibleRowCount="Auto"
+                visibleRowCount="{/rowCount}"
                 paste="onPaste"
                 class="sapUiTinyMargin">
                 <uit:rowSettingsTemplate>
