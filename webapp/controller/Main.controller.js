@@ -71,7 +71,6 @@ sap.ui.define([
                 var oJSONDataModel = new JSONModel(); 
                 oJSONDataModel.setData(this._counts);
 
-                // oJSONDataModel.setData(oData);
                 this.getView().setModel(oJSONDataModel, "counts");
 
                 this.setSmartFilterModel();
