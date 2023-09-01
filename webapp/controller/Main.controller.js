@@ -34,6 +34,7 @@ sap.ui.define([
                 this._oModelColumns = [];
                 this._aColumns = [];
                 this._colFilters = {};
+                this._selectedRecs = [];
 
                 if (sap.ui.getCore().byId("backBtn") !== undefined) {
                     this._fBackButton = sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction;
@@ -215,6 +216,8 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "CONVNUM"});
                 oDDTextParam.push({CODE: "CONVDEN"});
                 oDDTextParam.push({CODE: "NAME1"});
+                oDDTextParam.push({CODE: "INFO_INPUT_DELVDATE"});
+                oDDTextParam.push({CODE: "TEXT1"});
 
                 oModel.create("/CaptionMsgSet", { CaptionMsgItems: oDDTextParam  }, {
                     method: "POST",
@@ -355,6 +358,14 @@ sap.ui.define([
                     error: function (err) { }
                 });
 
+                this._oModel.read("/PODocTypSet", {
+                    success: function (oData, oResponse) {
+                        me.getView().setModel(new JSONModel(oData.results), "podoctyp");
+                        me.getOwnerComponent().getModel("LOOKUP_MODEL").setProperty("/podoctyp", oData.results);
+                    },
+                    error: function (err) { }
+                });
+
                 this.getColumnProp();
             },
 
@@ -478,7 +489,12 @@ sap.ui.define([
                             if (item.VENDOR === '') vUnassigned++;
                             if (item.QTY !== item.ORDEREDQTY && +item.ORDEREDQTY > 0) vPartial++;
                             item.DELVDATE = dateFormat.format(item.DELVDATE);
-                            
+                            item.RECID = item.PRNUMBER + item.PRITEMNO;
+                        })
+
+                        oData.results.sort((a,b) => (a.RECID < b.RECID ? 1 : -1));
+
+                        oData.results.forEach((item, index) => {
                             if (index === 0) item.ACTIVE = "X";
                             else item.ACTIVE = "";
                         })
@@ -532,6 +548,7 @@ sap.ui.define([
                 //bind the data to the table
                 oTable.bindRows("/rows");
 
+                this.setActiveRowHighlight();
                 this._tableRendered = "mainTab";
             },
 
@@ -831,7 +848,12 @@ sap.ui.define([
                             if (item.VENDOR === '') vUnassigned++;
                             if (item.QTY !== item.ORDEREDQTY && +item.ORDEREDQTY > 0) vPartial++;
                             item.DELVDATE = dateFormat.format(item.DELVDATE);
+                            item.RECID = item.PRNUMBER + item.PRITEMNO;
+                        })
 
+                        oData.results.sort((a,b) => (a.RECID < b.RECID ? 1 : -1));
+
+                        oData.results.forEach((item, index) => {
                             if (index === 0) item.ACTIVE = "X";
                             else item.ACTIVE = "";
                         })
@@ -1319,6 +1341,7 @@ sap.ui.define([
                         this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").setProperty("/items", this._aColSorters);
                     }
 
+                    this._selectedRecs = this._oAssignVendorData;
                     this.refreshTableData(); 
                 }
 
@@ -1361,7 +1384,79 @@ sap.ui.define([
                 this._AssignVendorResultDialog.open();
             },
 
-            onManualAssign: function (oEvent) {
+            onManualAssign: async function (oEvent) {
+                var me = this;
+                this._oAssignVendorData = [];
+                this._oLock = [];
+                this._refresh = false;
+
+                var oTable = this.byId("mainTab");
+                var oSelectedIndices = oTable.getSelectedIndices();
+                var oTmpSelectedIndices = [];
+                var aData = oTable.getModel().getData().rows;
+                var vSBU = this.getView().getModel("ui").getData().sbu;
+                var vMatTypExist = true, vInvalid = false;
+
+                if (oSelectedIndices.length > 0) {
+                    oSelectedIndices.forEach(item => {
+                        oTmpSelectedIndices.push(oTable.getBinding("rows").aIndices[item])
+                    })
+
+                    oSelectedIndices = oTmpSelectedIndices;
+
+                    oSelectedIndices.forEach((item, index) => {
+                        if (vInvalid || !vMatTypExist) return;
+
+                        if (aData.at(item).VENDOR !== "" || aData.at(item).PURCHORG === "") vInvalid = true;
+
+                        me._oAssignVendorData.push({
+                            PRNUMBER: aData.at(item).PRNUMBER,
+                            PRITEMNO: aData.at(item).PRITEMNO,
+                            MATERIALNO: aData.at(item).MATERIALNO,
+                            IONUMBER: aData.at(item).IONUMBER,
+                            QTY: aData.at(item).QTY,
+                            DELVDATE: aData.at(item).DELVDATE,
+                            UNIT: aData.at(item).UNIT,
+                            PURCHORG: aData.at(item).PURCHORG,
+                            PURCHPLANT: aData.at(item).PURCHPLANT,
+                            PURCHGRP: aData.at(item).PURCHGRP,
+                            REQUISITIONER: aData.at(item).REQUISITIONER,
+                            TRACKINGNO: aData.at(item).TRACKINGNO,
+                            SUPPLYTYPE: aData.at(item).SUPPLYTYPE,
+                            SHIPTOPLANT: aData.at(item).SHIPTOPLANT,
+                            SEASON: aData.at(item).SEASON,
+                            SHORTTEXT: aData.at(item).SHORTTEXT,
+                            VENDOR: "",
+                            EDITED: false,
+                            REMARKS: ""
+                        })
+
+                        me._oLock.push({
+                            Prno: aData.at(item).PRNUMBER,
+                            Prln: aData.at(item).PRITEMNO
+                        })
+                    })
+                    
+                    if (vInvalid) {
+                        sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_INVALID_SEL_MANUALASSIGNVENDOR"]);
+                        me.closeLoadingDialog();
+                    }
+                    else {
+                        me.showLoadingDialog('Processing...');
+
+                        var bProceed = await me.lock(me);
+                        if (!bProceed) return;
+
+                        me.closeLoadingDialog();
+                        me.showManualVendorAssignment(); 
+                    }
+                }
+                else {
+                    sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_NO_RECORD_TO_PROC"]);
+                }
+            },
+
+            onManualAssign2: function (oEvent) {
                 var me = this;
                 this._oAssignVendorData = [];
                 this._oLock = [];
@@ -2080,6 +2175,8 @@ sap.ui.define([
                         var bProceed = await this.lock(this);
                         if (!bProceed) return;
 
+                        this._selectedRecs = 
+
                         oParam['N_ChangePRParam'] = oParamData;
                         oParam['N_ChangePRReturn'] = [];
 
@@ -2087,11 +2184,11 @@ sap.ui.define([
                             method: "POST",
                             success: function(oResultCPR, oResponse) {
                                 me.closeLoadingDialog();
-    
+
                                 if (oResultCPR.N_ChangePRReturn.results.length > 0) {
                                     me._oAssignVendorData.forEach(item => {
                                         var oRetMsg = oResultCPR.N_ChangePRReturn.results.filter(fItem => fItem.PreqNo === item.PRNUMBER);
-    
+
                                         if (oRetMsg.length > 0) {
                                             item.REMARKS = oRetMsg[0].Message;
                                         }
@@ -2160,9 +2257,17 @@ sap.ui.define([
                             if (item.VENDOR === '') vUnassigned++;
                             if (item.QTY !== item.ORDEREDQTY && +item.ORDEREDQTY > 0) vPartial++;
                             item.DELVDATE = dateFormat.format(item.DELVDATE);
+                            item.RECID = item.PRNUMBER + item.PRITEMNO;
+                        })
 
-                            if (index === 0) item.ACTIVE = "X";
-                            else item.ACTIVE = "";
+                        oData.results.sort((a,b) => (a.RECID < b.RECID ? 1 : -1));
+
+                        oData.results.forEach((item, index) => {
+                            if (me._selectedRecs.length === 0) {
+                                if (index === 0) item.ACTIVE = "X";
+                                else item.ACTIVE = "";
+                            }
+                            else { item.ACTIVE = ""; }
                         })
 
                         me._counts.total = oData.results.length;
@@ -2182,10 +2287,39 @@ sap.ui.define([
                         // if (me.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").getData().items.length > 0) me.setColumnFilters("mainTab");
                         if (me.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").getData().items.length > 0) me.setColumnSorters("mainTab");
                         TableFilter.applyColFilters(me);
+
+                        setTimeout(() => {
+                            if (me._selectedRecs.length > 0) {
+                                me.setSelectedRows();
+                            }
+                        }, 500);
                     },
                     error: function (err) { }
                 });
 
+            },
+
+            setSelectedRows() {
+                var bActive = false;
+
+                this.byId("mainTab").getModel().getData().rows.forEach((item, index) => {
+                    item.ACTIVE = "";
+
+                    if (this._selectedRecs.filter(fItem => fItem.PRNUMBER === item.PRNUMBER && fItem.PRITEMNO === item.PRITEMNO).length > 0) {
+                        this.byId("mainTab").getBinding("rows").aIndices.forEach((item2, index2) => {
+                            if (item2 === index) {
+                                this.byId("mainTab").addSelectionInterval(index2, index2);
+
+                                if (!bActive) {
+                                    item.ACTIVE = "X";
+                                    bActive = true;
+                                }
+                            }
+                        })
+                    }
+                })
+
+                this._selectedRecs = [];
             },
 
             onSaveTableLayout: function () {
@@ -2429,16 +2563,28 @@ sap.ui.define([
                                                             else {
                                                                 item.DOCTYPE = returnData[0].PODOCTYP;
 
+                                                                var oCompany = me.getView().getModel("company").getData().filter(fItem => fItem.BUKRS === item.COMPANY);
+                                                                var oPurchPlant = me.getView().getModel("plant").getData().filter(fItem => fItem.WERKS === item.PURCHPLANT);
+                                                                var oShipPlant = me.getView().getModel("plant").getData().filter(fItem => fItem.WERKS === item.SHIPTOPLANT);
+                                                                var oPurchOrg = me.getView().getModel("purchorg").getData().filter(fItem => fItem.PURCHORG === item.PURCHORG);
+                                                                var oPurchGrp = me.getView().getModel("purchgrp").getData().filter(fItem => fItem.PURCHGRP === item.PURCHGRP);
+
                                                                 oParamData.push({
                                                                     DOCTYPE: returnData[0].PODOCTYP,
+                                                                    DOCTYPEDESC: returnData[0].SHORTTEXT + " (" + returnData[0].PODOCTYP + ")",
                                                                     VENDOR: item.VENDOR,
-                                                                    PURCHORG: item.PURCHORG,
-                                                                    PURCHGRP: item.PURCHGRP,
-                                                                    COMPANY: item.COMPANY,
-                                                                    PURCHPLANT: item.PURCHPLANT,
-                                                                    SHIPTOPLANT: item.SHIPTOPLANT,
                                                                     VENDORNAME: item.VENDORNAME,
-                                                                    CUSTGRP: item.CUSTGRP
+                                                                    CUSTGRP: item.CUSTGRP,
+                                                                    PURCHORG: item.PURCHORG,
+                                                                    PURCHORGDESC: oPurchOrg.length > 0 ? oPurchOrg[0].DESCRIPTION + " (" + item.PURCHORG + ")" : item.PURCHORG,
+                                                                    PURCHGRP: item.PURCHGRP,
+                                                                    PURCHGRPDESC: oPurchGrp.length > 0 ? oPurchGrp[0].DESCRIPTION + " (" + item.PURCHGRP + ")" : item.PURCHGRP,
+                                                                    COMPANY: item.COMPANY,
+                                                                    COMPANYDESC: oCompany.length > 0 ? oCompany[0].BUTXT + " (" + item.COMPANY + ")" : item.COMPANY,
+                                                                    PURCHPLANT: item.PURCHPLANT,
+                                                                    PURCHPLANTDESC: oPurchPlant.length > 0 ? oPurchPlant[0].NAME1 + " (" + item.PURCHPLANT + ")" : item.PURCHPLANT,
+                                                                    SHIPTOPLANT: item.SHIPTOPLANT,
+                                                                    SHIPTOPLANTTDESC: oShipPlant.length > 0 ? oShipPlant[0].NAME1 + " (" + item.SHIPTOPLANT + ")" : item.SHIPTOPLANT
                                                                 })
                                                             }
                                                         })
@@ -2552,16 +2698,28 @@ sap.ui.define([
                                                 else {
                                                     item.DOCTYPE = returnData[0].PODOCTYP;
 
+                                                    var oCompany = me.getView().getModel("company").getData().filter(fItem => fItem.BUKRS === item.COMPANY);
+                                                    var oPurchPlant = me.getView().getModel("plant").getData().filter(fItem => fItem.WERKS === item.PURCHPLANT);
+                                                    var oShipPlant = me.getView().getModel("plant").getData().filter(fItem => fItem.WERKS === item.SHIPTOPLANT);
+                                                    var oPurchOrg = me.getView().getModel("purchorg").getData().filter(fItem => fItem.PURCHORG === item.PURCHORG);
+                                                    var oPurchGrp = me.getView().getModel("purchgrp").getData().filter(fItem => fItem.PURCHGRP === item.PURCHGRP);
+
                                                     oParamData.push({
                                                         DOCTYPE: returnData[0].PODOCTYP,
+                                                        DOCTYPEDESC: returnData[0].SHORTTEXT + " (" + returnData[0].PODOCTYP + ")",
                                                         VENDOR: item.VENDOR,
-                                                        PURCHORG: item.PURCHORG,
-                                                        PURCHGRP: item.PURCHGRP,
-                                                        COMPANY: item.COMPANY,
-                                                        PURCHPLANT: item.PURCHPLANT,
-                                                        SHIPTOPLANT: item.SHIPTOPLANT,
                                                         VENDORNAME: item.VENDORNAME,
-                                                        CUSTGRP: item.CUSTGRP
+                                                        CUSTGRP: item.CUSTGRP,
+                                                        PURCHORG: item.PURCHORG,
+                                                        PURCHORGDESC: oPurchOrg.length > 0 ? oPurchOrg[0].DESCRIPTION + " (" + item.PURCHORG + ")" : item.PURCHORG,
+                                                        PURCHGRP: item.PURCHGRP,
+                                                        PURCHGRPDESC: oPurchGrp.length > 0 ? oPurchGrp[0].DESCRIPTION + " (" + item.PURCHGRP + ")" : item.PURCHGRP,
+                                                        COMPANY: item.COMPANY,
+                                                        COMPANYDESC: oCompany.length > 0 ? oCompany[0].BUTXT + " (" + item.COMPANY + ")" : item.COMPANY,
+                                                        PURCHPLANT: item.PURCHPLANT,
+                                                        PURCHPLANTDESC: oPurchPlant.length > 0 ? oPurchPlant[0].NAME1 + " (" + item.PURCHPLANT + ")" : item.PURCHPLANT,
+                                                        SHIPTOPLANT: item.SHIPTOPLANT,
+                                                        SHIPTOPLANTTDESC: oShipPlant.length > 0 ? oShipPlant[0].NAME1 + " (" + item.SHIPTOPLANT + ")" : item.SHIPTOPLANT
                                                     })
                                                 }
                                             })

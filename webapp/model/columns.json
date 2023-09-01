@@ -11,6 +11,8 @@
             "suggestionItems": {"path": "shipmode>/", "text": "{shipmode>SHIPMODE}", "additionalText": "{shipmode>DESC}", "maxSuggestionWidth": "160px"}}} 
     ],
     "detail": [
+        {"name": "POADDTLDESC", "label": "PO Additional Desc", "type": "STRING", "required": false, "length": "200",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
         {"name": "DELVDATE", "label": "Delv Date", "type": "DATE", "required": true, "length": "10",
             "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
         {"name": "BASEPOQTY", "label": "PO QTY (BASE)", "type": "NUMBER", "required": true, "length": "13", "precision":"13", "scale": "3",
@@ -44,9 +46,9 @@
                 "columns": "tvh_shipmode"
             }
         },
-        {"ColumnName": "PAYTERMS", "TextFormatMode": "Key",
-            "ValueHelp": {"show": true, "items": {"path": "payterm", "value": "ZTERM", "text": "ZTERM"},
-                "SuggestionItems": {"path": "payterm>/", "text": "{payterm>ZTERM}" },
+        {"ColumnName": "PAYTERMS", "TextFormatMode": "ValueKey",
+            "ValueHelp": {"show": true, "items": {"path": "payterm", "value": "ZTERM", "text": "TEXT1"},
+                "SuggestionItems": {"path": "payterm>/", "text": "{payterm>ZTERM}", "additionalText": "{payterm>TEXT1}", "maxSuggestionWidth": "200px" },
                 "columns": "tvh_payterms"
             }
         },
@@ -63,12 +65,14 @@
         {"ColumnName": "SBU", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false}
     ],
     "tvh_payterms": [
-        {"ColumnName": "ZTERM", "DataType": "STRING", "ColumnWidth": "340px", "Visible": true, "Key": true, "Value": true},
+        {"ColumnName": "ZTERM", "DataType": "STRING", "ColumnWidth": "150px", "Visible": true, "Key": true, "Value": false},
         {"ColumnName": "LIFNR", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
         {"ColumnName": "EKORG", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
         {"ColumnName": "WAERS", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
         {"ColumnName": "INCO1", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
-        {"ColumnName": "INCO2", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false}
+        {"ColumnName": "INCO2", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "WEBRE", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
+        {"ColumnName": "TEXT1", "DataType": "STRING", "ColumnWidth": "250px", "Visible": true, "Key": false, "Value": true}
     ],
     "tvh_incoterm": [
         {"ColumnName": "INCO1", "DataType": "STRING", "ColumnWidth": "100px", "Visible": true, "Key": true, "Value": false},

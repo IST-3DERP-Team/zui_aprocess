@@ -14,7 +14,7 @@
             <Button icon="sap-icon://accept" text="Execute" press="onChangeDate"/>
 		</beginButton>        
         <endButton>
-			<Button icon="sap-icon://decline" text="Close" press="onCloseChangeDate"/>
+			<Button icon="sap-icon://decline" press="onCloseChangeDate"/>
 		</endButton>
         <content>
             <!-- <Panel class="sapUiSmallMargin"> -->

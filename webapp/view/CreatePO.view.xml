@@ -11,7 +11,11 @@
     height="100%"
     displayBlock="true">
     <Page showHeader="false" title="{ddtext>/POCREATE}" showNavButton="true" navButtonPress="onNavBack">
-        <!-- <content> -->
+        <dependents>
+            <core:CommandExecution id="CE_CANCELALL" command="CancelAll" enabled="true" execute=".onCancelAllPO" />
+            <core:CommandExecution id="CE_CANCEL" command="Cancel" enabled="true" execute=".onCancelPO" />
+        </dependents>
+        <content>
             <VBox fitContainer="true" class="genpo"> 
                 <!-- <uiT:Table id="headerTab"
                     rows="{header>/}"
@@ -268,7 +272,7 @@
                                 <form:formElements>
                                     <form:FormElement label="{ddtext>/DOCTYPE}">
                                         <form:fields>
-                                            <Text text="{grpheader>/0/DOCTYPE}" />
+                                            <Text text="{grpheader>/0/DOCTYPEDESC}" />
                                         </form:fields>
                                     </form:FormElement>
                                     <form:FormElement label="{ddtext>/PODATE}">
@@ -288,7 +292,7 @@
                                     </form:FormElement>
                                     <form:FormElement label="{ddtext>/COMPANY}">
                                         <form:fields>
-                                            <Text text="{grpheader>/0/COMPANY}" />
+                                            <Text text="{grpheader>/0/COMPANYDESC}" />
                                         </form:fields>
                                     </form:FormElement>
                                 </form:formElements>
@@ -297,22 +301,22 @@
                                 <form:formElements>
                                     <form:FormElement label="{ddtext>/PURCHORG}">
                                         <form:fields>
-                                            <Text text="{grpheader>/0/PURCHORG}" />
+                                            <Text text="{grpheader>/0/PURCHORGDESC}" />
                                         </form:fields>
                                     </form:FormElement>
                                     <form:FormElement label="{ddtext>/PURCHGRP}">
                                         <form:fields>
-                                            <Text text="{grpheader>/0/PURCHGRP}" />
+                                            <Text text="{grpheader>/0/PURCHGRPDESC}" />
                                         </form:fields>
                                     </form:FormElement>                                
                                     <form:FormElement label="{ddtext>/PURCHPLANT}">
                                         <form:fields>
-                                            <Text text="{grpheader>/0/PURCHPLANT}" />
+                                            <Text text="{grpheader>/0/PURCHPLANTDESC}" />
                                         </form:fields>
                                     </form:FormElement>
                                     <form:FormElement label="{ddtext>/SHIPTOPLANT}">
                                         <form:fields>
-                                            <Text text="{grpheader>/0/SHIPTOPLANT}" />
+                                            <Text text="{grpheader>/0/SHIPTOPLANTDESC}" />
                                         </form:fields>
                                     </form:FormElement>
                                     <form:FormElement label="{ddtext>/EXRATE}">
@@ -336,14 +340,19 @@
                                         <form:fields>
                                             <!-- <Input value="{grpheader>/0/PAYTERMS}" /> -->
                                             <Input type="Text" 
-                                                value="{grpheader>/0/PAYTERMS}" 
+                                                value="{ 
+                                                    parts: [{ path: 'grpheader>/0/PAYTERMS' }, { value: 'payterm' }, { value: 'ZTERM' }, { value: 'TEXT1' }, { value: 'ValueKey' }],
+                                                    formatter: '.formatValueHelp'
+                                                }"
+                                                textFormatMode="ValueKey"
                                                 showValueHelp="true"
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 suggestionItems="{path: 'payterm>/', length: 10000, templateShareable: false}" 
+                                                maxSuggestionWidth="160px"
                                                 change="onFormValueHelpInputChange">
                                                 <suggestionItems>
-                                                    <core:Item key="{payterm>ZTERM}" text="{payterm>ZTERM}" />
+                                                    <core:ListItem key="{payterm>ZTERM}" text="{payterm>TEXT1}" additionalText="{payterm>ZTERM}" />
                                                 </suggestionItems>
                                             </Input>
                                         </form:fields>
@@ -693,6 +702,6 @@
                     </layoutData>               
                 </VBox> -->
             </VBox>
-        <!-- </content> -->
+        </content>
     </Page>
 </mvc:View>

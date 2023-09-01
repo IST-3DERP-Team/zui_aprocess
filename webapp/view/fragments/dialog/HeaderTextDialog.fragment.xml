@@ -18,7 +18,7 @@
                 class="sapUiNoContentPadding" 
                 select="onSelectHdrTxtTab"
                 stretchContentHeight="true" 
-                applyContentPadding="false">
+                applyContentPadding="false">               
                 <items>
                     <IconTabFilter text="Remarks" key="remarks">
                         <uiT:Table id="remarksTab"
@@ -165,8 +165,8 @@
         </content>
         <buttons>
             <Button id="btnAddHdrTxt" icon="sap-icon://add" tooltip="{ddtext>/ADD}" press="onAddHdrTxt" />
-            <Button icon="sap-icon://save" tooltip="{ddtext>/SAVE}" press="onSaveHdrTxt" />
-            <Button icon="sap-icon://delete" tooltip="{ddtext>/DELETE}" press="onDeleteHdrTxt" />
+            <Button id="btnSaveHdrTxt" icon="sap-icon://save" tooltip="{ddtext>/SAVE}" press="onSaveHdrTxt" />
+            <Button id="btnDeleteHdrTxt" icon="sap-icon://delete" tooltip="{ddtext>/DELETE}" press="onDeleteHdrTxt" />
             <Button icon="sap-icon://decline" tooltip="{ddtext>/CLOSE}" press="onCloseHdrTxt" />        
         </buttons>
     </Dialog>

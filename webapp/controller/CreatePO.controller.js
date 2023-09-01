@@ -33,6 +33,21 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
             this.byId("titlePOCreate").addEventDelegate(oEventDelegate);
             this._tableValueHelp = TableValueHelp; 
+
+            // var oInputEventDelegate = {
+            //     onkeydown: function(oEvent){
+            //         me.onInputKeyDown(oEvent);
+            //     },
+            // };
+
+            // this.byId("detailTab").getColumns().forEach(col => {
+            //     if (col.getTemplate().getBindingInfo("value") !== undefined) {
+            //         console.log(col.getTemplate())
+            //         var oInput = col.getTemplate();
+            //         oInput.addEventDelegate(oInputEventDelegate);
+            //         col.setTemplate(oInput);
+            //     }
+            // })
         },
         
         onPatternMatched: function() {  
@@ -41,6 +56,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._aColumns = [];            
             this._poCreated = false;
             this._toExtend = false;
+            this._sActiveTable = "";
+            this._headerTextDialog = false;
+            this._changeDateDialog = false;
             
             if (sap.ui.getCore().byId("backBtn") !== undefined) {
                 sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction = function(oEvent) {
@@ -64,12 +82,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().supplyType), "supplyType");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().uom), "uom");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().payterm), "payterm");
-
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().shipmode), "currency");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().incoterm), "company");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().supplyType), "plant");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().uom), "purchorg");
             this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().payterm), "purchgrp");
+            this.getView().setModel(new JSONModel(this.getOwnerComponent().getModel("LOOKUP_MODEL").getData().payterm), "podoctyp");
 
             this._oModel.read("/IncoTermsSet", {
                 success: function (oData, oResponse) {
@@ -91,19 +109,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 },
                 error: function (err) { }
             });
-
-            var oDataDetail = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail.filter(fItem => fItem.GROUP === "1");
-
-            oDataDetail.forEach(item => {
-                item.BASEPOQTY2 = item.BASEPOQTY;
-                item.BASEPOQTY3 = item.BASEPOQTY;
-                item.BASEPOQTY4 = item.BASEPOQTY;
-                item.BASEPOQTY5 = item.BASEPOQTY;
-                item.BASEPOQTY6 = item.BASEPOQTY;
-            })
-            this.getView().setModel(new JSONModel(oDataDetail), "detail");
-            this.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
-            this.byId("detailTab").bindRows({path: "detail>/"});
 
             var oHeaderData = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().header;
             var oDataRem = {}, oDataPackIns = {}, oDataFabSpecs = {}; //, oDataPOTolerance = {};
@@ -141,14 +146,16 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var vShipMode = oShipMode.length === 1 ? oShipMode[0].SHIPMODE : "";
             
             oHeaderData.forEach((item, idx) => {
+                var oDataGroupDetail = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail.filter(fItem => fItem.GROUP === item.GROUP);
+
                 item.PODATE = dateFormat.format(new Date());
                 item.PAYTERMS = "";
                 item.INCOTERMS = "";
                 item.DESTINATION = "";
                 item.CURR = "";
                 item.EXRATE = "";
-                item.SHIPMODE = vShipMode
-                item.STATUS = "NEW"
+                item.SHIPMODE = vShipMode;
+                item.STATUS = "NEW";
 
                 var sVendor = item.VENDOR;
 
@@ -164,6 +171,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         iCounter++;                                
                         mData[item.GROUP] = oData.results;
 
+                        oDataGroupDetail.forEach(dtl => {
+                            if (dtl.INFOREC === "") { dtl.GRBASEDIV = oData.results[0].WEBRE }
+                        });
+                        
                         if (oData.results.length > 0) {
                             item.PAYTERMS = oData.results[0].ZTERM;
                             item.INCOTERMS = oData.results[0].INCO1;
@@ -173,13 +184,17 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
                         if (item.GROUP === "1") {
                             me.getView().getModel("payterm").setProperty("/", oData.results);
+                            me.getView().setModel(new JSONModel(oDataGroupDetail), "detail");
+                            me.byId("detailTab").setModel(new JSONModel(oDataGroupDetail), "detail");
+                            me.byId("detailTab").bindRows({path: "detail>/"});
+                            me.getColumnProp();
                         }
 
                         if (iCounter === oHeaderData.length) {
                             me.getView().setModel(new JSONModel(mData), "payterms");
                             me.getView().setModel(new JSONModel(oHeaderData), "header");
                             me.getView().setModel(new JSONModel(oHeaderData.filter(grp => grp.GROUP === "1")), "grpheader");
-                        } 
+                        }                         
                     },
                     error: function (err) {
                         iCounter++;
@@ -218,7 +233,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     ZZCFCW: "",
                     ZZSHRQ: "",
                     ZZSHDA: "",
-                    PLANMONTH: this.getView().getModel("detail").getData()[0].PLANMONTH,
+                    PLANMONTH: oDataGroupDetail[0].PLANMONTH, //this.getView().getModel("detail").getData()[0].PLANMONTH,
                     ZZREQ1: "",
                     ZZREQ2: "",
                     STATUS: "NEW"                 
@@ -253,7 +268,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     STATUS: "NEW",
                     REMARKS: "For PO Generation"
                 })
-            })            
+            })
+
+            // var oDataDetail = this.getOwnerComponent().getModel("CREATEPO_MODEL").getData().detail.filter(fItem => fItem.GROUP === "1");
+            // this.getView().setModel(new JSONModel(oDataDetail), "detail");
+            // this.byId("detailTab").setModel(new JSONModel(oDataDetail), "detail");
+            // this.byId("detailTab").bindRows({path: "detail>/"});
 
             this.getView().setModel(new JSONModel({
                 today: dateFormat.format(new Date()),
@@ -272,8 +292,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
             if (oHeaderData.length > 1) { this.byId("btnNextPO").setEnabled(true); } 
             else { this.byId("btnNextPO").setEnabled(false); }
-
-            this.getColumnProp();
         },
 
         onNavBack: function(oEvent) {
@@ -541,6 +559,12 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._bDetailsChanged = false;
             this._validationErrors = [];
 
+            var oInputEventDelegate = {
+                onkeydown: function(oEvent){
+                    me.onInputKeyDown(oEvent);
+                },
+            };
+
             oTable.getColumns().forEach((col, idx) => {
                 var sColName = "";
 
@@ -610,6 +634,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 });
                             }
 
+                            oInput.addEventDelegate(oInputEventDelegate);
+
                             col.setTemplate(oInput);
                         }
                         else if (ci.type === "NUMBER") {
@@ -621,7 +647,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 // change: this.onNumberChange.bind(this),
                                 liveChange: this.onNumberLiveChange.bind(this), 
                                 enabled: true
-                            }));
+                            }).addEventDelegate(oInputEventDelegate));
                         }
                         else if (ci.type === "DATE") {
                             col.setTemplate(new sap.m.DatePicker({
@@ -630,13 +656,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 valueFormat: "MM/dd/yyyy",
                                 change: this.onDateChange.bind(this),
                                 navigate: this.onClickDate.bind(this)
-                            }))
+                            }).addEventDelegate(oInputEventDelegate))
                         }
                         else {
                             col.setTemplate(new sap.m.Input({
                                 value: "{" + arg + ">" + ci.name + "}"
                                 // liveChange: this.onInputLiveChange.bind(this)
-                            }));
+                            }).addEventDelegate(oInputEventDelegate));
                         }
 
                         if (ci.required) {
@@ -1475,6 +1501,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },
 
         onUpdDate: function(oEvent) {
+            var me = this;
             var bProceed = true;
 
             if (this.getView().getModel("ui").getData().activeGroup === "") {
@@ -1484,14 +1511,22 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             // var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
 
             if (bProceed) {
-                if (!this._ChangeDateDialog) {
-                    this._ChangeDateDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ChangeDateDialog", this);
-                    this.getView().addDependent(this._ChangeDateDialog);
+                if (!this._oChangeDateDialog) {
+                    this._oChangeDateDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ChangeDateDialog", this);
+                    this.getView().addDependent(this._oChangeDateDialog);
+
+                    var oDialogEventDelegate = {
+                        onkeydown: function (oEvent) {
+                            me.onKeyDown(oEvent);
+                        }
+                    };
+    
+                    this._oChangeDateDialog.addEventDelegate(oDialogEventDelegate);
                 }
                 
-                
-                this._ChangeDateDialog.setTitle(this.getView().getModel("ddtext").getData()["CHANGEDELVDATE"]);
-                this._ChangeDateDialog.open(); 
+                this._oChangeDateDialog.setTitle(this.getView().getModel("ddtext").getData()["CHANGEDELVDATE"]);
+                this._oChangeDateDialog.open(); 
+                this._changeDateDialog = true;
             }           
         },
 
@@ -1500,9 +1535,22 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
             var oParam = {};
             var me = this;
+            var oDatePicker;
+            var oDatePickerValue = "";
 
-            var oDatePicker = oEvent.getSource().oParent.getContent().filter(fItem => fItem.sId === "DP1")[0];
+            if (oEvent === undefined) {
+                oDatePicker = sap.ui.getCore().byId("DP1");
+            }
+            else {
+                oDatePicker = oEvent.getSource().oParent.getContent().filter(fItem => fItem.sId === "DP1")[0];
+            }
+
             oDatePickerValue = oDatePicker.getProperty("value");
+
+            if (oDatePickerValue === "") {
+                MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_INPUT_DELVDATE"]);
+                return;
+            }
 
             oParam["PurchPlant"] = aHeaderData[0].PURCHPLANT;
             oParam["N_GetFtyCalDateParam"] = [{
@@ -1576,12 +1624,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
             this.byId("detailTab").setModel(new JSONModel(this.getView().getModel("detail").getData()), "detail");
             this.byId("detailTab").bindRows({path: "detail>/"});
-            this._ChangeDateDialog.close();
+            this._oChangeDateDialog.close();
             MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_DELVDATE_UPDATED"]);
         },
 
         onCloseChangeDate: function(oEvent) {
-            this._ChangeDateDialog.close();
+            this._oChangeDateDialog.close();
+            this._changeDateDialog = false;
         },
         
         onCellClick: function(oEvent) {
@@ -1723,8 +1772,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 this._ConfirmDialog.open();
             }
             else {
-                this._HeaderTextDialog.close();
-                // this._FabSpecsDialog.close();
+                this._headerTextDialog = false;
+                this._oHeaderTextDialog.close();
             }
         },
 
@@ -1756,6 +1805,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },
 
         onHdrText: function(oEvent) {
+            var me = this;
             this._bRemarksChanged = false;
             this._bPackInsChanged = false;
 
@@ -1774,10 +1824,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             // var uniqPackIns = [...mapPackIns.values()].reverse();
             // this.getView().getModel("packins").setProperty('/' + sActiveGroup, uniqPackIns);
 
-            if (!this._HeaderTextDialog) {
-                this._HeaderTextDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.HeaderTextDialog", this);
+            if (!this._oHeaderTextDialog) {
+                this._oHeaderTextDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.HeaderTextDialog", this);
 
-                this._HeaderTextDialog.setModel(
+                this._oHeaderTextDialog.setModel(
                     new JSONModel({
                         rem_items: this.getView().getModel("remarks").getData()[sActiveGroup],
                         packins_items: this.getView().getModel("packins").getData()[sActiveGroup],
@@ -1785,20 +1835,41 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     })
                 )
 
-                this.getView().addDependent(this._HeaderTextDialog);
+                this.getView().addDependent(this._oHeaderTextDialog);
+
+                // var oTableEventDelegate = {
+                //     onkeydown: function (oEvent) {
+                //         me.onKeyDown(oEvent);
+                //     },
+    
+                //     onclick: function(oEvent) {
+                //         me.onTableClick(oEvent);
+                //     }
+                // };
+    
+                // sap.ui.getCore().byId("remarksTab").addEventDelegate(oTableEventDelegate);
+                // sap.ui.getCore().byId("packinsTab").addEventDelegate(oTableEventDelegate);
+
+                var oDialogEventDelegate = {
+                    onkeydown: function (oEvent) {
+                        me.onKeyDown(oEvent);
+                    }
+                };
+
+                this._oHeaderTextDialog.addEventDelegate(oDialogEventDelegate);
             }
             else {
-                this._HeaderTextDialog.getModel().setProperty("/rem_items", this.getView().getModel("remarks").getData()[sActiveGroup]);
-                this._HeaderTextDialog.getModel().setProperty("/packins_items", this.getView().getModel("packins").getData()[sActiveGroup]);
-                this._HeaderTextDialog.getModel().setProperty("/fs", this.getView().getModel("fabspecs").getData()[sActiveGroup]);
+                this._oHeaderTextDialog.getModel().setProperty("/rem_items", this.getView().getModel("remarks").getData()[sActiveGroup]);
+                this._oHeaderTextDialog.getModel().setProperty("/packins_items", this.getView().getModel("packins").getData()[sActiveGroup]);
+                this._oHeaderTextDialog.getModel().setProperty("/fs", this.getView().getModel("fabspecs").getData()[sActiveGroup]);
             }
 
             this._aRemarksDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("remarks").getData()[sActiveGroup]);
             this._aPackInsDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("packins").getData()[sActiveGroup]);
             this._aFabSpecsDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("fabspecs").getData()[sActiveGroup]);
 
-            this._HeaderTextDialog.setTitle(this.getView().getModel("ddtext").getData()["HEADERTEXT"]);
-            this._HeaderTextDialog.open(); 
+            this._oHeaderTextDialog.setTitle(this.getView().getModel("ddtext").getData()["HEADERTEXT"]);
+            this._oHeaderTextDialog.open(); 
 
             var oHeaderData = this.getView().getModel("grpheader").getData();
             var oHdrTxtTab = sap.ui.getCore().byId("ITB1");
@@ -1831,14 +1902,37 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             sap.ui.getCore().byId("ZZREQ2").setValue(oData[0].ZZREQ2);
             // sap.ui.getCore().byId("EBELP").setValue(oData[0].EBELP);
             // sap.ui.getCore().byId("EBELN").setValue(oData[0].EBELN);
+
+            this._sActiveTable = sap.ui.getCore().byId("ITB1").getSelectedKey() + "Tab";
+            this._headerTextDialog = true;
+
+            var oInputEventDelegate = {
+                onkeydown: function(oEvent){
+                    me.onInputKeyDown(oEvent);
+                },
+            };
+
+            sap.ui.getCore().byId("remarksTab").getColumns()[1].getTemplate().addEventDelegate(oInputEventDelegate);
+            sap.ui.getCore().byId("packinsTab").getColumns()[1].getTemplate().addEventDelegate(oInputEventDelegate);
+        },
+
+        New() {
+            this._sActiveTable = sap.ui.getCore().byId("ITB1").getSelectedKey() + "Tab";
+            this.addHdrTxt();
         },
 
         onAddHdrTxt: function(oEvent) {
-            var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
-            var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
+            this._sActiveTable = sap.ui.getCore().byId("ITB1").getSelectedKey() + "Tab";            
+            this.addHdrTxt();
+        },
+
+        addHdrTxt() {
             var oTable, oData;
+            var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
             
-            if (activeTab === "remarks") {
+            sap.ui.getCore().byId("btnAddHdrTxt").focus();
+
+            if (this._sActiveTable === "remarksTab") {
                 oTable = sap.ui.getCore().byId("remarksTab");
                 oData = oTable.getModel().getProperty('/rem_items');
 
@@ -1853,7 +1947,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     });
         
                     this.getView().getModel("remarks").setProperty("/" + sActiveGroup, aDataRemItems);
-                    this._HeaderTextDialog.getModel().setProperty("/rem_items", this.getView().getModel("remarks").getData()[sActiveGroup]);
+                    this._oHeaderTextDialog.getModel().setProperty("/rem_items", this.getView().getModel("remarks").getData()[sActiveGroup]);
                 }
             }
             else {
@@ -1871,7 +1965,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     });
         
                     this.getView().getModel("packins").setProperty("/" + sActiveGroup, aDataPackInsItems);
-                    this._HeaderTextDialog.getModel().setProperty("/packins_items", this.getView().getModel("packins").getData()[sActiveGroup]);
+                    this._oHeaderTextDialog.getModel().setProperty("/packins_items", this.getView().getModel("packins").getData()[sActiveGroup]);
                 }
             }
                         
@@ -1900,30 +1994,31 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         onSaveHdrTxt: function(oEvent) {
             var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
+            sap.ui.getCore().byId("btnSaveHdrTxt").focus();
 
             if (activeTab === "remarks") {
-                if (this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.REMARKS === "").length > 0) {
+                if (this._oHeaderTextDialog.getModel().getData().rem_items.filter(item => item.REMARKS === "").length > 0) {
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_INPUT_REMARKS"]);
                 }
                 else {
                     this._bRemarksChanged = false;
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_REMARKS_SAVED"]);
 
-                    this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._HeaderTextDialog.getModel().getData().rem_items);
+                    this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._oHeaderTextDialog.getModel().getData().rem_items);
                     this.getView().getModel("remarks").getData()[sActiveGroup].forEach(item => item.STATUS = "UPDATED");
                     this._aRemarksDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("remarks").getData()[sActiveGroup]);
                 }
             }
             else if (activeTab === "packins") {
-                if (this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.PACKINS === "").length > 0) {
+                if (this._oHeaderTextDialog.getModel().getData().packins_items.filter(item => item.PACKINS === "").length > 0) {
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_INPUT_PACKINS"]);
                 }
                 else {
-                    // this._HeaderTextDialog.close();
+                    // this._oHeaderTextDialog.close();
                     this._bPackInsChanged = false;
                     MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_PACKINS_SAVED"]);
 
-                    this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._HeaderTextDialog.getModel().getData().packins_items);
+                    this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._oHeaderTextDialog.getModel().getData().packins_items);
                     this.getView().getModel("packins").getData()[sActiveGroup].forEach(item => item.STATUS = "UPDATED");
                     this._aPackInsDataBeforeChange = jQuery.extend(true, [], this.getView().getModel("packins").getData()[sActiveGroup]);
                 }
@@ -1936,6 +2031,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         onDeleteHdrTxt: function(oEvent) {
             var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
             var oTable, sProcess;
+            sap.ui.getCore().byId("btnDeleteHdrTxt").focus();
 
             if (activeTab === "fabspecs") {
                 this.onDeleteFabSpecs();
@@ -1986,8 +2082,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             }
             else {
                 if (activeTab === "remarks") {
-                    if (this._HeaderTextDialog.getModel().getData().rem_items !== undefined) {
-                        iNew = this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
+                    if (this._oHeaderTextDialog.getModel().getData().rem_items !== undefined) {
+                        iNew = this._oHeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
                     }
     
                     if (this._bRemarksChanged || iNew > 0) {
@@ -2000,8 +2096,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     }
                 }
                 else if (activeTab === "packins") {
-                    if (this._HeaderTextDialog.getModel().getData().packins_items !== undefined) {
-                        iNew = this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
+                    if (this._oHeaderTextDialog.getModel().getData().packins_items !== undefined) {
+                        iNew = this._oHeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
                     }
     
                     if (this._bPackInsChanged || iNew > 0) {
@@ -2028,7 +2124,10 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         
                     this._ConfirmDialog.open();
                 }
-                else this._HeaderTextDialog.close();
+                else {
+                    this._headerTextDialog = false;
+                    this._oHeaderTextDialog.close();
+                }
             }
         },
 
@@ -2045,11 +2144,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var bProceed = true;
             var iNew = 0;
 
+            this._sActiveTable = activeTab + "Tab";
+
             if (activeTab === "remarks") {
                 sap.ui.getCore().byId("btnAddHdrTxt").setVisible(true);
 
-                if (this._HeaderTextDialog.getModel().getData().rem_items !== undefined) {
-                    iNew = this._HeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
+                if (this._oHeaderTextDialog.getModel().getData().rem_items !== undefined) {
+                    iNew = this._oHeaderTextDialog.getModel().getData().rem_items.filter(item => item.STATUS === "NEW").length;
                 }
 
                 if (this._bPackInsChanged) {
@@ -2072,8 +2173,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             else if (activeTab === "packins") {
                 sap.ui.getCore().byId("btnAddHdrTxt").setVisible(true);
 
-                if (this._HeaderTextDialog.getModel().getData().packins_items !== undefined) {
-                    iNew = this._HeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
+                if (this._oHeaderTextDialog.getModel().getData().packins_items !== undefined) {
+                    iNew = this._oHeaderTextDialog.getModel().getData().packins_items.filter(item => item.STATUS === "NEW").length;
                 }
 
                 if (this._bRemarksChanged) {
@@ -2096,8 +2197,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             else if (activeTab === "fabspecs") {
                 sap.ui.getCore().byId("btnAddHdrTxt").setVisible(false);
                 
-                if (this._HeaderTextDialog.getModel().getData().fs !== undefined) {
-                    iNew = this._HeaderTextDialog.getModel().getData().fs.filter(item => item.STATUS === "UPDATED").length;
+                if (this._oHeaderTextDialog.getModel().getData().fs !== undefined) {
+                    iNew = this._oHeaderTextDialog.getModel().getData().fs.filter(item => item.STATUS === "UPDATED").length;
                 }
 
                 if (this._bRemarksChanged) {
@@ -2145,33 +2246,43 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 		},
 
         onCloseConfirmDialog: function(oEvent) {
+            console.log(this._ConfirmDialog.getModel().getData().Process);
             var sActiveGroup = this.getView().getModel("ui").getData().activeGroup;
 
             if (this._ConfirmDialog.getModel().getData().Process === "remarks-close") {
                 this._bRemarksChanged = false;
-                this._HeaderTextDialog.close();
+                this._headerTextDialog = false;
+                this._oHeaderTextDialog.close();
 
                 // var oData = this.getView().getModel("remarks").getData();
                 // oData[sActiveGroup] = this._aRemarksDataBeforeChange;
                 this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._aRemarksDataBeforeChange);
+                this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._aPackInsDataBeforeChange);
+                this.getView().getModel("fabspecs").setProperty('/' + sActiveGroup, this._aFabSpecsDataBeforeChange);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "packins-close") {
                 this._bPackInsChanged = false;
-                this._HeaderTextDialog.close();
+                this._headerTextDialog = false;
+                this._oHeaderTextDialog.close();
 
                 this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._aPackInsDataBeforeChange);
+                this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._aRemarksDataBeforeChange);
+                this.getView().getModel("fabspecs").setProperty('/' + sActiveGroup, this._aFabSpecsDataBeforeChange);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "fabspecs-close") {
                 // this.clearFabSpecs();
-                this.getView().getModel("fabspecs").setProperty('/' + sActiveGroup, this._aFabSpecsDataBeforeChange);
                 this._bFabSpecsChanged = false;
-                // this._FabSpecsDialog.close();
-                this._HeaderTextDialog.close();
+                this._headerTextDialog = false;
+                this._oHeaderTextDialog.close();
+                
+                this.getView().getModel("fabspecs").setProperty('/' + sActiveGroup, this._aFabSpecsDataBeforeChange);
+                this.getView().getModel("remarks").setProperty('/' + sActiveGroup, this._aRemarksDataBeforeChange);
+                this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._aPackInsDataBeforeChange);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "remarks-delete") {
                 var oTable = sap.ui.getCore().byId("remarksTab");
                 // var oTableModel = oTable.getModel();
-                var oData = this._HeaderTextDialog.getModel().getData().rem_items; //oTableModel.getProperty('/rem_items');
+                var oData = this._oHeaderTextDialog.getModel().getData().rem_items; //oTableModel.getProperty('/rem_items');
                 var selected = oTable.getSelectedIndices();
 
                 oData = oData.filter(function (value, index) {
@@ -2180,7 +2291,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
                 oTable.clearSelection();
 
-                this._HeaderTextDialog.getModel().setProperty("/rem_items", oData);
+                this._oHeaderTextDialog.getModel().setProperty("/rem_items", oData);
                 this.getView().getModel("remarks").setProperty("/" + sActiveGroup,  oData);
 
                 if (oData.length === 0) this._bRemarksChanged = false;
@@ -2188,7 +2299,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             else if (this._ConfirmDialog.getModel().getData().Process === "packins-delete") {
                 var oTable = sap.ui.getCore().byId("packinsTab");
                 // var oTableModel = oTable.getModel();
-                var oData = this._HeaderTextDialog.getModel().getData().packins_items; //oTableModel.getProperty('/packins_items');
+                var oData = this._oHeaderTextDialog.getModel().getData().packins_items; //oTableModel.getProperty('/packins_items');
                 var selected = oTable.getSelectedIndices();
                 
                 oData = oData.filter(function (value, index) {
@@ -2199,7 +2310,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 oTable.clearSelection();
                 // oTable.getBinding("rows").refresh();    
                 
-                this._HeaderTextDialog.getModel().setProperty("/packins_items", oData);
+                this._oHeaderTextDialog.getModel().setProperty("/packins_items", oData);
                 this.getView().getModel("packins").setProperty("/" + sActiveGroup,  oData);
 
                 if (oData.length === 0) this._bPackInsChanged = false;
@@ -2216,10 +2327,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "packins-cancel") {
                 this._bPackInsChanged = false;
-
-                // var oTable = sap.ui.getCore().byId("packinsTab");
-                // var oTableModel = oTable.getModel("packins");
-                // oTableModel.setData(this._aPackInsDataBeforeChange);
                 this.getView().getModel("packins").setProperty('/' + sActiveGroup, this._aPackInsDataBeforeChange);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "fabspecs-cancel") {
@@ -2286,6 +2393,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         },  
 
         onCancelConfirmDialog: function(oEvent) {
+            console.log(this._ConfirmDialog.getModel().getData().Process);
             if (this._ConfirmDialog.getModel().getData().Process === "remarks-cancel") {
                 sap.ui.getCore().byId("ITB1").setSelectedKey("remarks");
                 sap.ui.getCore().byId("ITB1").selectedKey = "remarks";
@@ -2949,7 +3057,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         Evers     : resultExtendPop[0][x].EVERS,
                         Uebto     : resultExtendPop[0][x].UEBTO,
                         Untto     : resultExtendPop[0][x].UNTTO,
-                        Uebtk     : resultExtendPop[0][x].UEBTK
+                        Uebtk     : resultExtendPop[0][x].UEBTK,
+                        Charg     : resultExtendPop[0][x].CHARG,
                         // Elikz     : resultExtendPop[0][x].ELIKZ,
                         // DeleteRec : resultExtendPop[0][x].LOEKZ
                     });
@@ -3749,5 +3858,136 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
             this._bHeaderChanged = true;
         },
+
+        onTableClick(oEvent) {
+            var oControl = oEvent.srcControl;
+            var sTabId = oControl.sId.split("--")[oControl.sId.split("--").length - 1];
+
+            while (sTabId.substr(sTabId.length - 3) !== "Tab") {                    
+                oControl = oControl.oParent;
+                sTabId = oControl.sId.split("--")[oControl.sId.split("--").length - 1];
+            }
+            
+            this._sActiveTable = sTabId;
+        },
+
+        onKeyDown(oEvent) {           
+            if (this._headerTextDialog) {
+                if (oEvent.key.toUpperCase() === "ENTER") {
+                    if (oEvent.srcControl.sParentAggregationName === "cells" && (this._sActiveTable === "remarksTab" || this._sActiveTable === "packinsTab")) { this.onAddHdrTxt(); }
+                }
+                else if (oEvent.ctrlKey && oEvent.key.toUpperCase() === "I") {
+                    this.onAddHdrTxt();
+                }
+                else if (oEvent.ctrlKey && oEvent.key.toUpperCase() === "S") {
+                    this.onSaveHdrTxt();
+                }
+                else if (oEvent.ctrlKey && oEvent.key.toUpperCase() === "D") {
+                    oEvent.preventDefault();
+                    this.onDeleteHdrTxt();
+                }
+                else if (oEvent.ctrlKey && oEvent.key.toUpperCase() === "X") {
+                    this.onCloseHdrTxt();
+                }
+            }
+            else if (this._changeDateDialog) {
+                if (oEvent.key.toUpperCase() === "ENTER") {
+                    this.onChangeDate();
+                }
+                else if (oEvent.ctrlKey && oEvent.key.toUpperCase() === "X") {
+                    this.onCloseChangeDate();
+                }
+            }
+        },
+        
+        onInputKeyDown(oEvent) {
+            if (oEvent.key === "ArrowUp" || oEvent.key === "ArrowDown") {
+                //prevent increase/decrease of number value
+                oEvent.preventDefault();
+
+                var sTableId = oEvent.srcControl.oParent.oParent.sId;
+                // var oTable = this.byId(sTableId);
+                var oTable = sap.ui.getCore().byId(sTableId);
+                var sColumnName = oEvent.srcControl.getBindingInfo("value").parts[0].path;
+                var sCurrentRowIndex = -1;
+                var sColumnIndex = -1;
+                var sCurrentRow = -1;
+                var sNextRow = -1;
+                var sActiveRow = -1;
+                var iFirstVisibleRowIndex = oTable.getFirstVisibleRow();
+                var iVisibleRowCount = oTable.getVisibleRowCount();
+                var iRowCount = 0;
+
+                if (this._headerTextDialog) {
+                    var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
+
+                    if (activeTab === "remarks") {
+                        iRowCount = this._oHeaderTextDialog.getModel().getData().rem_items.length;
+                        sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext().sPath.replace("/rem_items/", "");
+                        this._oHeaderTextDialog.getModel().setProperty(oEvent.srcControl.oParent.getBindingContext().sPath + "/REMARKS", oEvent.srcControl.getValue());
+                    }
+                    else if (activeTab === "packins") {
+                        iRowCount = this._oHeaderTextDialog.getModel().getData().packins_items.length;
+                        sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext().sPath.replace("/packins_items/", "");
+                        this._oHeaderTextDialog.getModel().setProperty(oEvent.srcControl.oParent.getBindingContext().sPath + "/PACKINS", oEvent.srcControl.getValue());
+                    }
+                }
+                else {
+                    iRowCount = oTable.getModel("detail").getData().length;
+                    sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext("detail").sPath.replace("/", "");
+                    oTable.getModel("detail").setProperty(oEvent.srcControl.oParent.getBindingContext("detail").sPath + "/" + oEvent.srcControl.getBindingInfo("value").parts[0].path, oEvent.srcControl.getValue());
+                }
+
+                //get active row (arrow down)
+                oTable.getBinding("rows").aIndices.forEach((item, index) => {
+                    if (item === sCurrentRowIndex) { sCurrentRow = index; }
+                    if (sCurrentRow !== -1 && sActiveRow === -1) { 
+                        if ((sCurrentRow + 1) === index) { sActiveRow = item }
+                        else if ((index + 1) === oTable.getBinding("rows").aIndices.length) { sActiveRow = item }
+                    }
+                })
+                
+                //get next row to focus and active row (arrow up)
+                if (oEvent.key === "ArrowUp") { 
+                    if (sCurrentRow !== 0) {
+                        sActiveRow = oTable.getBinding("rows").aIndices.filter((fItem, fIndex) => fIndex === (sCurrentRow - 1))[0];
+                    }
+                    else { sActiveRow = oTable.getBinding("rows").aIndices[0] }
+
+                    sCurrentRow = sCurrentRow === 0 ? sCurrentRow : sCurrentRow - iFirstVisibleRowIndex;
+                    sNextRow = sCurrentRow === 0 ? 0 : sCurrentRow - 1;
+                }
+                else if (oEvent.key === "ArrowDown") { 
+                    sCurrentRow = sCurrentRow - iFirstVisibleRowIndex;
+                    sNextRow = sCurrentRow + 1;
+                }
+
+                //auto-scroll up/down
+                if (oEvent.key === "ArrowDown" && (sNextRow + 1) < iRowCount && (sNextRow + 1) > iVisibleRowCount) {
+                    oTable.setFirstVisibleRow(iFirstVisibleRowIndex + 1);
+                }   
+                else if (oEvent.key === "ArrowUp" && sCurrentRow === 0 && sNextRow === 0 && iFirstVisibleRowIndex !== 0) { 
+                    oTable.setFirstVisibleRow(iFirstVisibleRowIndex - 1);
+                }
+
+                //get the cell to focus
+                oTable.getRows()[sCurrentRow].getCells().forEach((cell, index) => {
+                    if (cell.getBindingInfo("value") !== undefined) {
+                        if (cell.getBindingInfo("value").parts[0].path === sColumnName) { sColumnIndex = index; }
+                    }
+                })
+                
+                if (oEvent.key === "ArrowDown") {
+                    sNextRow = sNextRow === iVisibleRowCount ? sNextRow - 1 : sNextRow;
+                }
+
+                //set focus on cell
+                setTimeout(() => {
+                    oTable.getRows()[sNextRow].getCells()[sColumnIndex].focus();
+                    oTable.getRows()[sNextRow].getCells()[sColumnIndex].getFocusDomRef().select();
+                }, 100);
+            }
+        },
+
     })
 })
