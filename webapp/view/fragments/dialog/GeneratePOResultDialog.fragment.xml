@@ -20,31 +20,31 @@
             cellClick="onCreatePOGroupCellClick">
             <uit:columns>
                 <uit:Column width="5rem">
-                    <Label text="GROUP" />
+                    <Text text="GROUP" />
                     <uit:template>
                         <Text text="{GROUP}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="30rem">
-                    <Label text="REMARKS" />
+                    <Text text="REMARKS" />
                     <uit:template>
                         <Text text="{REMARKS}" wrapping="false" />
                     </uit:template>
                 </uit:Column>                   
                 <uit:Column width="8rem">
-                    <Label text="VENDOR" />
+                    <Text text="VENDOR" />
                     <uit:template>
                         <Text text="{VENDOR}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="8rem">
-                    <Label text="PURCH ORG" />
+                    <Text text="PURCH ORG" />
                     <uit:template>
                         <Text text="{PURCHORG}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="8rem">
-                    <Label text="PURCH GROUP" />
+                    <Text text="PURCH GROUP" />
                     <uit:template>
                         <Text text="{PURCHGRP}" wrapping="false" />
                     </uit:template>

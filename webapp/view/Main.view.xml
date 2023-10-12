@@ -183,6 +183,7 @@
                 <uiT:Table id="mainTab"
                     class="sapUiTinyMarginBottom sapUiTinyMarginBegin sapUiTinyMarginEnd"
                     visibleRowCountMode="Auto"
+                    minAutoRowCount="1"
                     showColumnVisibilityMenu="true"
                     enableColumnFreeze="true"
                     enableCellFilter="true"
@@ -197,7 +198,7 @@
                     columnSelect="onColumnUpdated"
                     columnVisibility="onColumnUpdated">
                     <uiT:extension>
-                        <Toolbar class="sapUiTinyMarginBottom">
+                        <OverflowToolbar class="sapUiTinyMarginBottom">
                             <!-- <Text text="{counts>/total} PRs" /> -->
                             <GenericTag text="{ddtext>/TOTAL}" design="StatusIconHidden" status="Information" class="sapUiTinyMarginEnd">
                                 <ObjectNumber emphasized="true" number="{counts>/total}" state="Information" id="forecastNumber"/>
@@ -226,7 +227,7 @@
                                 visible="true"/>
                             <Button id="btnManualAssign" 
                                 text="{ddtext>/MANUALASSIGNVENDOR}"
-                                icon="sap-icon://request"
+                                icon="sap-icon://user-edit"
                                 press="onManualAssign"
                                 tooltip="{ddtext>/MANUALASSIGNVENDOR}"
                                 visible="true"/>
@@ -235,6 +236,12 @@
                                 icon="sap-icon://multiselect-none"
                                 press="onUnassign"
                                 tooltip="{ddtext>/UNDOASSIGNVENDOR}"
+                                visible="true"/>
+                            <Button id="btnUpdPurPlant" 
+                                text="{ddtext>/CHANGEPURPLANT}"
+                                icon="sap-icon://user-edit"
+                                press="onUpdPurPlant"
+                                tooltip="{ddtext>/CHANGEPURPLANT}"
                                 visible="true"/>
                             <Button id="btnCreatePO" 
                                 text="{ddtext>/CREATEPO}"
@@ -246,7 +253,7 @@
                                 icon="sap-icon://grid" 
                                 tooltip="{ddtext>/SAVELAYOUT}" 
                                 press="onSaveTableLayout"/>
-                        </Toolbar>
+                        </OverflowToolbar>
                     </uiT:extension>
                     <uiT:layoutData>
                         <FlexItemData growFactor="1" baseSize="0%"/>

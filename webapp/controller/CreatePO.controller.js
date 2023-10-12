@@ -2970,7 +2970,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var extendPopPOModel = this.getOwnerComponent().getModel();
             var resultExtendPop = [];
             var promiseResult;
-
             
             var rfcModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
             var oParamInitParam = {};
@@ -2980,6 +2979,17 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var delDt; 
             var ebelpArray = [];
             var ebelpLastCount = 0;
+
+            this._aParamLockPOdata = [];
+
+            this._aParamLockPOdata.push({
+                Pono: poNo
+            });
+
+            this.showLoadingDialog('Processing...');
+
+            var bProceed = await this.onPOLock();
+            if (!bProceed) return;
 
             this.getView().getModel("detail").getData().forEach(item => {
                 delDt = item.DELVDATE
@@ -2998,14 +3008,19 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         })
 
                         resultExtendPop.push(oData.results);
-                        resolve();
+                        resolve(true);
                     },
                     error: function(error) {
-                        resolve();
+                        resolve(false);
+                        MessageBox.error(me.getView().getModel("ddtext").getData()["INFO_ERROR"] + " " + error.message);
+                        me.closeLoadingDialog();
                     }
                 });
             });
+
             await promiseResult;
+
+            if (!promiseResult) return;
 
             oParamInitParam = {
                 IPoNumber: poNo,
@@ -3089,7 +3104,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         Unsez     : resultExtendPop[0][0].UNSEZ,
                         Matnr     : item.MATERIALNO,
                         Txz01     : item.GMCDESCEN.substring(0, 40),
-                        Menge     : item.BASEPOQTY + "",
+                        Menge     : item.ORDERPOQTY + "",
                         Meins     : item.UOM,
                         Netpr     : item.GROSSPRICE,
                         Peinh     : item.PER,
@@ -3122,13 +3137,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 oParam['N_ChangePOItemParam'] = oParamDataPO;
                 oParam['N_ChangePOClosePRParam'] = oParamCPOClosePRData;
                 oParam['N_ChangePOReturn'] = [];
-
                 console.log(oParam);
-
+                
                 var bSuccess = "", sRetMessage = "";
                 var oCurrHeaderData = me.getView().getModel("grpheader").getData();
 
-                this.showLoadingDialog('Processing...');
                 promiseResult = new Promise((resolve, reject)=>{
                     rfcModel.create("/ChangePOSet", oParam, {
                         method: "POST",
@@ -3172,11 +3185,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                             }
 
                             bSuccess = oData.OutSuccess;
+                            me.onPOUnlock();
                         },
                         error: function(error) {
                             me.closeLoadingDialog();
-                            MessageBox.error(me.getView().getModel("ddtext").getData()["INFO_ERROR"]);
-                            resolve()
+                            MessageBox.error(me.getView().getModel("ddtext").getData()["INFO_ERROR"] + " " + error.message);
+                            resolve();
+                            me.onPOUnlock();
                         }
                     })
                 });
@@ -3988,6 +4003,72 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 }, 100);
             }
         },
+
+        onPOLock: async function(){
+            var me = this;
+            var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK2_SRV");
+            var sError = "";
+            var boolResult = true;
+
+            var oParam = {
+                "N_LOCK_PO_ITEMTAB": this._aParamLockPOdata,
+                "iv_count": 300, 
+                "N_LOCK_PO_ENQ": [], 
+                "N_LOCK_PO_OUTMESSAGES": [] 
+            }
+
+            await new Promise((resolve, reject) => {
+                oModel.create("/Lock_POHdr_Set", oParam, {
+                    method: "POST",
+                    success: function(data, oResponse) {
+                        for(var item of data.N_LOCK_PO_OUTMESSAGES.results) {
+                            if (item.Type === "E") {
+                                sError += item.Message + ". ";
+                            }
+                        }
+
+                        if (sError.length > 0) {
+                            boolResult = false;
+                            MessageBox.information(sError);
+                            me.closeLoadingDialog();
+                        }
+
+                        resolve();
+                    },
+                    error: function(err) {
+                        MessageBox.error(me.getView().getModel("ddtext").getData()["INFO_ERROR"] + " " + error.message);
+                        boolResult = false;
+                        resolve();
+                        me.onPOUnlock();
+                        me.closeLoadingDialog();
+                    }
+                });
+                
+            });
+
+            return boolResult;
+        },
+
+        onPOUnlock: function(){
+            var me = this;
+            var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK2_SRV");
+
+            var oParam = {
+                "N_UNLOCK_PO_ITEMTAB": this._aParamLockPOdata,
+                "N_UNLOCK_PO_ENQ": [], 
+                "N_UNLOCK_PO_MESSAGES": [] 
+            };
+            console.log("unlocking PO: ", oParam);
+            oModel.create("/Unlock_POHdr_Set", oParam, {
+                method: "POST",
+                success: function(oData, oResponse) {
+                    me._aParamLockPOdata = [];
+                    console.log(oData)
+                    console.log(oResponse)
+                },
+                error: function(err) { }
+            });
+        }
 
     })
 })

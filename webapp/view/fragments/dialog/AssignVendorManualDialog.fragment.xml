@@ -5,7 +5,7 @@
         xmlns:uit="sap.ui.table"
         id="fragment-assignvendormanual" 
         fragmentName="assignvendormanual">
-    <Dialog contentWidth="826px"
+    <Dialog contentWidth="850px"
         contentHeight="395px"
         title="Assign Vendor Manually"
         beforeOpen="beforeOpenAVM"
@@ -23,34 +23,20 @@
                 </uit:rowSettingsTemplate>
                 <uit:columns>
                     <uit:Column width="150px">
-                        <Label text="{ddtext>/MATERIALNO}" />
+                        <Text text="{ddtext>/MATERIALNO}" />
                         <uit:template>
                             <Text text="{MATERIALNO}" wrapping="false" />
                         </uit:template>
                     </uit:Column>
                     <uit:Column width="150px">
-                        <Label text="{ddtext>/VENDOR}" class="sapMLabelRequired" />
+                        <Text text="{ddtext>/VENDOR}" class="sapMLabelRequired" />
                         <uit:template>
-                            <!-- <Input id="iptManualVendor"
-                                type="Text" 
-                                enabled="true"
-                                value="{VENDOR}"
-                                change="handleValueHelpChange"
-                                showValueHelp="true"
-                                valueHelpRequest="handleValueHelp"
-                                showSuggestion="true" 
-                                suggestionItemSelected="handleSuggestionItemSelected"
-                                suggestionItems="{path:'/AssignVendorManuallySet', templateShareable:false, sorter: { path: 'LIFNR' }}">
-                                <suggestionItems>
-                                    <core:ListItem text="{LIFNR}" key="{LIFNR}" />
-                                </suggestionItems>
-                            </Input> -->
                             <Input id="iptManualVendor"
                                 type="Text" 
                                 value="{VENDOR}"
                                 textFormatMode="Key"	
                                 showValueHelp="true"
-                                valueHelpRequest="handleStaticValueHelp" 
+                                valueHelpRequest="handleStaticValueHelp"  
                                 showSuggestion="true" 
                                 maxSuggestionWidth="600px"
                                 suggestionItemSelected="handleSuggestionItemSelected"
@@ -59,37 +45,13 @@
                         </uit:template>
                     </uit:Column>
                     <uit:Column width="350px">
-                        <Label text="{ddtext>/VENDORNAME}" />
+                        <Text text="{ddtext>/VENDORNAME}" />
                         <uit:template>
                             <Text text="{VENDORNAME}" wrapping="false" />
                         </uit:template>
-                    </uit:Column>                   
-                    <!-- <uit:Column width="100px">
-                        <Label text="{ddtext>/CURR}" />
-                        <uit:template>
-                            <Text text="{CURR}" wrapping="false" />
-                        </uit:template>
-                    </uit:Column>
-                    <uit:Column width="125px">
-                        <Label text="{ddtext>/PAYTERMS}" />
-                        <uit:template>
-                            <Text text="{PAYTERMS}" wrapping="false" />
-                        </uit:template>
                     </uit:Column>
                     <uit:Column width="120px">
-                        <Label text="{ddtext>/INCOTERMS}" />
-                        <uit:template>
-                            <Text text="{INCO1}" wrapping="false" />
-                        </uit:template>
-                    </uit:Column>
-                    <uit:Column width="120px">
-                        <Label text="{ddtext>/DESTINATION}" />
-                        <uit:template>
-                            <Text text="{INCO2}" wrapping="false" />
-                        </uit:template>
-                    </uit:Column> -->
-                    <uit:Column width="120px">
-                        <Label text="{ddtext>/PURCHORG}" />
+                        <Text text="{ddtext>/PURCHORG}" />
                         <uit:template>
                             <Text text="{PURCHORG}" wrapping="false" />
                         </uit:template>

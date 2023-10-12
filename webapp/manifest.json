@@ -60,6 +60,15 @@
                     "annotations": [],
                     "localUri": "localService/ZGW_3DERP_LOCK_SRV/metadata.xml"
                 }
+            },
+            "ZGW_3DERP_LOCK2_SRV": {
+                "uri": "/sap/opu/odata/sap/ZGW_3DERP_LOCK2_SRV",
+                "type": "OData",
+                "settings": {
+                    "annotations": [],
+                    "localUri": "localService/ZGW_3DERP_LOCK2_SRV/metadata.xml",
+                    "odataVersion": "2.0"
+                }
             }
         }
     },
@@ -119,10 +128,10 @@
             "CancelAll": {
                 "shortcut": "Ctrl+Shift+X"
             }
-        },        
+        },
         "contentDensities": {
             "compact": true,
-            "cozy": true
+            "cozy": false
         },
         "models": {
             "i18n": {
@@ -189,7 +198,19 @@
             },
             "COLUMN_SORTER_MODEL": {
                 "type": "sap.ui.model.json.JSONModel"
-            }          
+            },
+            "ZGW_3DERP_LOCK2_SRV": {
+                "dataSource": "ZGW_3DERP_LOCK2_SRV",
+                "preload": true,
+                "settings": {
+                    "defaultBindingMode": "TwoWay",
+                    "defaultCountMode": "Inline",
+                    "refreshAfterChange": false,
+                    "metadataUrlParams": {
+                        "sap-value-list": "none"
+                    }
+                }
+            }
         },
         "resources": {
             "css": [
@@ -248,6 +269,11 @@
         },
         "config": {
             "fullWidth": true
+        },
+        "services": {
+            "ShellUIService": {
+                "factoryName": "sap.ushell.ui5service.ShellUIService"
+            }
         }
     }
 }

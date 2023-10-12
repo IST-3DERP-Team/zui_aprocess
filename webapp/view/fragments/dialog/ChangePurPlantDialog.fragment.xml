@@ -1,0 +1,55 @@
+<core:FragmentDefinition
+		xmlns="sap.m"
+        xmlns:f="sap.ui.layout.form"
+		xmlns:core="sap.ui.core"
+        xmlns:uit="sap.ui.table"
+        id="fragment-updpurplant" 
+        fragmentName="updpurplant">
+    <Dialog contentWidth="850px"
+        contentHeight="395px"
+        title="Change Purch Plant"
+        beforeOpen="beforeOpen"
+        resizable="true"
+        draggable="true">
+        <content>
+            <uit:Table id="purPlantTab"
+                rows="{/rows}"
+                selectionMode="Single"
+                selectionBehavior="RowSelector"
+                visibleRowCount="{/rowCount}"
+                class="sapUiTinyMargin">
+                <uit:columns>
+                    <uit:Column width="200px">
+                        <Text text="{ddtext>/SHIPTOPLANT}" />
+                        <uit:template>
+                            <Text text="{SHIPTOPLANT}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="200px">
+                        <Text text="{ddtext>/COMPANY}" />
+                        <uit:template>
+                            <Text text="{COMPANYCD}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="200px">
+                        <Text text="{ddtext>/PURCHPLANT}" />
+                        <uit:template>
+                            <Text text="{PURPLANT}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="200px">
+                        <Text text="{ddtext>/COMPANY}" />
+                        <uit:template>
+                            <Text text="{VBUKR}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                </uit:columns>
+            </uit:Table>
+        </content> 
+        <buttons>
+            <Button id="btnExecCPP" icon="sap-icon://accept" text="{ddtext>/EXECUTE}" tooltip="{ddtext>/EXECUTE}" press="execUpdPurPlant" visible="true" />
+            <Button id="btnCancelCPP" icon="sap-icon://decline" text="{ddtext>/CANCEL}" tooltip="{ddtext>/CANCEL}" press="onCancelUpdPurPlant" visible="true" />
+            <Button id="btnCancelAllCPP" icon="sap-icon://decline" text="{ddtext>/CANCELALL}" tooltip="{ddtext>/CANCEL}" press="onCancelAllUpdPurPlant" visible="false" />
+        </buttons>        
+    </Dialog>
+</core:FragmentDefinition>

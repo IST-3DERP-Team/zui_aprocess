@@ -1,0 +1,48 @@
+<core:FragmentDefinition
+		xmlns="sap.m"
+        xmlns:f="sap.ui.layout.form"
+		xmlns:core="sap.ui.core"
+        xmlns:uit="sap.ui.table"
+        id="fragment-updpurplantres" 
+        fragmentName="updpurplantres">
+    <Dialog contentWidth="1000px"
+        contentHeight="285px"
+        title="Change Purch Plant Result"
+        resizable="true"
+        draggable="true">
+        <endButton>
+			<Button text="Close" press="onUpdPurPlantResultClose"/>
+		</endButton>
+        <uit:Table id="purPlantResultTab"
+            rows="{/items}"
+            selectionMode="None"
+            visibleRowCount="{/rowCount}">
+            <uit:columns>              
+                <uit:Column width="9rem">
+                    <Text text="{ddtext>/PRNUMBER}" />
+                    <uit:template>
+                        <Text text="{PRNUMBER}" wrapping="true" tooltip="{PRNUMBER}" />
+                    </uit:template>
+                </uit:Column>
+                <uit:Column width="8rem">
+                    <Text text="{ddtext>/PRITEMNO}" />
+                    <uit:template>
+                        <Text text="{PRITEMNO}" wrapping="true" tooltip="{PRITEMNO}" />
+                    </uit:template>
+                </uit:Column>
+                <uit:Column width="9rem">
+                    <Text text="{ddtext>/SHIPTOPLANT}" />
+                    <uit:template>
+                        <Text text="{SHIPTOPLANT}" wrapping="true" tooltip="{SHIPTOPLANT}" />
+                    </uit:template>
+                </uit:Column>
+                <uit:Column width="35rem">
+                    <Text text="{ddtext>/REMARKS}" />
+                    <uit:template>
+                        <Text text="{REMARKS}" wrapping="true" tooltip="{REMARKS}" />
+                    </uit:template>
+                </uit:Column>
+            </uit:columns>
+        </uit:Table>    
+    </Dialog>
+</core:FragmentDefinition>

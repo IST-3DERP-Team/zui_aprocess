@@ -20,67 +20,67 @@
             paste="onPaste">
             <uit:columns>
                 <uit:Column width="7rem">
-                    <Label text="PR#" />
+                    <Text text="PR#" />
                     <uit:template>
                         <Text text="{PRNUMBER}" wrapping="false" />
                     </uit:template>
                 </uit:Column>                
                 <uit:Column width="5rem">
-                    <Label text="PR Item" />
+                    <Text text="PR Item" />
                     <uit:template>
                         <Text text="{PRITEMNO}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="20rem">
-                    <Label text="Remarks" />
+                    <Text text="Remarks" />
                     <uit:template>
                         <Text text="{REMARKS}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="10rem">
-                    <Label text="Material No." />
+                    <Text text="Material No." />
                     <uit:template>
                         <Text text="{MATERIALNO}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="7rem">
-                    <Label text="IO No." />
+                    <Text text="IO No." />
                     <uit:template>
                         <Text text="{IONUMBER}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="4rem">
-                    <Label text="Qty" />
+                    <Text text="Qty" />
                     <uit:template>
                         <Text text="{QTY}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="5rem">
-                    <Label text="UOM" />
+                    <Text text="UOM" />
                     <uit:template>
                         <Text text="{UNIT}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="7rem">
-                    <Label text="Vendor" />
+                    <Text text="Vendor" />
                     <uit:template>
                         <Text text="{VENDOR}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="7rem">
-                    <Label text="Purch Org" />
+                    <Text text="Purch Org" />
                     <uit:template>
                         <Text text="{PURCHORG}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="7rem">
-                    <Label text="Purch Plant" />
+                    <Text text="Purch Plant" />
                     <uit:template>
                         <Text text="{PURCHPLANT}" wrapping="false" />
                     </uit:template>
                 </uit:Column>
                 <uit:Column width="7rem">
-                    <Label text="Purch Group" />
+                    <Text text="Purch Group" />
                     <uit:template>
                         <Text text="{PURCHGRP}" wrapping="false" />
                     </uit:template>

@@ -36,24 +36,30 @@ sap.ui.define([
                 this._colFilters = {};
                 this._selectedRecs = [];
 
-                if (sap.ui.getCore().byId("backBtn") !== undefined) {
-                    this._fBackButton = sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction;
-
-                    var oView = this.getView();
-                    oView.addEventDelegate({
-                        onAfterShow: function(oEvent){
-                            sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction = that._fBackButton; 
+                var oInterval = setInterval(() => {
+                    if (sap.ui.getCore().byId("backBtn") !== undefined) {
+                        if (sap.ui.getCore().byId("backBtn") !== undefined) {
+                            this._fBackButton = sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction;
                             
-                            if (that.getOwnerComponent().getModel("UI_MODEL").getData().flag) {
-                                that.refreshTableData();
-                            }
-                            
-                            if (that._oLock.length > 0) {
-                                that.unLock();
-                            }
+                            var oView = this.getView();
+                            oView.addEventDelegate({
+                                onAfterShow: function(oEvent){
+                                    sap.ui.getCore().byId("backBtn").mEventRegistry.press[0].fFunction = that._fBackButton; 
+                                    
+                                    if (that.getOwnerComponent().getModel("UI_MODEL").getData().flag) {
+                                        that.refreshTableData();
+                                    }
+                                    
+                                    if (that._oLock.length > 0) {
+                                        that.unLock();
+                                    }
+                                }
+                            }, oView);
                         }
-                    }, oView);
-                }
+
+                        clearInterval(oInterval);
+                    }
+                }, 1000);
 
                 this.showLoadingDialog('Loading...');
 
@@ -218,6 +224,10 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "NAME1"});
                 oDDTextParam.push({CODE: "INFO_INPUT_DELVDATE"});
                 oDDTextParam.push({CODE: "TEXT1"});
+                oDDTextParam.push({CODE: "CHANGEPURPLANT"});
+                oDDTextParam.push({CODE: "INFO_INVALID_CHANGE_PURPLANT"});
+                oDDTextParam.push({CODE: "EXECUTE"});
+                oDDTextParam.push({CODE: "REMARKS"});
 
                 oModel.create("/CaptionMsgSet", { CaptionMsgItems: oDDTextParam  }, {
                     method: "POST",
@@ -367,6 +377,15 @@ sap.ui.define([
                 });
 
                 this.getColumnProp();
+            },
+
+            onAfterRendering: function() {
+                // var a = setInterval(() => {
+                //     if (sap.ui.getCore().byId("backBtn") !== undefined) {
+                //         console.log(sap.ui.getCore().byId("backBtn"))
+                //         clearInterval(a);
+                //     }
+                // }, 1000);
             },
 
             onExit: function() {
@@ -573,7 +592,7 @@ sap.ui.define([
                     if (sColumnDataType === "NUMBER") {
                         return new sap.ui.table.Column({
                             id: sColumnId,
-                            label: sColumnLabel,
+                            label: new sap.m.Text({text: sColumnLabel}), 
                             template: me.columnTemplate(sColumnId, sColumnType),
                             width: sColumnWidth + 'px',
                             sortProperty: sColumnId,
@@ -595,7 +614,7 @@ sap.ui.define([
                     else {
                         return new sap.ui.table.Column({
                             id: sColumnId,
-                            label: sColumnLabel,
+                            label: new sap.m.Text({text: sColumnLabel}), 
                             template: me.columnTemplate(sColumnId, sColumnType),
                             width: sColumnWidth + 'px',
                             sortProperty: sColumnId,
@@ -604,7 +623,7 @@ sap.ui.define([
                             visible: sColumnVisible,
                             sorted: sColumnSorted,                        
                             hAlign: sColumnDataType === "NUMBER" ? "End" : sColumnDataType === "BOOLEAN" ? "Center" : "Begin",
-                            sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending" ),
+                            sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending" )
                         });
                     }
                 });
@@ -1905,6 +1924,353 @@ sap.ui.define([
                 this._ConfirmDialog.open();
             },
 
+            onUpdPurPlant: async function(oEvent) {
+                var me = this;
+                this._oAssignPurPlantData = [];
+                this._oLock = [];
+                this._refresh = false;
+
+                var oTable = this.byId("mainTab");
+                var oSelectedIndices = oTable.getSelectedIndices();
+                var oTmpSelectedIndices = [];
+                var aData = oTable.getModel().getData().rows;
+                var vInvalid = false;
+                var vCtr = 0;
+                var bError = false;
+                var aSelectedData = [];
+
+                if (oSelectedIndices.length > 0) {
+                    oSelectedIndices.forEach(item => {
+                        oTmpSelectedIndices.push(oTable.getBinding("rows").aIndices[item])
+                    })
+
+                    oSelectedIndices = oTmpSelectedIndices;
+
+                    oSelectedIndices.forEach((item, index) => {
+                        if (vInvalid) return;
+
+                        if (aData.at(item).VENDOR === "" || aData.at(item).SHIPTOPLANT === "") vInvalid = true;
+
+                        aSelectedData.push({
+                            PRNUMBER: aData.at(item).PRNUMBER,
+                            PRITEMNO: aData.at(item).PRITEMNO,
+                            SHIPTOPLANT: aData.at(item).SHIPTOPLANT,
+                            MATERIALNO: aData.at(item).MATERIALNO,
+                            IONUMBER: aData.at(item).IONUMBER,
+                            QTY: aData.at(item).QTY,
+                            DELVDATE: aData.at(item).DELVDATE,
+                            UNIT: aData.at(item).UNIT,
+                            PURCHORG: aData.at(item).PURCHORG,
+                            PURCHPLANT: aData.at(item).PURCHPLANT,
+                            PURCHGRP: aData.at(item).PURCHGRP,
+                            REQUISITIONER: aData.at(item).REQUISITIONER,
+                            TRACKINGNO: aData.at(item).TRACKINGNO,
+                            SUPPLYTYPE: aData.at(item).SUPPLYTYPE,
+                            SEASON: aData.at(item).SEASON,
+                            SHORTTEXT: aData.at(item).SHORTTEXT,
+                            INFORECORD: aData.at(item).INFORECORD,
+                            VENDOR: aData.at(item).VENDOR,
+                            REMARKS: ""
+                        })
+
+                        me._oLock.push({
+                            Prno: aData.at(item).PRNUMBER,
+                            Prln: aData.at(item).PRITEMNO
+                        })
+                    })
+                    
+                    if (vInvalid) {
+                        sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_INVALID_CHANGE_PURPLANT"]);
+                        me.closeLoadingDialog();
+                    }
+                    else {
+                        me.showLoadingDialog('Processing...');
+
+                        var bProceed = await me.lock(me);
+                        if (!bProceed) {
+                            me.closeLoadingDialog();
+                            return;
+                        }
+
+                        [...new Set(aSelectedData.map(item => item.SHIPTOPLANT))].forEach((item, index) => {
+                            this._oAssignPurPlantData.push({
+                                GROUP: index + 1,
+                                SHIPTOPLANT: item,
+                                STATUS: "NW",
+                                REMARKS: "",
+                                ITEMS: aSelectedData.filter(fItem => fItem.SHIPTOPLANT === item),
+                                PLANTS: []
+                            })
+                        });
+
+                        this._oAssignPurPlantData.forEach(val => {
+                            if (bError) { return; }
+
+                            this._oModel.read("/PurchPlantSet", {
+                                urlParameters: {
+                                    "$filter": "SHIPTOPLANT eq '" + val.SHIPTOPLANT +"'"
+                                },
+                                success: function (oData, oResponse) {
+                                    vCtr++;
+                                    // console.log(oData);
+                                    me._oAssignPurPlantData.filter(fItem => fItem.SHIPTOPLANT === oData.results[0].SHIPTOPLANT).forEach(item => {
+                                        item.PLANTS = oData.results;
+                                    })
+                                    // console.log(me._oAssignPurPlantData);
+                                    if (vCtr === me._oAssignPurPlantData.length) {                                       
+                                        var vRowCount = me._oAssignPurPlantData[0].PLANTS.length > 10 ? me._oAssignPurPlantData[0].PLANTS.length : 10;
+    
+                                        if (!me._ChangePurPlantDialog) {
+                                            me._ChangePurPlantDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ChangePurPlantDialog", me);
+                                            
+                                            me._ChangePurPlantDialog.setModel(
+                                                new JSONModel({
+                                                    rows: me._oAssignPurPlantData[0].PLANTS,
+                                                    rowCount: vRowCount
+                                                })
+                                            )
+        
+                                            me.getView().addDependent(me._ChangePurPlantDialog);
+        
+                                            // var oTableEventDelegate = {
+                                            //     onkeyup: function (oEvent) {
+                                            //         me.onKeyUp(oEvent);
+                                            //     },
+                            
+                                            //     onAfterRendering: function (oEvent) {
+                                            //         var oControl = oEvent.srcControl;
+                                            //         var sTabId = oControl.sId.split("--")[oControl.sId.split("--").length - 1];
+                            
+                                            //         if (sTabId.substr(sTabId.length - 3) === "Tab") me._tableRendered = sTabId;
+                                            //         else me._tableRendered = "";
+                            
+                                            //         me.onAfterTableRendering();
+                                            //     }
+                                            // };
+        
+                                            // sap.ui.getCore().byId("purPlantTab").addEventDelegate(oTableEventDelegate);
+                                        }
+                                        else {
+                                            sap.ui.getCore().byId("purPlantTab").clearSelection();
+                                            me._ChangePurPlantDialog.getModel().setProperty("/rows", me._oAssignPurPlantData[0].PLANTS);
+                                            me._ChangePurPlantDialog.getModel().setProperty("/rowCount", vRowCount);
+                                        }
+        
+                                        if (me._oAssignPurPlantData.length === 1) {
+                                            sap.ui.getCore().byId("btnCancelAllCPP").setVisible(false);
+                                        }
+                                        else {
+                                            sap.ui.getCore().byId("btnCancelAllCPP").setVisible(true);
+                                        }
+
+                                        me.closeLoadingDialog();                                       
+                                        me._ChangePurPlantDialog.setTitle(me.getView().getModel("ddtext").getData()["CHANGEPURPLANT"]);
+                                        me._ChangePurPlantDialog.open();                                        
+                                        sap.ui.getCore().byId("purPlantTab").focus();
+                                    }
+                                },
+                                error: function (err) { 
+                                    bError = true;
+                                    me.closeLoadingDialog();
+                                    sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_ERROR"] + ": " + err.message);
+                                    return;
+                                }
+                            });
+                        })
+                    }
+                }
+                else {
+                    sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_NO_RECORD_TO_PROC"]);
+                }
+            },
+
+            execUpdPurPlant: function(oEvent) {
+                var me = this;
+                var oTable = sap.ui.getCore().byId("purPlantTab");
+                var oParam = {};
+                var oParamData = [];
+                var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");  
+                var oCurrGrpData = this._oAssignPurPlantData.filter(fItem => fItem.SHIPTOPLANT === this._ChangePurPlantDialog.getModel().getData().rows[0].SHIPTOPLANT);
+
+                if (oTable.getSelectedIndices().length === 0) {
+                    sap.m.MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_NO_RECORD_TO_PROC"]);
+                    return;
+                }
+                
+                oCurrGrpData[0].ITEMS.forEach(item => {
+                    oParamData.push({
+                        PreqNo: item.PRNUMBER,
+                        PreqItem: item.PRITEMNO,
+                        Matno: item.MATERIALNO,
+                        Uom: item.UNIT,
+                        Quantity: item.QTY,
+                        DelivDate: sapDateFormat.format(new Date(item.DELVDATE)) + "T00:00:00",
+                        Batch: item.IONUMBER,
+                        Plant: oCurrGrpData[0].PLANTS[oTable.getSelectedIndices()[0]].PURPLANT,
+                        Purgrp: item.PURCHGRP,
+                        Reqsnr: item.REQUISITIONER,
+                        DesVendor: item.VENDOR,
+                        PurchOrg: item.PURCHORG,
+                        Trackingno: item.TRACKINGNO,
+                        Supplytyp: item.SUPPLYTYPE,
+                        InfoRec: item.INFORECORD,
+                        Shiptoplant: item.SHIPTOPLANT,
+                        Seasoncd: item.SEASON,
+                        ShortText: item.SHORTTEXT,
+                        Callbapi: 'X'
+                    })
+                })
+                // console.log(oParamData)
+                oParam['N_ChangePRParam'] = oParamData;
+                oParam['N_ChangePRReturn'] = [];
+
+                me.showLoadingDialog('Processing...');
+
+                oModel.create("/ChangePRSet", oParam, {
+                    method: "POST",
+                    success: function(oResultCPR, oResponse) {   
+                        console.log(oResultCPR)
+                        if (oResultCPR.N_ChangePRReturn.results.length > 0) {
+                            oCurrGrpData[0].ITEMS.forEach(item => {
+                                var oRetMsg = []; //oResultCPR.N_ChangePRReturn.results.filter(fItem => fItem.PreqNo === item.PRNUMBER && fItem.PreqItem === item.PRITEMNO);
+
+                                if (oRetMsg.length === 0)
+                                    oRetMsg = oResultCPR.N_ChangePRReturn.results.filter(fItem => fItem.PreqNo === item.PRNUMBER);
+
+                                if (oRetMsg.length > 0) {
+                                    if (oRetMsg.filter(fItem => fItem.Type === "E").length > 0) {
+                                        oRetMsg.forEach(msg => {
+                                            if (msg.Type === "E") {
+                                                item.REMARKS += msg.Message + ". \r\n";
+                                            }
+                                        })
+                                    }
+                                    else if (oRetMsg.filter(fItem => fItem.Type === "S").length > 0) {
+                                        oRetMsg.forEach(msg => {
+                                            if (msg.Type === "S" && item.REMARKS === "") {
+                                                item.REMARKS = msg.Message + ". ";
+                                            }
+                                        })
+                                    }
+                                }
+                                else {
+                                    item.REMARKS = 'No return message on PR change.';
+                                }
+                            })
+                            
+                            oCurrGrpData[0].STATUS = "PR";
+                            oCurrGrpData[0].REMARKS = "Processed";
+                            me._refresh = true;
+                        }
+
+                        me.closeLoadingDialog();
+                        me.onUpdPurPlantNextGrp(oCurrGrpData[0].GROUP);
+                    },
+                    error: function() {
+                        me.closeLoadingDialog();
+                        me.onUpdPurPlantNextGrp(oCurrGrpData[0].GROUP);                        
+                    }
+                });
+            },
+
+            onUpdPurPlantNextGrp(currGrp) {
+                if (currGrp === this._oAssignPurPlantData.length) {
+                    this._ChangePurPlantDialog.close();
+                    this.showUpdPurPlantResult();
+                    return;
+                }
+
+                sap.ui.getCore().byId("purPlantTab").clearSelection();
+                this._ChangePurPlantDialog.getModel().setProperty("/rows", this._oAssignPurPlantData[currGrp].PLANTS);
+            },       
+
+            onCancelUpdPurPlant: function(oEvent) {
+                var oCurrGrpData = this._oAssignPurPlantData.filter(fItem => fItem.SHIPTOPLANT === this._ChangePurPlantDialog.getModel().getData().rows[0].SHIPTOPLANT)[0];
+                oCurrGrpData.STATUS = "CA";
+                oCurrGrpData.REMARKS = "Cancelled";
+
+                oCurrGrpData.ITEMS.forEach(item => item.REMARKS = "Cancelled")
+
+                if (oCurrGrpData.GROUP === this._oAssignPurPlantData.length) {
+                    this._ChangePurPlantDialog.close();
+                    this.showUpdPurPlantResult();
+                    return;
+                }
+
+                oTable.clearSelection();
+                this._ChangePurPlantDialog.getModel().setProperty("/rows", me._oAssignPurPlantData[vCurrGrp].PLANTS);
+            },
+
+            onCancelAllUpdPurPlant: function(oEvent) {
+                this._oAssignPurPlantData.filter(fItem => fItem.REMARKS === "").forEach(grp => {
+                    grp.STATUS = "CA";
+                    grp.REMARKS = "Cancelled";
+
+                    grp.ITEMS.forEach(item => item.REMARKS = "Cancelled");
+                })
+
+                this._ChangePurPlantDialog.close();
+                this.showUpdPurPlantResult();
+            },
+
+            showUpdPurPlantResult() {
+                this.unLock();
+
+                var oDataResult = [];
+
+                this._oAssignPurPlantData.forEach(grp => {
+                    grp.ITEMS.forEach(item => {
+                        oDataResult.push({
+                            PRNUMBER: item.PRNUMBER,
+                            PRITEMNO: item.PRITEMNO,
+                            SHIPTOPLANT: item.SHIPTOPLANT,
+                            REMARKS: item.REMARKS
+                        })
+                    })
+                })
+
+                var vRowCount = oDataResult.length > 7 ? oDataResult : 7;
+
+                if (!this._ChangePurPlantResultDialog) {
+                    this._ChangePurPlantResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.ChangePurPlantResultDialog", this);
+
+                    this._ChangePurPlantResultDialog.setModel(
+                        new JSONModel({
+                            items: oDataResult,
+                            rowCount: vRowCount
+                        })
+                    )
+
+                    this.getView().addDependent(this._ChangePurPlantResultDialog);
+                }
+                else {
+                    this._ChangePurPlantResultDialog.getModel().setProperty("/items", oDataResult);
+                    this._ChangePurPlantResultDialog.getModel().setProperty("/rowCount", vRowCount);
+                }
+
+                this._ChangePurPlantResultDialog.open();
+            },
+
+            onUpdPurPlantResultClose: function(oEvent) {
+                if (this._refresh) { 
+                    if (this.byId("mainTab").getBinding("rows").aSorters.length > 0) {
+                        this._aColSorters = this.byId("mainTab").getBinding("rows").aSorters;
+                        this.getOwnerComponent().getModel("COLUMN_SORTER_MODEL").setProperty("/items", this._aColSorters);
+                    }
+
+                    this._selectedRecs = [];
+                    this._oAssignPurPlantData.forEach(grp => {
+                        grp.ITEMS.forEach(item => {
+                            this._selectedRecs.push(item);
+                        })
+                    })
+                    // console.log(this._selectedRecs);
+                    this.refreshTableData(); 
+                }
+
+                this._ChangePurPlantResultDialog.close();
+            },
+
             handleValueHelp: function(oEvent) {
                 var oSource = oEvent.getSource();
    
@@ -2304,9 +2670,12 @@ sap.ui.define([
 
                 this.byId("mainTab").getModel().getData().rows.forEach((item, index) => {
                     item.ACTIVE = "";
-
+                    // console.log(item.PRNUMBER, item.PRITEMNO)
                     if (this._selectedRecs.filter(fItem => fItem.PRNUMBER === item.PRNUMBER && fItem.PRITEMNO === item.PRITEMNO).length > 0) {
+                        // console.log(this._selectedRecs);
+                        // console.log(this.byId("mainTab").getBinding("rows").aIndices)
                         this.byId("mainTab").getBinding("rows").aIndices.forEach((item2, index2) => {
+                            // console.log(index, index2)
                             if (item2 === index) {
                                 this.byId("mainTab").addSelectionInterval(index2, index2);
 
@@ -2584,7 +2953,7 @@ sap.ui.define([
                                                                     PURCHPLANT: item.PURCHPLANT,
                                                                     PURCHPLANTDESC: oPurchPlant.length > 0 ? oPurchPlant[0].NAME1 + " (" + item.PURCHPLANT + ")" : item.PURCHPLANT,
                                                                     SHIPTOPLANT: item.SHIPTOPLANT,
-                                                                    SHIPTOPLANTTDESC: oShipPlant.length > 0 ? oShipPlant[0].NAME1 + " (" + item.SHIPTOPLANT + ")" : item.SHIPTOPLANT
+                                                                    SHIPTOPLANTDESC: oShipPlant.length > 0 ? oShipPlant[0].NAME1 + " (" + item.SHIPTOPLANT + ")" : item.SHIPTOPLANT
                                                                 })
                                                             }
                                                         })
@@ -2719,7 +3088,7 @@ sap.ui.define([
                                                         PURCHPLANT: item.PURCHPLANT,
                                                         PURCHPLANTDESC: oPurchPlant.length > 0 ? oPurchPlant[0].NAME1 + " (" + item.PURCHPLANT + ")" : item.PURCHPLANT,
                                                         SHIPTOPLANT: item.SHIPTOPLANT,
-                                                        SHIPTOPLANTTDESC: oShipPlant.length > 0 ? oShipPlant[0].NAME1 + " (" + item.SHIPTOPLANT + ")" : item.SHIPTOPLANT
+                                                        SHIPTOPLANTDESC: oShipPlant.length > 0 ? oShipPlant[0].NAME1 + " (" + item.SHIPTOPLANT + ")" : item.SHIPTOPLANT
                                                     })
                                                 }
                                             })
@@ -3070,7 +3439,7 @@ sap.ui.define([
             },
 
             lock: async (me) => {
-                var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+                var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK2_SRV");
                 var oParamLock = {};
                 var sError = "";
                 
@@ -3078,10 +3447,11 @@ sap.ui.define([
                     oParamLock["N_IMPRTAB"] = me._oLock;
                     oParamLock["iv_count"] = 300;
                     oParamLock["N_LOCK_MESSAGES"] = []; 
-
+                    console.log(oParamLock)
                     oModelLock.create("/Lock_PRSet", oParamLock, {
                         method: "POST",
                         success: function(oResultLock) {
+                            console.log(oResultLock);
                             oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
                                 if (item.Type === "E") {
                                     sError += item.Message + ".\r\n ";
@@ -3108,27 +3478,27 @@ sap.ui.define([
             },
 
             unLock() {
-                // if (this._oLock.length > 0) {
-                    var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
-                    var oParamUnLock = {};
+                if (this._oLock.length > 0) {
+                    var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK2_SRV");
+                    var oParamUnLock = {}
     
                     oParamUnLock["N_IMPRTAB"] = this._oLock;
-    
-                    setTimeout(() => {
+                    console.log(oParamUnLock)
+                    // setTimeout(() => {
                         oModelLock.create("/Unlock_PRSet", oParamUnLock, {
                             method: "POST",
-                            success: function(oResultLock) { },
+                            success: function(oResultUnlock) { console.log(oResultUnlock) },
                             error: function (err) { }
                         })
         
                         this._oLock = [];                    
-                    }, 10);
-                // }
+                    // }, 10);
+                }
             },
 
             singlelock: async (me) => {
                 var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
-                oModelLock.setUseBatch(true);
+                // oModelLock.setUseBatch(true);
                 var oParamLock = {};
                 var sError = "";
                 var vCounter = 0;
@@ -3138,7 +3508,7 @@ sap.ui.define([
                         setTimeout(() => {
                             var oLockItem = [];
                             oLockItem.push(item);
-    
+                            console.log(item)
                             oParamLock["N_IMPRTAB"] = oLockItem; //me._oLock;
                             oParamLock["iv_count"] = 300;
                             oParamLock["N_LOCK_MESSAGES"] = []; 
@@ -3157,6 +3527,7 @@ sap.ui.define([
                                     if (sError.length > 0) {
                                         if (vCounter === me._oLock.length) {
                                             resolve(false);
+                                            me.unLock();
                                             sap.m.MessageBox.information(sError);
                                             me.closeLoadingDialog();
                                         }
@@ -3173,11 +3544,12 @@ sap.ui.define([
     
                                     if (vCounter === me._oLock.length) {
                                         me.closeLoadingDialog();
+                                        me.unLock();
                                         resolve(false);
                                     }
                                 }
                             });                            
-                        }, 1);
+                        }, 100);
                     })
                 })
 
@@ -3206,6 +3578,160 @@ sap.ui.define([
 
                 this._oLock = [];
             },
+
+            batchlock: async (me) => {
+                me._lockCounter = 0;
+                me._lockError = "";
+                me._lockResult = false;
+                me._lockFinish = false;
+                me.looplock(0);
+                
+                var promise = new Promise((resolve, reject) => {
+                    var lockInterval = setInterval(() => {
+                        if (me._lockFinish) {
+                            resolve(me._lockResult);
+                            clearInterval(lockInterval);
+                        }                        
+                    }, 500);
+                })
+
+                return await promise;
+            },
+
+            looplock(iCounter) {
+                var me = this;
+                var oModelLock = this.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+                var oParamLock = {};
+
+                setTimeout(() => {
+                    console.log(new Date());
+                    var oLockItem = [];
+                    oLockItem.push(me._oLock[iCounter]);
+                    
+                    oParamLock["N_IMPRTAB"] = oLockItem;
+                    oParamLock["iv_count"] = 300;
+                    oParamLock["N_LOCK_MESSAGES"] = []; 
+
+                    oModelLock.create("/Lock_PRSet", oParamLock, {
+                        method: "POST",
+                        success: function(oResultLock) {
+                            me._lockCounter++;
+                            console.log(me._lockCounter, me._oLock.length, oResultLock);
+
+                            oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
+                                if (item.Type === "E") {
+                                    me._lockError += item.Message + ".\r\n ";
+                                }
+                            })
+                            
+                            if (me._lockError.length > 0) {
+                                if (me._lockCounter === me._oLock.length) {
+                                    me._lockResult = false;
+                                    me._lockFinish = true;
+                                    me.unLock();
+                                    sap.m.MessageBox.information(me._lockError);
+                                    me.closeLoadingDialog();
+                                }
+                            }
+                            else {
+                                if (me._lockCounter === me._oLock.length) {
+                                    me.closeLoadingDialog();
+                                    me._lockResult = true;
+                                    me._lockFinish = true;
+                                }
+                            }
+                        },
+                        error: function (err) {
+                            me._lockCounter++;
+                            me._lockError += oLockItem[0].Prno + oLockItem[0].Prln + " " + err.message + ".\r\n ";
+                            console.log(err)
+                            if (me._lockCounter === me._oLock.length) {
+                                me.closeLoadingDialog();
+                                me.unLock();
+                                me._lockResult = false;
+                                me._lockFinish = true;
+                                sap.m.MessageBox.information(me._lockError);
+                            }
+                        }
+                    });                    
+
+                    iCounter++;
+
+                    if (iCounter !== me._oLock.length) {
+                        me.looplock(iCounter);
+                    }
+                }, 5000);
+            },
+
+            // batchlock: async (me) => {
+            //     var oModelLock = me.getOwnerComponent().getModel("ZGW_3DERP_LOCK_SRV");
+            //     var iCounter = 0;
+            //     var sError = "";
+            //     var mParameters = { groupId:"update" };
+
+            //     oModelLock.setUseBatch(true);
+            //     oModelLock.setDeferredGroups(["update"]);                
+                
+            //     var promise = new Promise((resolve, reject) => {
+            //         me._oLock.forEach(item => {
+            //             setTimeout(() => {
+            //                 console.log(new Date());
+            //                 var oParamLock = {};     
+            //                 var oLockItem = [];
+
+            //                 oLockItem.push(item);
+            //                 oParamLock["N_IMPRTAB"] = oLockItem; //me._oLock;
+            //                 oParamLock["iv_count"] = 300;
+            //                 oParamLock["N_LOCK_MESSAGES"] = []; 
+            //                 console.log(oLockItem)
+            //                 oModelLock.create("/Lock_PRSet", oParamLock, mParameters);
+
+            //                 oModelLock.submitChanges({
+            //                     groupId: "update",
+            //                     success: function (oResultLock, oResponse) {
+            //                         console.log(oResultLock);
+            //                         console.log(oResponse)
+            //                         iCounter++;
+
+            //                         if (oResultLock.__batchResponses[0].__changeResponses[0].data.N_LOCK_MESSAGES.results.length !== 0) {                                        
+            //                             if (oResultLock.__batchResponses[0].__changeResponses[0].data.N_LOCK_MESSAGES.results[0].Type === "E") {
+            //                                 sError += oResultLock.__batchResponses[0].__changeResponses[0].data.N_LOCK_MESSAGES.results[0].Message + ".\r\n ";
+            //                             }
+            //                         }
+                                        
+            //                         if (sError.length > 0) {
+            //                             if (iCounter === me._oLock.length) {
+            //                                 resolve(false);
+            //                                 me.unLock();
+            //                                 sap.m.MessageBox.information(sError);
+            //                                 me.closeLoadingDialog();
+            //                             }
+            //                         }
+            //                         else {
+            //                             if (iCounter === me._oLock.length) {
+            //                                 me.closeLoadingDialog();
+            //                                 resolve(true);
+            //                             }
+            //                         }
+            //                     },
+            //                     error: function (error) {
+            //                         iCounter++;
+            //                         sError += oLockItem[0].Prno + oLockItem[0].Prln + ":" + error.message + ".\r\n ";
+
+            //                         if (iCounter === me._oLock.length) {
+            //                             me.closeLoadingDialog();
+            //                             resolve(false);
+            //                             me.unLock();
+            //                             sap.m.MessageBox.information(sError);
+            //                         }
+            //                     }
+            //                 })
+            //             }, 1000);
+            //         })
+            //     })
+
+            //     return await promise;
+            // },
 
             applyColFilter() {
                 var pFilters = this._colFilters;

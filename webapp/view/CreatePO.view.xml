@@ -17,168 +17,9 @@
         </dependents>
         <content>
             <VBox fitContainer="true" class="genpo"> 
-                <!-- <uiT:Table id="headerTab"
-                    rows="{header>/}"
-                    class="sapUiTinyMargin"
-                    visibleRowCountMode="Auto"
-                    showColumnVisibilityMenu="true"
-                    enableColumnFreeze="true"
-                    selectionMode="Single"
-                    cellClick="onCellClick"
-                    sort="onSorted">
-                    <uiT:columns>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/DOCTYPE}" />
-                            <uiT:template>
-                                <Text text="{header>DOCTYPE}" wrapping="false" tooltip="{detail>DOCTYPE}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PODATE}" />
-                            <uiT:template>
-                                <Text text="{header>PODATE}" wrapping="false" tooltip="{detail>PODATE}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/VENDOR}" />
-                            <uiT:template>
-                                <Text text="{header>VENDOR}" wrapping="false" tooltip="{detail>VENDOR}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="300px">
-                            <Text text="{ddtext>/VENDORNAME}" />
-                            <uiT:template>
-                                <Text text="{header>VENDORNAME}" wrapping="false" tooltip="{detail>VENDORNAME}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PURCHORG}" />
-                            <uiT:template>
-                                <Text text="{header>PURCHORG}" wrapping="false" tooltip="{detail>PURCHORG}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PURCHGRP}" />
-                            <uiT:template>
-                                <Text text="{header>PURCHGRP}" wrapping="false" tooltip="{detail>PURCHGRP}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/COMPANY}" />
-                            <uiT:template>
-                                <Text text="{header>COMPANY}" wrapping="false" tooltip="{detail>COMPANY}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PURCHPLANT}" />
-                            <uiT:template>
-                                <Text text="{header>PURCHPLANT}" wrapping="false" tooltip="{detail>PURCHPLANT}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/SHIPTOPLANT}" />
-                            <uiT:template>
-                                <Text text="{header>SHIPTOPLANT}" wrapping="false" tooltip="{detail>SHIPTOPLANT}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/PAYTERMS}" />
-                            <uiT:template>
-                                <Text text="{header>PAYTERMS}" wrapping="false" tooltip="{detail>PAYTERMS}" />
-                            </uiT:template>                            
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/INCOTERMS}" />
-                            <uiT:template>
-                                <Text text="{header>INCOTERMS}" wrapping="false" tooltip="{detail>INCOTERMS}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="200px">
-                            <Text text="{ddtext>/DESTINATION}" />
-                            <uiT:template>
-                                <Text text="{header>DESTINATION}" wrapping="false" tooltip="{detail>DESTINATION}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/CURR}" />
-                            <uiT:template>
-                                <Text text="{header>CURR}" wrapping="false" tooltip="{detail>CURR}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/EXRATE}" />
-                            <uiT:template>
-                                <Text text="{header>EXRATE}" wrapping="false" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/SHIPMODE}" />
-                            <uiT:template>
-                                <Text text="{header>SHIPMODE}" wrapping="false" tooltip="{detail>SHIPMODE}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/CREATEDBY}" />
-                            <uiT:template>
-                                <Text text="{header>CREATEDBY}" wrapping="false" tooltip="{detail>CREATEDBY}" />
-                            </uiT:template>
-                        </uiT:Column>
-                        <uiT:Column width="100px">
-                            <Text text="{ddtext>/CREATEDDATE}" />
-                            <uiT:template>
-                                <Text text="{header>CREATEDDATE}" wrapping="false" tooltip="{detail>CREATEDDATE}" />
-                            </uiT:template>
-                        </uiT:Column>
-                    </uiT:columns>
-                    <uiT:extension>
-                        <Toolbar>
-                            <Title level="H3" text="{ddtext>/CREATEPO}" />
-                            <ToolbarSpacer/>
-                            <Button id="btnEditHdr" 
-                                icon="sap-icon://edit"
-                                press="onEditHdr"
-                                tooltip="{ddtext>/EDIT}"
-                                visible="true"/>
-                            <Button id="btnUpdDate" 
-                                icon="sap-icon://calendar"
-                                press="onUpdDate"
-                                tooltip="{ddtext>/CHANGEDELVDATE}"
-                                visible="true"/>
-                            <Button id="btnFabSpecs" 
-                                icon="sap-icon://list"
-                                press="onFabSpecs"
-                                tooltip="{ddtext>/FABSPECS}"
-                                visible="true"/>
-                            <Button id="btnHdrTxt" 
-                                icon="sap-icon://header"
-                                press="onHdrText"
-                                tooltip="{ddtext>/HEADERTEXT}"
-                                visible="true"/>
-                            <Button id="btnGenPO" 
-                                icon="sap-icon://add-document"
-                                press="onValidateExtendPO"
-                                tooltip="{ddtext>/GENERATEPO}"
-                                visible="true"/>
-                            <Button id="btnSaveHdr" 
-                                icon="sap-icon://save"
-                                press="onSaveHdr"
-                                tooltip="{ddtext>/SAVE}"
-                                visible="false"/>
-                            <Button id="btnCancelHdr" 
-                                icon="sap-icon://sys-cancel"
-                                press="onCancelHdr"
-                                tooltip="{ddtext>/CANCEL}"
-                                visible="false"/>
-                        </Toolbar>
-                    </uiT:extension>
-                    <uiT:layoutData>
-                        <FlexItemData growFactor="0.7" baseSize="0%"/>
-                    </uiT:layoutData>                  
-                </uiT:Table>  -->
                 <Panel class="sapUiNoContentPadding hdrFormBgColor">
-                    <Toolbar>
+                    <OverflowToolbar>
                         <Title id="titlePOCreate" level="H3" text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin createPOTitle cursorPointer" tooltip="Click to view group status" />
-                        <!-- <tnt:InfoLabel text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin" /> -->
                         <Button id="btnPrevPO" 
                             type="Transparent"
                             icon="sap-icon://slim-arrow-left"
@@ -193,11 +34,6 @@
                             tooltip="{ddtext>/NEXT}"
                             visible="true"/>
                         <ToolbarSpacer/>
-                        <!-- <Button id="btnEditHdr" 
-                            icon="sap-icon://edit"
-                            press="onEditHdr"
-                            tooltip="{ddtext>/EDIT}"
-                            visible="true"/> -->
                         <Button id="btnUpdDate" 
                             text="{ddtext>/CHANGEDELVDATE}"
                             icon="sap-icon://calendar"
@@ -232,23 +68,8 @@
                             icon="sap-icon://sys-cancel"
                             press="onCancelPO"
                             tooltip="{ddtext>/CANCEL}"
-                            visible="true"/>
-                        <!-- <Button id="btnTest"
-                            icon="sap-icon://action" 
-                            tooltip="{ddtext>/TEST}" 
-                            press="savePOTolerance('test')"
-                            visible="true"/> -->
-                        <!-- <Button id="btnSaveHdr" 
-                            icon="sap-icon://save"
-                            press="onSaveHdr"
-                            tooltip="{ddtext>/SAVE}"
-                            visible="false"/>
-                        <Button id="btnCancelHdr" 
-                            icon="sap-icon://sys-cancel"
-                            press="onCancelHdr"
-                            tooltip="{ddtext>/CANCEL}"
-                            visible="false"/> -->                           
-                    </Toolbar>
+                            visible="true"/>                         
+                    </OverflowToolbar>
 
                     <form:Form id="headerForm" editable="true" class="sapUiNoContentPadding" busy="false">
                         <form:layout>
@@ -437,9 +258,6 @@
                                 </form:formElements>
                             </form:FormContainer>
                         </form:formContainers>
-                        <!-- <form:layoutData>
-                            <FlexItemData growFactor="0" />
-                        </form:layoutData> -->
                     </form:Form>
                     <layoutData>
                         <FlexItemData growFactor="0" />
@@ -450,6 +268,7 @@
                         rows="{detail>/}"
                         class="sapUiTinyMargin"
                         visibleRowCountMode="Auto"
+                        minAutoRowCount="1"
                         showColumnVisibilityMenu="true"
                         enableColumnFreeze="true"
                         selectionMode="None"

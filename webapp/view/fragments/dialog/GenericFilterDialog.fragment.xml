@@ -93,13 +93,13 @@
                                 </uit:extension> 
                                 <uit:columns>
                                     <uit:Column width="50px" visible="false">
-                                        <Label text="Select" />
+                                        <Text text="Select" />
                                         <uit:template>
                                             <CheckBox selected="{Selected}" wrapping="false" />
                                         </uit:template>
                                     </uit:Column>
                                     <uit:Column width="100%">
-                                        <Label text="{/selectedItem}" />
+                                        <Text text="{/selectedItem}" />
                                         <uit:template>
                                             <Text text="{Value}" wrapping="false" tooltip="{Value}" />
                                         </uit:template>
