@@ -188,6 +188,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                             me.byId("detailTab").setModel(new JSONModel(oDataGroupDetail), "detail");
                             me.byId("detailTab").bindRows({path: "detail>/"});
                             me.getColumnProp();
+                            console.log(me.getView().getModel("detail").getData())
                         }
 
                         if (iCounter === oHeaderData.length) {
@@ -2413,7 +2414,94 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._ConfirmDialog.close();
         },
 
-        onGeneratePO: function(oEvent) {
+        checkSourceList: async (me) => {
+            var oHeaderData = me.getView().getModel("grpheader").getData()[0];
+
+            var oParam = {
+                SBU: me.getOwnerComponent().getModel("UI_MODEL").getData().sbu,
+                VENDOR: oHeaderData.VENDOR,
+                PURCHORG: oHeaderData.PURCHORG,
+                PURCHPLANT: oHeaderData.PURCHPLANT
+            };
+
+            var oParamItem = [];
+
+            me.getView().getModel("detail").getData().forEach(item => {
+                oParamItem.push({ 
+                    MATTYP: item.MATERIALTYPE,
+                    MATNO: item.MATERIALNO,
+                    EXIST: "",
+                    VALID: ""
+                })
+            })
+
+            oParam["N_CheckSourceListItem"] = oParamItem;
+            console.log(oParam)
+            var oPromise = new Promise((resolve, reject) => {
+                me._oModel.create("/CheckSourceListSet", oParam, {
+                    method: "POST",
+                    success: function(oResult, oResponse) {
+                        console.log(oResult)
+                        var oData = [];
+                        
+                        oResult.N_CheckSourceListItem.results.forEach(item => {
+                            if (item.VALID === "X" && item.EXIST === "") {
+                                oData.push({
+                                    MATNO: item.MATNO,
+                                    REMARKS: "No source list found."
+                                })
+                            }
+                        })
+
+                        if (oData.length === 0) {
+                            resolve(true);
+                        }
+                        else {
+                            resolve(false);
+
+                            var vRowCount = oData.length > 7 ? oData : 7;
+
+                            if (!me._CheckSourceListResultDialog) {
+                                me._CheckSourceListResultDialog = sap.ui.xmlfragment("zuiaprocess.view.fragments.dialog.CheckSourceListResultDialog", me);
+
+                                me._CheckSourceListResultDialog.setModel(
+                                    new JSONModel({
+                                        items: oData,
+                                        ddtext: {
+                                            MATNO: me.getView().getModel("ddtext").getData()["MATERIALNO"],
+                                            REMARKS: me.getView().getModel("ddtext").getData()["REMARKS"],
+                                        },
+                                        rowCount: vRowCount
+                                    })
+                                )
+
+                                me.getView().addDependent(this._CheckSourceListResultDialog);
+                            }
+                            else {
+                                me._CheckSourceListResultDialog.getModel().setProperty("/items", oData);
+                                me._CheckSourceListResultDialog.getModel().setProperty("/rowCount", vRowCount);
+                            }
+
+                            me._CheckSourceListResultDialog.setTitle("");
+                            me._CheckSourceListResultDialog.open();
+                        }
+                    },
+                    error: function(err) {
+                        MessageBox.err(err.message);
+                        resolve(false);
+                        // Common.closeProcessingDialog(me);
+                    }
+                }); 
+            })
+
+            return await oPromise;
+        },
+
+        onCheckSourceListResultClose: function(oEvent) {
+            this._CheckSourceListResultDialog.close();
+        },
+
+        onGeneratePO: async function(oEvent) {
             if (this._validationErrors.length === 0) {
                 var me = this;
                 var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_RFC_SRV");
@@ -2445,8 +2533,21 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     })
                 }
                 
+                if (!bProceed) {
+                    MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_CREATEPO_CHECK_REQD"]);
+                    return;
+                }
+
+                me.showLoadingDialog('Processing...');
+
+                // bProceed = await this.checkSourceList(this);
+                
+                // if (!bProceed) {
+                //     me.closeLoadingDialog();
+                //     return;
+                // }
+
                 if (bProceed) {
-                    me.showLoadingDialog('Processing...');
                     var iCounter = 0;
     
                     this.getView().getModel("grpheader").getData().forEach(item => {
@@ -2843,9 +2944,6 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         }, 500);
                     })
                 }
-                else {
-                    MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_CREATEPO_CHECK_REQD"]);
-                }
             }
             else {
                 MessageBox.information(this.getView().getModel("ddtext").getData()["INFO_CHECK_INVALID_ENTRIES"]);
@@ -2897,9 +2995,16 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         }
                     })
                 }
+
+                me.showLoadingDialog('Processing...');
+                bProceed = await this.checkSourceList(this);
+                
+                if (!bProceed) {
+                    me.closeLoadingDialog();
+                    return;
+                }
     
                 if (bProceed) {
-                    me.showLoadingDialog('Processing...');
                     var iCounter = 0;
     
                     var result = new Promise((resolve, reject)=>{

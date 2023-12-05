@@ -922,7 +922,7 @@ sap.ui.define([
                 if (oSelectedIndices.length > 0) {
                     this._oModel.read("/ZERPCheckSet", {
                         urlParameters: {
-                            "$filter": "Sbu eq '" + vSBU + "'"
+                            "$filter": "Sbu eq '" + vSBU + "' and Field1 eq 'INFORECORD'"
                         },
                         success: async function (oDataCheck, oResponse) {
                             oSelectedIndices.forEach(item => {
@@ -1491,7 +1491,7 @@ sap.ui.define([
                 if (oSelectedIndices.length > 0) {
                     this._oModel.read("/ZERPCheckSet", {
                         urlParameters: {
-                            "$filter": "Sbu eq '" + vSBU + "'"
+                            "$filter": "Sbu eq '" + vSBU + "' and Field1 eq 'INFORECORD'"
                         },
                         success: async function (oDataCheck, oResponse) {
                             oSelectedIndices.forEach(item => {
@@ -2824,7 +2824,7 @@ sap.ui.define([
                         
                         this._oModel.read("/ZERPCheckSet", {
                             urlParameters: {
-                                "$filter": "Sbu eq '" + vSBU + "'"
+                                "$filter": "Sbu eq '" + vSBU + "' and Field1 eq 'INFORECORD'"
                             },
                             success: function (oDataCheck, oResponse) {
                                 oDataCheck.results.forEach(chk => {

@@ -491,6 +491,12 @@
                                     <Text text="{detail>BASECONVFACTOR}" wrapping="false"/>
                                 </uiT:template>
                             </uiT:Column>
+                            <uiT:Column width="100px" hAlign="End" visible="false">
+                                <Text text="{ddtext>/MATERIALTYPE}" />
+                                <uiT:template>
+                                    <Text text="{detail>MATERIALTYPE}" wrapping="false"/>
+                                </uiT:template>
+                            </uiT:Column>
                         </uiT:columns>
                         <!-- <uiT:extension>
                             <Toolbar>
