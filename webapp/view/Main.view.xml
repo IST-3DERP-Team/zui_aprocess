@@ -253,6 +253,15 @@
                                 icon="sap-icon://grid" 
                                 tooltip="{ddtext>/SAVELAYOUT}" 
                                 press="onSaveTableLayout"/>
+                            <Button id="btnDataWrap" 
+                                text="{= ${ui>/dataWrap/mainTab} === true ? ${ddtext>/UNWRAP} : ${ddtext>/WRAP} }"
+                                press="onWrapText"
+                                tooltip="{= ${ui>/dataWrap/mainTab} === true ? ${ddtext>/UNWRAP} : ${ddtext>/WRAP} }"
+                                visible="true" >
+                                <customData>
+                                    <core:CustomData key="TableId" value="mainTab" />
+                                </customData>
+                            </Button>
                         </OverflowToolbar>
                     </uiT:extension>
                     <uiT:layoutData>

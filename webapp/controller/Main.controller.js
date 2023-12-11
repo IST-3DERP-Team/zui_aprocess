@@ -35,6 +35,7 @@ sap.ui.define([
                 this._aColumns = [];
                 this._colFilters = {};
                 this._selectedRecs = [];
+                this._sActiveTable = "mainTab";
 
                 var oInterval = setInterval(() => {
                     if (sap.ui.getCore().byId("backBtn") !== undefined) {
@@ -71,7 +72,10 @@ sap.ui.define([
 
                 this.getView().setModel(new JSONModel({
                     sbu: '',
-                    currsbu: ''
+                    currsbu: '',
+                    dataWrap: {
+                        mainTab: false
+                    }
                 }), "ui");
 
                 this._sbuChange = false;
@@ -228,6 +232,8 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "INFO_INVALID_CHANGE_PURPLANT"});
                 oDDTextParam.push({CODE: "EXECUTE"});
                 oDDTextParam.push({CODE: "REMARKS"});
+                oDDTextParam.push({CODE: "WRAP"});
+                oDDTextParam.push({CODE: "UNWRAP"});
 
                 oModel.create("/CaptionMsgSet", { CaptionMsgItems: oDDTextParam  }, {
                     method: "POST",
@@ -586,6 +592,7 @@ sap.ui.define([
                     var sColumnSorted = context.getObject().Sorted;
                     var sColumnSortOrder = context.getObject().SortOrder;
                     var sColumnDataType = context.getObject().DataType;
+                    var sTextWrapping = context.getObject().WrapText;
 
                     if (sColumnWidth === 0) sColumnWidth = 100;
 
@@ -593,7 +600,7 @@ sap.ui.define([
                         return new sap.ui.table.Column({
                             id: sColumnId,
                             label: new sap.m.Text({text: sColumnLabel}), 
-                            template: me.columnTemplate(sColumnId, sColumnType),
+                            template: me.columnTemplate(sColumnId, sTextWrapping),
                             width: sColumnWidth + 'px',
                             sortProperty: sColumnId,
                             // filterProperty: sColumnId,
@@ -615,7 +622,7 @@ sap.ui.define([
                         return new sap.ui.table.Column({
                             id: sColumnId,
                             label: new sap.m.Text({text: sColumnLabel}), 
-                            template: me.columnTemplate(sColumnId, sColumnType),
+                            template: me.columnTemplate(sColumnId, sColumnType, sTextWrapping),
                             width: sColumnWidth + 'px',
                             sortProperty: sColumnId,
                             // filterProperty: sColumnId,
@@ -627,6 +634,9 @@ sap.ui.define([
                         });
                     }
                 });
+
+                var vWrap = oColumns[0].WrapText === "X" ? true : false;
+                this.getView().getModel("ui").setProperty("/dataWrap/mainTab", vWrap);
 
                 //date/number sorting
                 oTable.attachSort(function(oEvent) {
@@ -690,12 +700,12 @@ sap.ui.define([
                 TableFilter.updateColumnMenu("mainTab", this);
             },
             
-            columnTemplate: function (sColumnId, sColumnType) {
+            columnTemplate: function (sColumnId, sColumnType, sTextWrapping) {
                 var oColumnTemplate;
 
                 oColumnTemplate = new sap.m.Text({ 
                     text: "{" + sColumnId + "}", 
-                    wrapping: false,
+                    wrapping: sTextWrapping === "X" ? true : false,
                     tooltip: "{" + sColumnId + "}"
                 }); //default text
 
@@ -2715,7 +2725,8 @@ sap.ui.define([
                         SORTORDER: column.mProperties.sortOrder,
                         SORTSEQ: "1",
                         VISIBLE: column.mProperties.visible,
-                        WIDTH: column.mProperties.width.replace('rem','')
+                        WIDTH: column.mProperties.width.replace('px',''),
+                        WRAPTEXT: this.getView().getModel("ui").getData().dataWrap["mainTab"] === true ? "X" : ""
                     });
 
                     ctr++;
@@ -3994,6 +4005,19 @@ sap.ui.define([
                 else return sValue;
             },
 
+            onWrapText: function(oEvent) {
+                this._sActiveTable = oEvent.getSource().data("TableId");
+                var vWrap = this.getView().getModel("ui").getData().dataWrap[this._sActiveTable];
+                
+                this.byId(this._sActiveTable).getColumns().forEach(col => {
+                    var oTemplate = col.getTemplate();
+                    oTemplate.setWrapping(!vWrap);
+                    col.setTemplate(oTemplate);
+                })
+
+                this.getView().getModel("ui").setProperty("/dataWrap/" + [this._sActiveTable], !vWrap);
+            },
+            
             //******************************************* */
             // Column Filtering
             //******************************************* */
