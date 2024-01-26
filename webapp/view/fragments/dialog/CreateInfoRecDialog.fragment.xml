@@ -1,0 +1,25 @@
+<core:FragmentDefinition 
+    xmlns="sap.m" 
+    xmlns:core="sap.ui.core" 
+    xmlns:t="sap.ui.table"
+    class="sapUiSizeCompact" >
+    <Dialog title="Create Info Record" contentHeight="40%" contentWidth="100%" escapeHandler=".onCloseInfoRec" afterClose=".onCloseInfoRec" resizable="true" draggable="true">
+        <content> 
+            <t:Table id="inforecTab" 
+                class="sapUiSizeCompact" 
+                showColumnVisibilityMenu="true" 
+                visibleRowCountMode="Auto"
+                minAutoRowCount="1"
+                enableColumnFreeze="true" 
+                selectionMode="MultiToggle" 
+                selectionBehavior="RowSelector" 
+                alternateRowColors="true">
+            </t:Table>
+        </content> 
+        <buttons>
+            <Button id="btnINFNRSubmit" text="{i18n>Submit}" press="onCreateInfoRec" tooltip="Submit" visible="true" />
+            <Button id="btnINFNRCancel" text="{i18n>Cancel}" press="onCloseInfoRec" tooltip="Cancel" visible="true" />
+            <Button id="btnINFNRClose" text="{i18n>Close}" press="onCloseInfoRec" tooltip="Close" visible="false" />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

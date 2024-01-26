@@ -1,0 +1,66 @@
+<core:FragmentDefinition
+		xmlns="sap.m"
+        xmlns:f="sap.ui.layout.form"
+		xmlns:core="sap.ui.core"
+        xmlns:uit="sap.ui.table"
+        id="fragment-extend" 
+        fragmentName="extend">
+    <Dialog contentWidth="850px"
+        contentHeight="415px"
+        title="Extend PO Option"
+        resizable="true"
+        draggable="true">
+        <content>
+            <uit:Table id="extendTab"
+                rows="{/rows}"
+                selectionMode="MultiToggle"
+                visibleRowCount="{/rowCount}"
+                class="sapUiTinyMargin">
+                <uit:extension>
+                    <Text text="{ddtext>/SELEXTENDPOITEMS}" class="sapUiTinyMarginBottom"></Text>
+                </uit:extension>
+                <uit:columns>
+                    <uit:Column width="150px">
+                        <Text text="{ddtext>/PONO}" />
+                        <uit:template>
+                            <Text text="{PONO}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="350px">
+                        <Text text="{ddtext>/VENDOR}" />
+                        <uit:template>
+                            <Text text="{VENDORCDNAME}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="120px">
+                        <Text text="{ddtext>/PURCHORG}" />
+                        <uit:template>
+                            <Text text="{PURCHORG}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="120px">
+                        <Text text="{ddtext>/PURCHGRP}" />
+                        <uit:template>
+                            <Text text="{PURCHGRP}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="120px">
+                        <Text text="{ddtext>/PURCHPLANT}" />
+                        <uit:template>
+                            <Text text="{PURCHPLANT}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                    <uit:Column width="120px">
+                        <Text text="{ddtext>/SHIPTOPLANT}" />
+                        <uit:template>
+                            <Text text="{SHIPTOPLANT}" wrapping="false" />
+                        </uit:template>
+                    </uit:Column>
+                </uit:columns>
+            </uit:Table>
+        </content> 
+        <buttons>
+            <Button id="btnGenPO" icon="sap-icon://accept" text="{ddtext>/EXECUTE}" tooltip="{ddtext>/EXECUTE}" press="onExecCreatePO" visible="true" />
+        </buttons>        
+    </Dialog>
+</core:FragmentDefinition>

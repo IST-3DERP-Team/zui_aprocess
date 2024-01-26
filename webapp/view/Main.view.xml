@@ -15,7 +15,8 @@
     <Page id="page" title="{i18n>title}" showHeader="false">
         <content> 
             <VBox fitContainer="true" class="anp">
-                <smartfilterbar:SmartFilterBar id="smartFilterBar" entitySet="ZVB_3DERP_ANP_FILTERS" search="onSearch" persistencyKey="3DERP_ANPPKey" showClearButton="true" showClearOnFB="true">
+                <smartfilterbar:SmartFilterBar id="smartFilterBar" entitySet="ZVB_3DERP_ANP_FILTERS" search="onSearch" persistencyKey="3DERP_ANPPKey" showClearOnFB="true"
+                    beforeVariantFetch="beforeVariantFetch" afterVariantLoad="afterVariantLoad" clear="clearSmartFilters">
                     <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="SBU" label="{ddtext>/SBU}" groupId="_BASIC" mandatory="mandatory" width="50px" class="mandatoryFontColor">
                             <smartfilterbar:customControl>
@@ -32,89 +33,63 @@
                         </smartfilterbar:ControlConfiguration>
                     </smartfilterbar:controlConfiguration>
 
-                    <!-- <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="SBU" groupId="_BASIC" mandatory="mandatory" controlType="dropDownList"  preventInitialDataFetchInValueHelpDialog="false" />
-                    </smartfilterbar:controlConfiguration> -->
                     <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="DOCTYPE" label="{ddtext>/DOCTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
-                    </smartfilterbar:controlConfiguration>
-                    <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="PRNUMBER" label="{ddtext>/PRNUMBER}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
-                    </smartfilterbar:controlConfiguration>
-                    <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="SHIPTOPLANT" label="{ddtext>/SHIPTOPLANT}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
-                    </smartfilterbar:controlConfiguration>
-                    <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="PURCHPLANT" label="{ddtext>/PURCHPLANT}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
-                    </smartfilterbar:controlConfiguration>
-                    <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="PURCHGRP" label="{ddtext>/PURCHGRP}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
-                    </smartfilterbar:controlConfiguration>
-                    <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration id="filterVendor" key="VENDOR" label="{ddtext>/VENDOR}" groupId="_BASIC" displayBehaviour="descriptionAndId"
-                            preventInitialDataFetchInValueHelpDialog="false"> 
-                        </smartfilterbar:ControlConfiguration>
-                    </smartfilterbar:controlConfiguration>
-
-                    <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="MATERIALGRP" label="{ddtext>/MATERIALGRP}" groupId="_BASIC" displayBehaviour="descriptionAndId" preventInitialDataFetchInValueHelpDialog="false" />   
-                    </smartfilterbar:controlConfiguration>
-                    <!-- <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
+                        <smartfilterbar:ControlConfiguration key="DOCTYPE" label="{ddtext>/DOCTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
                             <smartfilterbar:customControl>
-                                <MultiInput
-                                    id="multiInput2"
-                                    width="100%"
-                                    placeholder=""
-                                    showSuggestion="true"
-                                    maxSuggestionWidth="400px"
-                                    showValueHelp="true"
-                                    suggestionRows="{ZVB_3DERP_MATTYPE_SH_FILTER>/}">
-                                    <suggestionColumns>
-                                        <Column
-                                            hAlign="Begin"
-                                            popinDisplay="Inline"
-                                            demandPopin="true"
-                                            width="100px">
-                                            <Label text="Material Type"/>
-                                        </Column>
-                                        <Column
-                                            hAlign="Begin"
-                                            popinDisplay="Inline"
-                                            demandPopin="true"
-                                            minScreenWidth="Tablet">
-                                            <Label text="Description"/>
-                                        </Column>
-                                    </suggestionColumns>
-                                    <suggestionRows>
-                                        <ColumnListItem>
-                                            <cells>
-                                                <Label text="{ZVB_3DERP_MATTYPE_SH_FILTER>MaterialType}"/>
-                                                <Label text="{ZVB_3DERP_MATTYPE_SH_FILTER>Description}"/>
-                                            </cells>
-                                        </ColumnListItem>
-                                    </suggestionRows>
-                                </MultiInput>
-                                <MultiInput id="multiInput4"
-                                            width="100%"
-                                            showValueHelp="true"
-                                            suggestionItems="{
-                                    path: 'ZVB_3DERP_MATTYPE_SH_FILTER>/'
-                                }">
-                                    <core:Item key="{ZVB_3DERP_MATTYPE_SH_FILTER>MaterialType}" text="{ZVB_3DERP_MATTYPE_SH_FILTER>MaterialType} - {ZVB_3DERP_MATTYPE_SH_FILTER>Description}" />
-                                </MultiInput>
-                                <smartMultiInput:SmartMultiInput value="{MaterialType}" entitySet="ZVB_3DERP_MATTYPE_SH" supportRanges="true" />
+                                <MultiInput id="sffDOCTYPE" name="DOCTYPE" maxSuggestionWidth="300px" />
                             </smartfilterbar:customControl>
                         </smartfilterbar:ControlConfiguration>
-                    </smartfilterbar:controlConfiguration> -->
+                    </smartfilterbar:controlConfiguration>
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="PRNUMBER" label="{ddtext>/PRNUMBER}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffPRNUMBER" name="PRNUMBER" maxSuggestionWidth="250px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
+                    </smartfilterbar:controlConfiguration>
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="SHIPTOPLANT" label="{ddtext>/SHIPTOPLANT}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffSHIPTOPLANT" name="SHIPTOPLANT"  maxSuggestionWidth="300px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
+                    </smartfilterbar:controlConfiguration>
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="PURCHPLANT" label="{ddtext>/PURCHPLANT}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffPURCHPLANT" name="PURCHPLANT"  maxSuggestionWidth="300px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
+                    </smartfilterbar:controlConfiguration>
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="PURCHGRP" label="{ddtext>/PURCHGRP}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffPURCHGRP" name="PURCHGRP" maxSuggestionWidth="300px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
+                    </smartfilterbar:controlConfiguration>
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="VENDOR" label="{ddtext>/VENDOR}" groupId="_BASIC" displayBehaviour="descriptionAndId" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffVENDOR" name="VENDOR" maxSuggestionWidth="400px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
+                    </smartfilterbar:controlConfiguration>
 
-                    <!-- <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" />
-                    </smartfilterbar:controlConfiguration> -->
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration key="MATERIALGRP" label="{ddtext>/MATERIALGRP}" groupId="_BASIC" displayBehaviour="descriptionAndId" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffMATERIALGRP" name="MATERIALGRP"  maxSuggestionWidth="250px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
+                    </smartfilterbar:controlConfiguration>
 
                     <smartfilterbar:controlConfiguration>
                         <smartfilterbar:ControlConfiguration key="MATERIALTYPE" label="{ddtext>/MATERIALTYPE}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" >
                             <smartfilterbar:customControl>
+                                <MultiInput id="sffMATERIALTYPE" name="MATERIALTYPE" maxSuggestionWidth="350px"  />
+                            </smartfilterbar:customControl>
+                            <!-- <smartfilterbar:customControl>
                                 <MultiInput id="multiInputMatTyp"
                                     
                                     change="onCustomSmartFilterValueHelpChange"
@@ -142,15 +117,23 @@
                                         </ColumnListItem>
                                     </suggestionRows>
                                 </MultiInput>
-                            </smartfilterbar:customControl>
+                            </smartfilterbar:customControl> -->
                         </smartfilterbar:ControlConfiguration>
                     </smartfilterbar:controlConfiguration>
 
                     <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="IONUMBER" label="{ddtext>/IONUMBER}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" />
+                        <smartfilterbar:ControlConfiguration key="IONUMBER" label="{ddtext>/IONUMBER}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" width="15rem" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffIONUMBER" name="IONUMBER"  maxSuggestionWidth="400px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
                     </smartfilterbar:controlConfiguration>
                     <smartfilterbar:controlConfiguration>
-                        <smartfilterbar:ControlConfiguration key="SEASON" label="{ddtext>/SEASON}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" />
+                        <smartfilterbar:ControlConfiguration key="SEASON" label="{ddtext>/SEASON}" groupId="_BASIC" preventInitialDataFetchInValueHelpDialog="false" >
+                            <smartfilterbar:customControl>
+                                <MultiInput id="sffSEASON" name="SEASON"  maxSuggestionWidth="250px" />
+                            </smartfilterbar:customControl>
+                        </smartfilterbar:ControlConfiguration>
                     </smartfilterbar:controlConfiguration>
 
                     <!-- <smartfilterbar:controlConfiguration>
@@ -188,6 +171,7 @@
                     enableColumnFreeze="true"
                     enableCellFilter="true"
                     selectionMode="MultiToggle"
+                    alternateRowColors="true"
                     firstVisibleRowChanged="onFirstVisibleRowChanged"
                     cellClick="onCellClick"
                     sort="onSort"
@@ -242,6 +226,12 @@
                                 icon="sap-icon://user-edit"
                                 press="onUpdPurPlant"
                                 tooltip="{ddtext>/CHANGEPURPLANT}"
+                                visible="true"/>
+                            <Button id="btnCreateInfoRec" 
+                                text="{ddtext>/CREATEINFOREC}"
+                                icon="sap-icon://add-document"
+                                press="onGetInfoRecList"
+                                tooltip="{ddtext>/CREATEINFOREC}"
                                 visible="true"/>
                             <Button id="btnCreatePO" 
                                 text="{ddtext>/CREATEPO}"

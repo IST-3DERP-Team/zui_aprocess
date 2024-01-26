@@ -32,6 +32,7 @@
                         <Text text="{ddtext>/VENDOR}" class="sapMLabelRequired" />
                         <uit:template>
                             <Input id="iptManualVendor"
+                                name="VENDOR"
                                 type="Text" 
                                 value="{VENDOR}"
                                 textFormatMode="Key"	
@@ -39,7 +40,6 @@
                                 valueHelpRequest="handleStaticValueHelp"  
                                 showSuggestion="true" 
                                 maxSuggestionWidth="600px"
-                                suggestionItemSelected="handleSuggestionItemSelected"
                                 change="onStaticValueHelpInputChange">
                             </Input>
                         </uit:template>

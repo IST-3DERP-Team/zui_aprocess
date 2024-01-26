@@ -764,8 +764,24 @@ sap.ui.define([
         
         handleTableValueHelpSelect: function (oEvent) {
             var sRowPath = oEvent.getParameters().rowBindingContext.sPath;
-            this._inputSource.setSelectedKey(oEvent.getSource().getModel().getProperty(sRowPath + "/VHKey"));
+            var sTextFormatMode = this._inputSource.getProperty("textFormatMode");
+
+            if (sTextFormatMode === "Key") {
+                this._inputSource.setValue(oEvent.getSource().getModel().getProperty(sRowPath + "/VHKey"));
+            }
+            else if (sTextFormatMode === "Value") {
+                this._inputSource.setValue(oEvent.getSource().getModel().getProperty(sRowPath + "/VHValue"));
+            }
+            else if (sTextFormatMode === "ValueKey") {
+                this._inputSource.setValue(oEvent.getSource().getModel().getProperty(sRowPath + "/VHValue") + " (" + oEvent.getSource().getModel().getProperty(sRowPath + "/VHKey") + ")");
+            }
+            else if (sTextFormatMode === "KeyValue") {
+                this._inputSource.setValue(oEvent.getSource().getModel().getProperty(sRowPath + "/VHKey") + " (" + oEvent.getSource().getModel().getProperty(sRowPath + "/VHValue") + ")");
+            }
+
+            this._inputSource.setSelectedKey(oEvent.getSource().getModel().getProperty(sRowPath + "/VHKey"));            
             this._inputSource.setValueState("None");
+            this._inputSource.fireChange();
             this._tableValueHelpDialog.close(); 
         }, 
 
@@ -802,6 +818,148 @@ sap.ui.define([
             }
 
             oTable.getBinding("rows").filter(oFilter, "Application");
+        },
+
+        setFormSuggestion: function (oThis, sModel) {
+            var me = oThis;
+
+            me._oModelColumns[sModel].forEach(col => {
+                var oCells = [];
+                var oInput = me.byId("fld" + col.ColumnName);
+                // console.log(col.ColumnName)
+                if (oInput.getSuggestionItems().length > 0) {
+                    oInput.removeAllSuggestionItems();
+                }
+
+                if (oInput.getSuggestionColumns().length === 0 && me._oModelColumns[col.ValueHelp["columns"]] !== undefined) {
+                    //assign first cell to key/code
+                    me._oModelColumns[col.ValueHelp["columns"]].filter(fItem => fItem.Key === true).forEach(item => {
+                        oInput.addSuggestionColumn(new sap.m.Column({
+                            header: new sap.m.Label({ text: me.getView().getModel("ddtext").getData()[item.ColumnName] })
+                        }))
+
+                        oCells.push(new sap.m.Text({
+                            text: { path: col.ValueHelp["items"].path + ">" + item.ColumnName }
+                        }))
+                    })
+
+                    //assign second cell to display value/description
+                    me._oModelColumns[col.ValueHelp["columns"]].filter(fItem => fItem.Key === false && fItem.Value === true).forEach(item => {
+                        oInput.addSuggestionColumn(new sap.m.Column({
+                            header: new sap.m.Label({ text: me.getView().getModel("ddtext").getData()[item.ColumnName] })
+                        }))
+
+                        oCells.push(new sap.m.Text({
+                            text: { path: col.ValueHelp["items"].path + ">" + item.ColumnName }
+                        }))
+                    })
+
+                    //add other column info
+                    me._oModelColumns[col.ValueHelp["columns"]].filter(fItem => fItem.Visible === true && fItem.Key === false && fItem.Value === false).forEach(item => {
+                        oInput.addSuggestionColumn(new sap.m.Column({
+                            header: new sap.m.Label({ text: me.getView().getModel("ddtext").getData()[item.ColumnName] })
+                        }))
+
+                        oCells.push(new sap.m.Text({
+                            text: { path: col.ValueHelp["items"].path + ">" + item.ColumnName }
+                        }))
+                    })
+
+                    oInput.bindSuggestionRows({
+                        path: col.ValueHelp["SuggestionItems"].path,
+                        template: new sap.m.ColumnListItem({
+                            cells: oCells
+                        }),
+                        length: 10000,
+                        templateShareable: false
+                    }); 
+
+                    oInput.setSuggestionRowValidator(this.suggestionRowValidator);
+                }
+            })
+        },
+        
+        setStaticTableSuggestion: function (oThis, oTable, oTableId, oInput, oValue) {
+            var me = oThis;
+            var oCells = [];
+            var sTableModel = oTableId.replace("Tab", "");
+            var sColumnPath = oInput.getProperty("name");
+            var oColumnProp = me._oModelColumns[sTableModel].filter(fItem => fItem.ColumnName === sColumnPath);
+            var vTabSuggestColCount = oInput.getSuggestionColumns().length;
+
+            if (oInput.getSuggestionItems().length > 0) {
+                oInput.removeAllSuggestionItems();
+            }
+
+            if (me._oModelColumns[oColumnProp[0].ValueHelp["columns"]] !== undefined) {
+                //assign first cell to key/code
+                me._oModelColumns[oColumnProp[0].ValueHelp["columns"]].filter(fItem => fItem.Key === true).forEach(item => {
+                    if (vTabSuggestColCount === 0) {
+                        oInput.addSuggestionColumn(new sap.m.Column({
+                            header: new sap.m.Label({ text: me.getView().getModel("ddtext").getData()[item.ColumnName] })
+                        }))
+                    }
+
+                    oCells.push(new sap.m.Text({
+                        text: { path: oColumnProp[0].ValueHelp["SuggestionItems"].path.replace("/", "") + item.ColumnName }
+                    }))
+                })
+
+                //assign second cell to display value/description
+                me._oModelColumns[oColumnProp[0].ValueHelp["columns"]].filter(fItem => fItem.Key === false && fItem.Value === true).forEach(item => {
+                    if (vTabSuggestColCount === 0) {
+                        oInput.addSuggestionColumn(new sap.m.Column({
+                            header: new sap.m.Label({ text: me.getView().getModel("ddtext").getData()[item.ColumnName] })
+                        }))    
+                    }
+
+                    oCells.push(new sap.m.Text({
+                        text: { path: oColumnProp[0].ValueHelp["SuggestionItems"].path.replace("/", "") + item.ColumnName }
+                    }))
+                })
+
+                //add other column info
+                me._oModelColumns[oColumnProp[0].ValueHelp["columns"]].filter(fItem => fItem.Visible === true && fItem.Key === false && fItem.Value === false).forEach(item => {
+                    if (vTabSuggestColCount === 0) {
+                        oInput.addSuggestionColumn(new sap.m.Column({
+                            header: new sap.m.Label({ text: me.getView().getModel("ddtext").getData()[item.ColumnName] })
+                        }))                                        
+                    }
+
+                    oCells.push(new sap.m.Text({
+                        text: { path: oColumnProp[0].ValueHelp["SuggestionItems"].path.replace("/", "") + item.ColumnName }
+                    }))
+                })
+
+                oInput.bindSuggestionRows({
+                    path: oColumnProp[0].ValueHelp["SuggestionItems"].path + oValue,
+                    template: new sap.m.ColumnListItem({
+                        cells: oCells
+                    }),
+                    length: 10000,
+                    templateShareable: false
+                }); 
+
+                oInput.setSuggestionRowValidator(this.suggestionRowValidator);
+            }
+
+        }, 
+
+        suggestionRowValidator: function (oColumnListItem) {
+            var aCells = oColumnListItem.getCells();
+            // console.log(aCells)
+            if (aCells.length === 1) {
+                return new sap.ui.core.Item({
+                    key: aCells[0].getText(),
+                    text: aCells[0].getText()
+                }); 
+            }
+            else {
+                return new sap.ui.core.Item({
+                    key: aCells[0].getText(),
+                    text: aCells[1].getText()
+                });
+            }
         },
 
 	};

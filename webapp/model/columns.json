@@ -19,22 +19,22 @@
             "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
         {"ColumnName": "UOM", "name": "UOM", "label": "Order UOM", "type": "STRING", "required": true, "length": "3", "TextFormatMode": "ValueKey",
             "ValueHelp": {"show": true, "items": {"path": "uom", "value": "MSEHI", "text": "MSEHL"},
-                "SuggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHL}", "maxSuggestionWidth": "150px"},
+                "SuggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHL}", "maxSuggestionWidth": "300px"},
                 "columns": "tvh_uom"
             }
         },
         {"ColumnName": "ORDERPRICEUNIT", "name": "ORDERPRICEUNIT", "label": "Order Price Unit", "type": "STRING", "required": true, "length": "3", "TextFormatMode": "ValueKey",
             "ValueHelp": {"show": true, "items": {"path": "uom", "value": "MSEHI", "text": "MSEHL"},
-                "SuggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHL}", "maxSuggestionWidth": "150px"},
+                "SuggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHL}", "maxSuggestionWidth": "300px"},
                 "columns": "tvh_uom"
             }
         },
         {"ColumnName": "SUPPLYTYPE", "name": "SUPPLYTYPE", "label": "Supply Type", "type": "STRING", "required": false, "length": "3", "TextFormatMode": "ValueKey",
             "valueHelp": {"show": true, "items": {"path": "supplyType", "value": "SUPPLYTYP", "text": "SHORTTEXT"},
-                "suggestionItems": {"path": "supplyType>/", "text": "{supplyType>SUPPLYTYP}", "additionalText": "{supplyType>SHORTTEXT}", "maxSuggestionWidth": "200px"}
+                "suggestionItems": {"path": "supplyType>/", "text": "{supplyType>SUPPLYTYP}", "additionalText": "{supplyType>SHORTTEXT}", "maxSuggestionWidth": "250px"}
             },
             "ValueHelp": {"show": true, "items": {"path": "supplyType", "value": "SUPPLYTYP", "text": "SHORTTEXT"},
-                "SuggestionItems": {"path": "supplyType>/", "text": "{supplyType>SUPPLYTYP}", "additionalText": "{supplyType>SHORTTEXT}", "maxSuggestionWidth": "200px"},
+                "SuggestionItems": {"path": "supplyType>/", "text": "{supplyType>SUPPLYTYP}", "additionalText": "{supplyType>SHORTTEXT}", "maxSuggestionWidth": "250px"},
                 "columns": "tvh_supplytype"
             }
         }              
@@ -54,7 +54,7 @@
         },
         {"ColumnName": "INCOTERMS", "TextFormatMode": "ValueKey",
             "ValueHelp": {"show": true, "items": {"path": "incoterm", "value": "INCO1", "text": "INCO1"},
-                "SuggestionItems": {"path": "incoterm", "text": "{incoterm>INCO1}", "additionalText": "{incoterm>DESC}", "maxSuggestionWidth": "200px" },
+                "SuggestionItems": {"path": "incoterm>/", "text": "{incoterm>INCO1}", "additionalText": "{incoterm>DESC}", "maxSuggestionWidth": "200px" },
                 "columns": "tvh_incoterm"
             }
         }
@@ -92,6 +92,7 @@
     "assignVendorManual": [
         {"ColumnName": "VENDOR", "TextFormatMode": "Key",
             "ValueHelp": {"show": true, "items": {"path": "vendors", "value": "LIFNR", "text": "NAME1"},
+                "SuggestionItems": {"path": "vendor>/", "text": "{vendor>LIFNR}", "additionalText": "{vendor>NAME1}", "maxSuggestionWidth": "400px"},
                 "columns": "tvh_vendor"
             }
         }
@@ -105,5 +106,29 @@
         {"ColumnName": "MATNO", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
         {"ColumnName": "WAERS", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false},
         {"ColumnName": "ZTERM", "DataType": "STRING", "ColumnWidth": "100px", "Visible": false, "Key": false, "Value": false}
+    ],
+    "inforec": [
+        {"name": "SALESPERSON", "label": "Salesperson", "type": "STRING", "required": false, "length": "200",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "TELNO", "label": "", "type": "STRING", "required": false, "length": "200",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "ORDERUOM", "label": "Order UOM", "type": "STRING", "required": true, "length": "3", "TextFormatMode": "ValueKey",
+            "ValueHelp": {"show": true, "items": {"path": "uom", "value": "MSEHI", "text": "MSEHL"},
+                "SuggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHL}", "maxSuggestionWidth": "300px"},
+                "columns": "tvh_uom"
+            }
+        },
+        {"name": "NUMERATOR", "label": "", "type": "NUMBER", "required": false, "length": "10",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "DENOMINATOR", "label": "", "type": "NUMBER", "required": false, "length": "10",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "DATAB", "label": "", "type": "DATE", "required": false, "length": "10",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "DATBI", "label": "", "type": "DATE", "required": false, "length": "10",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "UNITPRICE", "label": "", "type": "NUMBER", "required": false, "length": "10",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
+        {"name": "PEINH", "label": "", "type": "NUMBER", "required": false, "length": "10",
+            "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}}
     ]
 }

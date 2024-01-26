@@ -10,7 +10,7 @@
     xmlns:semantic="sap.m.semantic"
     height="100%"
     displayBlock="true">
-    <Page showHeader="false" title="{ddtext>/POCREATE}" showNavButton="true" navButtonPress="onNavBack">
+    <Page showHeader="false" title="{ui>/title}" showNavButton="true" navButtonPress="onNavBack">
         <dependents>
             <core:CommandExecution id="CE_CANCELALL" command="CancelAll" enabled="true" execute=".onCancelAllPO" />
             <core:CommandExecution id="CE_CANCEL" command="Cancel" enabled="true" execute=".onCancelPO" />
@@ -19,7 +19,7 @@
             <VBox fitContainer="true" class="genpo"> 
                 <Panel class="sapUiNoContentPadding hdrFormBgColor">
                     <OverflowToolbar>
-                        <Title id="titlePOCreate" level="H3" text="{ddtext>/POCREATE}" class="sapUiTinyMarginBegin createPOTitle cursorPointer" tooltip="Click to view group status" />
+                        <Title id="titlePOCreate" level="H3" text="{ui>/title}" class="sapUiTinyMarginBegin createPOTitle cursorPointer" tooltip="Click to view group status" />
                         <Button id="btnPrevPO" 
                             type="Transparent"
                             icon="sap-icon://slim-arrow-left"
@@ -53,10 +53,10 @@
                             tooltip="{ddtext>/HEADERTEXT}"
                             visible="true"/>
                         <Button id="btnGenPO" 
-                            text="{ddtext>/GENERATEPO}"
+                            text="{ui>/generatepo}"
                             icon="sap-icon://add-document"
-                            press="onValidateExtendPO"
-                            tooltip="{ddtext>/GENERATEPO}"
+                            press="onGeneratePO"
+                            tooltip="{ui>/generatepo}"
                             visible="true"/>
                         <Button id="btnCancelAllPO"
                             text="{ddtext>/CANCELALL}"
@@ -160,7 +160,8 @@
                                         </form:label>
                                         <form:fields>
                                             <!-- <Input value="{grpheader>/0/PAYTERMS}" /> -->
-                                            <Input type="Text" 
+                                            <Input id="fldPAYTERMS"
+                                                type="Text" 
                                                 value="{ 
                                                     parts: [{ path: 'grpheader>/0/PAYTERMS' }, { value: 'payterm' }, { value: 'ZTERM' }, { value: 'TEXT1' }, { value: 'ValueKey' }],
                                                     formatter: '.formatValueHelp'
@@ -169,12 +170,11 @@
                                                 showValueHelp="true"
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
-                                                suggestionItems="{path: 'payterm>/', length: 10000, templateShareable: false}" 
                                                 maxSuggestionWidth="160px"
                                                 change="onFormValueHelpInputChange">
-                                                <suggestionItems>
+                                                <!-- <suggestionItems>
                                                     <core:ListItem key="{payterm>ZTERM}" text="{payterm>TEXT1}" additionalText="{payterm>ZTERM}" />
-                                                </suggestionItems>
+                                                </suggestionItems> -->
                                             </Input>
                                         </form:fields>
                                     </form:FormElement>
@@ -184,7 +184,8 @@
                                         </form:label>
                                         <form:fields>
                                             <!-- <Input value="{grpheader>/0/INCOTERMS}" /> -->
-                                            <Input type="Text" 
+                                            <Input id="fldINCOTERMS"
+                                                type="Text" 
                                                 value="{ 
                                                     parts: [{ path: 'grpheader>/0/INCOTERMS' }, { value: 'incoterm' }, { value: 'INCO1' }, { value: 'DESC' }, { value: 'ValueKey' }],
                                                     formatter: '.formatValueHelp'
@@ -193,12 +194,11 @@
                                                 showValueHelp="true"
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
-                                                suggestionItems="{path: 'incoterm>/', length: 10000, templateShareable: false}" 
                                                 maxSuggestionWidth="160px"
                                                 change="onFormValueHelpInputChange">
-                                                <suggestionItems>
+                                                <!-- <suggestionItems>
                                                     <core:ListItem key="{incoterm>INCO1}" text="{incoterm>DESC}" additionalText="{incoterm>INCO1}" />
-                                                </suggestionItems>
+                                                </suggestionItems> -->
                                                 <!-- <customData>
                                                     <core:CustomData key="SHIPMODE" value="{grpheader>/0/SHIPMODE}"/>
                                                 </customData> -->
@@ -210,7 +210,7 @@
                                             <Label text="{ddtext>/DESTINATION}" required="true"></Label>
                                         </form:label>
                                         <form:fields>
-                                            <Input 
+                                            <Input id="fldDESTINATION"
                                                 value="{grpheader>/0/DESTINATION}" 
                                                 maxLength="28" 
                                                 required="true"
@@ -234,7 +234,8 @@
                                         </form:label>
                                         <form:fields>
                                             <!-- <Input value="{grpheader>/0/SHIPMODE}" /> -->
-                                            <Input type="Text" 
+                                            <Input id="fldSHIPMODE"
+                                                type="Text" 
                                                 value="{ 
                                                     parts: [{ path: 'grpheader>/0/SHIPMODE' }, { value: 'shipmode' }, { value: 'SHIPMODE' }, { value: 'DESC' }, { value: 'ValueKey' }],
                                                     formatter: '.formatValueHelp'
@@ -243,12 +244,11 @@
                                                 showValueHelp="true"
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
-                                                suggestionItems="{path: 'shipmode>/', length: 10000, templateShareable: false}" 
                                                 maxSuggestionWidth="160px"
                                                 change="onFormValueHelpInputChange">
-                                                <suggestionItems>
+                                                <!-- <suggestionItems>
                                                     <core:ListItem key="{shipmode>SHIPMODE}" text="{shipmode>DESC}" additionalText="{shipmode>SHIPMODE}" />
-                                                </suggestionItems>
+                                                </suggestionItems> -->
                                                 <!-- <customData>
                                                     <core:CustomData key="SHIPMODE" value="{grpheader>/0/SHIPMODE}"/>
                                                 </customData> -->
@@ -276,50 +276,50 @@
                         cellClick="onCellClick"
                         sort="onSorted">
                         <uiT:columns>
-                            <uiT:Column width="125px">
+                            <uiT:Column name="MATERIALNO" width="125px">
                                 <Text text="{ddtext>/MATERIALNO}" />
                                 <uiT:template>
                                     <Text text="{detail>MATERIALNO}" wrapping="false" tooltip="{detail>MATERIALNO}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="300px">
+                            <uiT:Column name="GMCDESCEN" width="300px">
                                 <Text text="{ddtext>/GMCDESCEN}" />
                                 <uiT:template>
                                     <Text text="{detail>GMCDESCEN}" wrapping="false" tooltip="{detail>GMCDESCEN}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="300px">
+                            <uiT:Column name="ADDTLDESC" width="300px">
                                 <Text text="{ddtext>/ADDTLDESC}" />
                                 <uiT:template>
                                     <Text text="{detail>ADDTLDESC}" wrapping="false" tooltip="{detail>ADDTLDESC}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="300px">
+                            <uiT:Column name="POADDTLDESC" width="300px">
                                 <Text text="{ddtext>/POADDTLDESC}" />
                                 <uiT:template>
                                     <Input value="{detail>POADDTLDESC}" tooltip="{detail>POADDTLDESC}" maxLength="68"/>
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column name="IONUMBER" width="100px">
                                 <Text text="{ddtext>/IONUMBER}" />
                                 <uiT:template>
                                     <Text text="{detail>IONUMBER}" wrapping="false" tooltip="{detail>IONUMBER}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="140px">
+                            <uiT:Column name="DELVDATE" width="140px">
                                 <Text text="{ddtext>/DELVDATE}" />
                                 <uiT:template>
                                     <Text text="{detail>DELVDATE}" wrapping="false" tooltip="{detail>DELVDATE}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="125px" hAlign="End">
+                            <uiT:Column name="BASEPOQTY" width="125px" hAlign="End">
                                 <Text text="{ddtext>/BASEPOQTY}" />
                                 <uiT:template>
                                     <Input value="{detail>BASEPOQTY}" enabled="false" change="onInputChange" />
                                     <!-- <Text text="{detail>BASEPOQTY}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column name="BASEUOM" width="100px">
                                 <Text text="{ddtext>/BASEUOM}" />
                                 <uiT:template>
                                     <Text 
@@ -361,13 +361,13 @@
                                 </uiT:template>
                             </uiT:Column> -->
 
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="ORDERPOQTY" width="100px" hAlign="End">
                                 <Text text="{ddtext>/ORDERPOQTY}" />
                                 <uiT:template>
                                     <Text text="{detail>ORDERPOQTY}" wrapping="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="150px">
+                            <uiT:Column name="ORDUOM" width="150px">
                                 <Text text="{ddtext>/ORDUOM}" />
                                 <uiT:template>
                                     <Input value="{detail>UOM}" tooltip="{detail>UOM}" enabled="false" change="onValueHelpInputChange" />
@@ -386,7 +386,7 @@
                                     </Input> -->
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="GROSSPRICE" width="100px" hAlign="End">
                                 <Text text="{ddtext>/GROSSPRICE}" />
                                 <uiT:template>
                                     <Input value="{detail>GROSSPRICE}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
@@ -398,64 +398,64 @@
                                     <Text text="{detail>NETPRICE}" wrapping="false" />
                                 </uiT:template>
                             </uiT:Column> -->
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="PER" width="100px" hAlign="End">
                                 <Text text="{ddtext>/PER}" />
                                 <uiT:template>
                                     <Text text="{detail>PER}" wrapping="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="150px">
+                            <uiT:Column name="ORDERPRICEUNIT" width="150px">
                                 <Text text="{ddtext>/ORDERPRICEUNIT}" />
                                 <uiT:template>
                                     <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onValueHelpInputChange" />
                                     <!-- <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="OVERDELTOL" width="100px" hAlign="End">
                                 <Text text="{ddtext>/OVERDELTOL}" />
                                 <uiT:template>
                                     <Input value="{detail>OVERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
                                     <!-- <Text text="{detail>OVERDELTOL}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="UNDERDELTOL" width="100px" hAlign="End">
                                 <Text text="{ddtext>/UNDERDELTOL}" />
                                 <uiT:template>
                                     <Input value="{detail>UNDERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
                                     <!-- <Text text="{detail>UNDERDELTOL}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="Center">
+                            <uiT:Column name="UNLI" width="100px" hAlign="Center">
                                 <Text text="{ddtext>/UNLI}" />
                                 <uiT:template>
                                     <CheckBox selected="{detail>UNLI}" editable="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column name="TAXCODE" width="100px">
                                 <Text text="{ddtext>/TAXCODE}" />
                                 <uiT:template>
                                     <Text text="{detail>TAXCODE}" wrapping="false" tooltip="{detail>TAXCODE}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="Center">
+                            <uiT:Column name="GRBASEDIV" width="100px" hAlign="Center">
                                 <Text text="{ddtext>/GRBASEDIV}" />
                                 <uiT:template>
                                     <CheckBox selected="{detail>GRBASEDIV}" editable="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column name="PRNUMBER" width="100px">
                                 <Text text="{ddtext>/PRNUMBER}" />
                                 <uiT:template>
                                     <Text text="{detail>PRNUMBER}" wrapping="false" tooltip="{detail>PRNUMBER}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px">
+                            <uiT:Column name="PRITEMNO" width="100px">
                                 <Text text="{ddtext>/PRITEMNO}" />
                                 <uiT:template>
                                     <Text text="{detail>PRITEMNO}" wrapping="false" tooltip="{detail>PRITEMNO}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="300px">
+                            <uiT:Column name="SUPPLYTYPE" width="300px">
                                 <Text text="{ddtext>/SUPPLYTYPE}" />
                                 <uiT:template>
                                     <Input value="{detail>SUPPLYTYPE}" tooltip="{detail>SUPPLYTYPE}" enabled="false" change="onValueHelpInputChange" />
@@ -479,19 +479,19 @@
                                     </Input>                                     -->
                                 </uiT:template>
                             </uiT:Column>                                                
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="ORDERCONVFACTOR" width="100px" hAlign="End">
                                 <Text text="{ddtext>/ORDERCONVFACTOR}" />
                                 <uiT:template>
                                     <Text text="{detail>ORDERCONVFACTOR}" wrapping="false" />
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="End">
+                            <uiT:Column name="BASECONVFACTOR" width="100px" hAlign="End">
                                 <Text text="{ddtext>/BASECONVFACTOR}" />
                                 <uiT:template>
                                     <Text text="{detail>BASECONVFACTOR}" wrapping="false"/>
                                 </uiT:template>
                             </uiT:Column>
-                            <uiT:Column width="100px" hAlign="End" visible="false">
+                            <uiT:Column name="MATERIALTYPE" width="100px" hAlign="End" visible="false">
                                 <Text text="{ddtext>/MATERIALTYPE}" />
                                 <uiT:template>
                                     <Text text="{detail>MATERIALTYPE}" wrapping="false"/>
