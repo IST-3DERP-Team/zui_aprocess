@@ -77,7 +77,8 @@ sap.ui.define([
                     sbu: '',
                     currsbu: '',
                     dataWrap: {
-                        mainTab: false
+                        mainTab: false,
+                        detailTab: false
                     }
                 }), "ui");
 
@@ -165,6 +166,7 @@ sap.ui.define([
                 oDDTextParam.push({CODE: "BASEPOQTY"});
                 oDDTextParam.push({CODE: "ORDERPOQTY"});
                 oDDTextParam.push({CODE: "UOM"});
+                oDDTextParam.push({CODE: "ORDUOM"});
                 oDDTextParam.push({CODE: "GROSSPRICE"});
                 oDDTextParam.push({CODE: "NETPRICE"});
                 oDDTextParam.push({CODE: "PER"});
@@ -275,7 +277,13 @@ sap.ui.define([
 
                 this.getOwnerComponent().getModel("UI_MODEL").setData({
                     sbu: "",
-                    flag: false
+                    flag: false,
+                    dataWrap: {
+                        mainTab: false,
+                        detailTab: false
+                    },
+                    columnUpdate: false,
+                    columns: []
                 })
 
                 this.getOwnerComponent().getModel("COLUMN_FILTER_MODEL").setData({
@@ -684,7 +692,7 @@ sap.ui.define([
                             }
                         })
                     }
-                    console.log()
+
                     oTable.getSortedColumns().forEach(col => {
                         if (col.getProperty("name") === sPath) {
                             sSortOrder = oEvent.getParameter("sortOrder");
@@ -1709,6 +1717,14 @@ sap.ui.define([
                     };
 
                     sap.ui.getCore().byId("assignVendorManualTab").addEventDelegate(oTableEventDelegate);
+
+                    var oInputEventDelegate = {
+                        onkeydown: function(oEvent){
+                            me.onInputKeyDown(oEvent);
+                        },
+                    };
+
+                    sap.ui.getCore().byId("iptManualVendor").addEventDelegate(oInputEventDelegate);
                 }
                 else {
                     me._AssignVendorManualDialog.getModel().setProperty("/rows", oData);
@@ -1718,6 +1734,7 @@ sap.ui.define([
                 me._AssignVendorManualDialog.setTitle(me.getView().getModel("ddtext").getData()["MANUALASSIGNVENDOR"]);
                 me._AssignVendorManualDialog.open();
                 sap.ui.getCore().byId("assignVendorManualTab").focus();
+                me._isAssignVendorManualDialog = true;
             },
 
             beforeOpenAVM: function(oEvent) {
@@ -2902,7 +2919,7 @@ sap.ui.define([
                 };
 
                 oTable.getColumns().forEach((col, idx) => {
-                    var sColName = "";
+                    var sColName = ""; 
     
                     if (col.mAggregations.template.mBindingInfos.text !== undefined) {
                         sColName = col.mAggregations.template.mBindingInfos.text.parts[0].path;
@@ -2975,7 +2992,9 @@ sap.ui.define([
                                             length: 10000,
                                             templateShareable: false
                                         },
-                                        change: this.onValueHelpInputChange.bind(this)
+                                        change: this.onValueHelpInputChange.bind(this),
+                                        suggest: this.onInputSuggest.bind(this),
+                                        suggestionItemSelected: this.onInputSuggestionItemSelected.bind(this)
                                     })
         
                                     oInput.setSuggestionRowValidator(this.suggestionRowValidator);
@@ -3057,6 +3076,8 @@ sap.ui.define([
                 if (oEvent.key === "ArrowUp" || oEvent.key === "ArrowDown") {
                     //prevent increase/decrease of number value
                     oEvent.preventDefault();
+
+                    if (this._inputSuggest) { return }
     
                     var sTableId = oEvent.srcControl.oParent.oParent.sId;
                     // var oTable = this.byId(sTableId);
@@ -3071,20 +3092,11 @@ sap.ui.define([
                     var iVisibleRowCount = oTable.getVisibleRowCount();
                     var iRowCount = 0;
     
-                    if (this._headerTextDialog) {
-                        var activeTab = sap.ui.getCore().byId("ITB1").getSelectedKey();
-    
-                        if (activeTab === "remarks") {
-                            iRowCount = this._oHeaderTextDialog.getModel().getData().rem_items.length;
-                            sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext().sPath.replace("/rem_items/", "");
-                            this._oHeaderTextDialog.getModel().setProperty(oEvent.srcControl.oParent.getBindingContext().sPath + "/REMARKS", oEvent.srcControl.getValue());
-                        }
-                        else if (activeTab === "packins") {
-                            iRowCount = this._oHeaderTextDialog.getModel().getData().packins_items.length;
-                            sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext().sPath.replace("/packins_items/", "");
-                            this._oHeaderTextDialog.getModel().setProperty(oEvent.srcControl.oParent.getBindingContext().sPath + "/PACKINS", oEvent.srcControl.getValue());
-                        }
-                    }
+                    if (this._isAssignVendorManualDialog) {
+                        iRowCount = this._AssignVendorManualDialog.getModel().getData().rows.length;
+                        sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext().sPath.replace("/rows/", "");
+                        this._AssignVendorManualDialog.getModel().setProperty(oEvent.srcControl.oParent.getBindingContext().sPath + "/" + oEvent.srcControl.getBindingInfo("value").parts[0].path, oEvent.srcControl.getValue());
+                }
                     else {
                         iRowCount = oTable.getModel("detail").getData().length;
                         sCurrentRowIndex = +oEvent.srcControl.oParent.getBindingContext("detail").sPath.replace("/", "");
@@ -3303,44 +3315,47 @@ sap.ui.define([
                 // })
     
                 if (isInvalid) { 
-                    this._validationErrors.push(oEvent.getSource().getId());
+                    this.validateInputValue(oSource);
+                    // this._validationErrors.push(oEvent.getSource().getId());
 
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
+                    // this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
+                    // this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
+                    // this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
+                    // this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
+                    // this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
                 }
                 else {
-                    var vValue = oSource.getSelectedKey();
+                    this.setValuesAfterInputChange(oSource);
+                    
+                    // var vValue = oSource.getSelectedKey();
 
-                    if (oSource.getSelectedKey() === "") {
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
-                    }
-                    else {
-                        var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
-                        var oVendor = this.getView().getModel("vendor").getData()[vMatNo].filter(fItem => fItem.LIFNR === vValue);
+                    // if (oSource.getSelectedKey() === "") {
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
+                    // }
+                    // else {
+                    //     var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
+                    //     var oVendor = this.getView().getModel("vendor").getData()[vMatNo].filter(fItem => fItem.LIFNR === vValue);
                         
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', oVendor[0].NAME1);
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', oVendor[0].WAERS);
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', oVendor[0].ZTERM);                           
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', oVendor[0].INCO1);
-                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', oVendor[0].INCO2);
-                    }
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', oVendor[0].NAME1);
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', oVendor[0].WAERS);
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', oVendor[0].ZTERM);                           
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', oVendor[0].INCO1);
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', oVendor[0].INCO2);
+                    // }
 
-                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + "/" + sPath, vValue);
+                    // this._AssignVendorManualDialog.getModel().setProperty(sRowPath + "/" + sPath, vValue);
 
-                    if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
+                    // if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
 
-                    this._validationErrors.forEach((item, index) => {
-                        if (item === oEvent.getSource().getId()) {
-                            this._validationErrors.splice(index, 1)
-                        }
-                    })
+                    // this._validationErrors.forEach((item, index) => {
+                    //     if (item === oEvent.getSource().getId()) {
+                    //         this._validationErrors.splice(index, 1)
+                    //     }
+                    // })
                 }
             },
 
@@ -3358,39 +3373,40 @@ sap.ui.define([
                 
                 if (sModel === undefined) { sModel = "" }
 
-                if (isInvalid) this._validationErrors.push(oEvent.getSource().getId());
-                else {
-                    this._validationErrors.forEach((item, index) => {
-                        if (item === oEvent.getSource().getId()) {
-                            this._validationErrors.splice(index, 1)
-                        }
-                    })
-                }
-
-                var oTable = this.byId(this._sActiveTable);
-
-                if (oTable === undefined) {
-                    oTable = sap.ui.getCore().byId(this._sActiveTable);
-                }
-
-                if (oTable.getModel(sModel) === undefined) {
-                    oTableModel =  oTable.getModel();
-                    sRowPath = oSource.oParent.getBindingContext().sPath;
+                if (isInvalid) {
+                    this.validateInputValue(oSource);
                 }
                 else {
-                    oTableModel =  oTable.getModel(sModel);
-                    sRowPath = oSource.oParent.getBindingContext(sModel).sPath;
+                    this.setValuesAfterInputChange(oSource);
+                    // this._validationErrors.forEach((item, index) => {
+                    //     if (item === oEvent.getSource().getId()) {
+                    //         this._validationErrors.splice(index, 1)
+                    //     }
+                    // })
                 }
 
-                if (oSource.getBindingInfo("value").parts[0].path === "ORDERUOM") {
-                    var vBaseUOM = oTableModel.getProperty(sRowPath + '/BASEUOM');
-                    this.convertUOM(vBaseUOM, vValue, oTableModel, sRowPath);
-                }
+                // var oTable = this.byId(this._sActiveTable);
 
-                oTableModel.setProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path, vValue);
-                if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
-    
-                // this._bHeaderChanged = true;
+                // if (oTable === undefined) {
+                //     oTable = sap.ui.getCore().byId(this._sActiveTable);
+                // }
+
+                // if (oTable.getModel(sModel) === undefined) {
+                //     oTableModel =  oTable.getModel();
+                //     sRowPath = oSource.oParent.getBindingContext().sPath;
+                // }
+                // else {
+                //     oTableModel =  oTable.getModel(sModel);
+                //     sRowPath = oSource.oParent.getBindingContext(sModel).sPath;
+                // }
+
+                // if (oSource.getBindingInfo("value").parts[0].path === "ORDERUOM") {
+                //     var vBaseUOM = oTableModel.getProperty(sRowPath + '/BASEUOM');
+                //     this.convertUOM(vBaseUOM, vValue, oTableModel, sRowPath);
+                // }
+
+                // oTableModel.setProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path, vValue);
+                // if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
             },
 
             onNumberLiveChange: function(oEvent) {
@@ -3852,6 +3868,7 @@ sap.ui.define([
                                                         else {
                                                             itemIR.REMARKS = returnData[0].RetType === 'E' ? returnData[0].RetMessage : '';
                                                             itemIR.UOM = returnData[0].PoUnit;
+                                                            itemIR.ORDUOM = returnData[0].PoUnit;
                                                             itemIR.GROSSPRICE = returnData[0].NetPrice;
                                                             itemIR.NETPRICE = returnData[0].NetPrice;
                                                             itemIR.PER = returnData[0].PriceUnit;
@@ -3958,6 +3975,7 @@ sap.ui.define([
                                                                                 noir.ORDERCONVFACTOR = oDataNOIR.results[0].Umren;
                                                                                 noir.BASECONVFACTOR = oDataNOIR.results[0].Umrez;
                                                                                 noir.UOM = oDataNOIR.results[0].Orderuom;
+                                                                                noir.ORDUOM = oDataNOIR.results[0].Orderuom;
                                                                                 noir.GROSSPRICE = oDataNOIR.results[0].Unitprice;
                                                                                 noir.NETPRICE = oDataNOIR.results[0].Netprice;
                                                                                 noir.ORDERPRICEUNIT = oDataNOIR.results[0].Orderuom;
@@ -4088,6 +4106,7 @@ sap.ui.define([
                                                                 noir.ORDERCONVFACTOR = oDataNOIR.results[0].Umren;
                                                                 noir.BASECONVFACTOR = oDataNOIR.results[0].Umrez;
                                                                 noir.UOM = oDataNOIR.results[0].Orderuom;
+                                                                noir.ORDUOM = oDataNOIR.results[0].Orderuom;
                                                                 noir.GROSSPRICE = oDataNOIR.results[0].Unitprice;
                                                                 noir.NETPRICE = oDataNOIR.results[0].Netprice;
                                                                 noir.ORDERPRICEUNIT = oDataNOIR.results[0].Orderuom;
@@ -4112,6 +4131,7 @@ sap.ui.define([
                                                                 if (oDataNOIR.results[0].Supplytyp !== "NOM") {
                                                                     if (oDataNOIR.results[0].Orderuom === "") { 
                                                                         noir.UOM = noir.BASEUOM;
+                                                                        noir.ORDUOM = noir.BASEUOM;
                                                                         noir.ORDERPRICEUNIT = noir.BASEUOM;
                                                                     }
                                                                 }
@@ -4424,11 +4444,10 @@ sap.ui.define([
                     oParamLock["N_IMPRTAB"] = me._oLock;
                     oParamLock["iv_count"] = 300;
                     oParamLock["N_LOCK_MESSAGES"] = []; 
-                    console.log(oParamLock)
+
                     oModelLock.create("/Lock_PRSet", oParamLock, {
                         method: "POST",
                         success: function(oResultLock) {
-                            console.log(oResultLock);
                             oResultLock.N_LOCK_MESSAGES.results.forEach(item => {
                                 if (item.Type === "E") {
                                     sError += item.Message + ".\r\n ";
@@ -4460,11 +4479,11 @@ sap.ui.define([
                     var oParamUnLock = {}
     
                     oParamUnLock["N_IMPRTAB"] = this._oLock;
-                    console.log(oParamUnLock)
+                    // console.log(oParamUnLock)
                     // setTimeout(() => {
                         oModelLock.create("/Unlock_PRSet", oParamUnLock, {
                             method: "POST",
-                            success: function(oResultUnlock) { console.log(oResultUnlock) },
+                            success: function(oResultUnlock) { },
                             error: function (err) { }
                         })
         
@@ -4727,6 +4746,7 @@ sap.ui.define([
             onCloseConfirmDialog: function(oEvent) {
                 this._ConfirmDialog.close();
                 this._AssignVendorManualDialog.close();
+                this._isAssignVendorManualDialog = false;
                 this.unLock();
             },  
     
@@ -5022,7 +5042,6 @@ sap.ui.define([
                     method: "POST",
                     success: function(oData, oResponse) {        
                         me.closeLoadingDialog();
-                        console.log(oData)
 
                         if (oData.N_ExtendItems.results.filter(fItem => fItem.PONO !== "").length > 0) {
                             me._extendData = oData.N_ExtendItems.results.filter(fItem => fItem.PONO !== "");
@@ -5170,7 +5189,7 @@ sap.ui.define([
             
             suggestionRowValidator: function (oColumnListItem) {
                 var aCells = oColumnListItem.getCells();
-                console.log(aCells)
+
                 if (aCells.length === 1) {
                     return new sap.ui.core.Item({
                         key: aCells[0].getText(),
@@ -5183,6 +5202,192 @@ sap.ui.define([
                         text: aCells[1].getText()
                     });
                 }
+            },
+
+            onInputSuggest: function(oEvent) {
+                //override the default filtering "StartsWidth" to "Contains"
+                var oInputSource = oEvent.getSource();
+                var sSuggestValue = oEvent.getParameter("suggestValue").toLowerCase();
+                var aFilters = [];
+                var oFilter = null;
+
+                this._inputSuggest = true;
+
+                if (oInputSource.getSuggestionRows().length === 0){
+                    oInputSource.getBinding("suggestionRows").filter(null);
+                }
+                
+                if (oInputSource.getSuggestionRows().length > 0) {
+                    oInputSource.getSuggestionRows()[0].getCells().forEach(cell => {
+                        aFilters.push(new Filter(cell.getBinding("text").sPath, FilterOperator.Contains, sSuggestValue))
+                    })
+    
+                    oFilter = new Filter(aFilters, false);
+    
+                    oInputSource.getBinding("suggestionRows").filter(oFilter);
+                    oInputSource.setShowSuggestion(true);
+                    oInputSource.setFilterSuggests(false);
+                }
+            },
+
+            onInputSuggestionItemSelected: function(oEvent) {
+                this._inputSuggest = false;
+            },
+
+            validateInputValue(source) {
+                var oInputSource = source;                
+                var sValue = oInputSource.getProperty("value").toLowerCase();
+                var sRowPath = oInputSource.oParent.getBindingContext().sPath;
+                var sTextFormatMode = "Key";
+                var aDataSource = [];
+                var sKey = "";
+
+                if (this._AssignVendorManualDialog.isOpen()) {
+                    var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
+                    aDataSource = jQuery.extend(true, [], this.getView().getModel("vendor").getData()[vMatNo]);
+                    sKey = "LIFNR";
+                }
+                else {
+                    var sDataSourceModel = oInputSource.getBindingInfo("value").parts[1].value;
+                    var sText = oInputSource.getBindingInfo("value").parts[3].value;
+                    sKey = oInputSource.getBindingInfo("value").parts[2].value;
+                    sTextFormatMode = oInputSource.getProperty("textFormatMode");
+                    aDataSource = jQuery.extend(true, [], this.getView().getModel(sDataSourceModel).getData());
+                }
+
+                aDataSource.forEach(item => {
+                    if (sTextFormatMode === "ValueKey") {
+                        item.DESCCODE = item[sText] + " (" + item[sKey] + ")";
+                    }
+                    else if (sTextFormatMode === "KeyValue") {
+                        item.CODEDESC = item[sKey] + " (" + item[sText] + ")";
+                    }
+                })
+
+                var aCols = Object.keys(aDataSource[0]).filter(fItem => fItem !== "__metadata");
+                var vColCount = aCols.length;
+
+                var matchedData = aDataSource.filter(function (d) {
+                    for (let i = 0; i < vColCount; i++) {
+                        // check for a match
+                        if (d[aCols[i]] != null) {
+                            if (d[aCols[i]].toString().toLowerCase() === sValue) {
+                                // found match, return true to add to result set
+                                return true;
+                            }
+                        }
+                    }
+                });
+
+                if (matchedData.length !== 0) {
+                    // console.log(matchedData[0][sKey])                    
+                    
+                    if (sTextFormatMode === "ValueKey") {
+                        oInputSource.setValue(matchedData[0][sText] + " (" + matchedData[0][sKey] + ")")
+                    }
+                    else if (sTextFormatMode === "KeyValue") {
+                        oInputSource.setValue(matchedData[0][sKey] + " (" + matchedData[0][sText] + ")")
+                    }
+                    else if (sTextFormatMode === "Key") {
+                        oInputSource.setValue(matchedData[0][sKey])
+                    }
+                    else if (sTextFormatMode === "Value") {
+                        oInputSource.setValue(matchedData[0][sText])
+                    }
+
+                    oInputSource.setSelectedKey(matchedData[0][sKey]);
+                    oInputSource.setValueState("None");
+
+                    this.setValuesAfterInputChange(oInputSource);
+
+                    // if (this._AssignVendorManualDialog.isOpen()) {
+                    //     this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/' + sFieldName, matchedData[0][sKey]);
+                    // }
+                    // else {
+                    //     this.byId(this._sActiveTable).getModel().setProperty(sRowPath + '/' + sFieldName, matchedData[0][sKey]);
+                    // }
+
+                    // this._validationErrors.forEach((item, index) => {
+                    //     if (item === oEvent.getSource().getId()) {
+                    //         this._validationErrors.splice(index, 1)
+                    //     }
+                    // })
+                }
+                else {
+                    oInputSource.setValueState("Error");
+                    this._validationErrors.push(oEvent.getSource().getId()); 
+
+                    if (this._AssignVendorManualDialog.isOpen()) {
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
+                    }
+                }
+            },
+
+            setValuesAfterInputChange(source) {
+                var oSource = source;
+                var vValue = oSource.getSelectedKey();
+                var sPath = oSource.getBindingInfo("value").parts[0].path;
+                var sRowPath = oSource.oParent.getBindingContext().sPath;
+
+                if (this._AssignVendorManualDialog.isOpen()) {
+                    if (oSource.getSelectedKey() === "") {
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', "");
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', "");
+                    }
+                    else {
+                        var vMatNo = this._AssignVendorManualDialog.getModel().getProperty(sRowPath + "/MATERIALNO");
+                        var oVendor = this.getView().getModel("vendor").getData()[vMatNo].filter(fItem => fItem.LIFNR === vValue);
+                        
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/VENDORNAME', oVendor[0].NAME1);
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/CURR', oVendor[0].WAERS);
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/PAYTERMS', oVendor[0].ZTERM);                           
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO1', oVendor[0].INCO1);
+                        this._AssignVendorManualDialog.getModel().setProperty(sRowPath + '/INCO2', oVendor[0].INCO2);
+                    }
+    
+                    this._AssignVendorManualDialog.getModel().setProperty(sRowPath + "/" + sPath, vValue);
+                }
+                else {
+                    var oTable = this.byId(this._sActiveTable);
+                    var sModel = oSource.getBindingInfo("value").parts[0].model;
+                    var oTableModel;
+                
+                    if (sModel === undefined) { sModel = "" }
+
+                    if (oTable === undefined) {
+                        oTable = sap.ui.getCore().byId(this._sActiveTable);
+                    }
+
+                    if (oTable.getModel(sModel) === undefined) {
+                        oTableModel = oTable.getModel();
+                    }
+                    else {
+                        oTableModel = oTable.getModel(sModel);
+                        sRowPath = oSource.oParent.getBindingContext(sModel).sPath;
+                    }
+
+                    if (sPath === "ORDERUOM") {
+                        var vBaseUOM = oTableModel.getProperty(sRowPath + '/BASEUOM');
+                        this.convertUOM(vBaseUOM, vValue, oTableModel, sRowPath);
+                    }
+
+                    oTableModel.setProperty(sRowPath + '/' + sPath, vValue);
+                }
+
+                if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
+
+                this._validationErrors.forEach((item, index) => {
+                    if (item === oEvent.getSource().getId()) {
+                        this._validationErrors.splice(index, 1)
+                    }
+                })
             },
 
             //******************************************* */

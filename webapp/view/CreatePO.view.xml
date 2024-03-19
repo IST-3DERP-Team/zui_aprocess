@@ -68,7 +68,20 @@
                             icon="sap-icon://sys-cancel"
                             press="onCancelPO"
                             tooltip="{ddtext>/CANCEL}"
-                            visible="true"/>                         
+                            visible="true"/>
+                        <Button id="btnTabLayout"
+                            icon="sap-icon://grid" 
+                            tooltip="{ddtext>/SAVELAYOUT}" 
+                            press="onSaveTableLayout"/>
+                        <Button id="btnDataWrap" 
+                            text="{= ${ui>/dataWrap/detailTab} === true ? ${ddtext>/UNWRAP} : ${ddtext>/WRAP} }"
+                            press="onWrapText"
+                            tooltip="{= ${ui>/dataWrap/detailTab} === true ? ${ddtext>/UNWRAP} : ${ddtext>/WRAP} }"
+                            visible="true" >
+                            <customData>
+                                <core:CustomData key="TableId" value="detailTab" />
+                            </customData>
+                        </Button>
                     </OverflowToolbar>
 
                     <form:Form id="headerForm" editable="true" class="sapUiNoContentPadding" busy="false">
@@ -171,6 +184,7 @@
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 maxSuggestionWidth="160px"
+                                                suggest="onInputSuggest"
                                                 change="onFormValueHelpInputChange">
                                                 <!-- <suggestionItems>
                                                     <core:ListItem key="{payterm>ZTERM}" text="{payterm>TEXT1}" additionalText="{payterm>ZTERM}" />
@@ -195,6 +209,7 @@
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 maxSuggestionWidth="160px"
+                                                suggest="onInputSuggest"
                                                 change="onFormValueHelpInputChange">
                                                 <!-- <suggestionItems>
                                                     <core:ListItem key="{incoterm>INCO1}" text="{incoterm>DESC}" additionalText="{incoterm>INCO1}" />
@@ -245,6 +260,7 @@
                                                 valueHelpRequest="handleFormValueHelp" 
                                                 showSuggestion="true" 
                                                 maxSuggestionWidth="160px"
+                                                suggest="onInputSuggest"
                                                 change="onFormValueHelpInputChange">
                                                 <!-- <suggestionItems>
                                                     <core:ListItem key="{shipmode>SHIPMODE}" text="{shipmode>DESC}" additionalText="{shipmode>SHIPMODE}" />
@@ -274,8 +290,11 @@
                         selectionMode="None"
                         selectionBehavior="RowOnly"
                         cellClick="onCellClick"
+                        columnMove="onColumnUpdated"
+                        columnResize="onColumnUpdated"
+                        columnVisibility="onColumnUpdated"
                         sort="onSorted">
-                        <uiT:columns>
+                        <!-- <uiT:columns>
                             <uiT:Column name="MATERIALNO" width="125px">
                                 <Text text="{ddtext>/MATERIALNO}" />
                                 <uiT:template>
@@ -316,13 +335,12 @@
                                 <Text text="{ddtext>/BASEPOQTY}" />
                                 <uiT:template>
                                     <Input value="{detail>BASEPOQTY}" enabled="false" change="onInputChange" />
-                                    <!-- <Text text="{detail>BASEPOQTY}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
                             <uiT:Column name="BASEUOM" width="100px">
                                 <Text text="{ddtext>/BASEUOM}" />
                                 <uiT:template>
-                                    <Text 
+                                    <Text
                                         text="{ 
                                                 parts: [{ path: 'detail>BASEUOM' }, { value: 'uom' }, { value: 'MSEHI' }, { value: 'MSEHL' }, { value: 'ValueKey' }],
                                                 formatter: '.formatValueHelp'
@@ -330,37 +348,6 @@
                                         wrapping="false" tooltip="{detail>BASEUOM}" />
                                 </uiT:template>
                             </uiT:Column>
-                            <!-- <uiT:Column width="125px" hAlign="End">
-                                <Text text="{ddtext>/BASEPOQTY}" />
-                                <uiT:template>
-                                    <Text text="{detail>BASEPOQTY2}" wrapping="false" />
-                                </uiT:template>
-                            </uiT:Column>
-                            <uiT:Column width="125px" hAlign="End">
-                                <Text text="{ddtext>/BASEPOQTY}" />
-                                <uiT:template>
-                                    <Text text="{detail>BASEPOQTY3}" wrapping="false" />
-                                </uiT:template>
-                            </uiT:Column>
-                            <uiT:Column width="125px" hAlign="End">
-                                <Text text="{ddtext>/BASEPOQTY}" />
-                                <uiT:template>
-                                    <Text text="{detail>BASEPOQTY4}" wrapping="false" />
-                                </uiT:template>
-                            </uiT:Column>                        
-                            <uiT:Column width="125px" hAlign="End">
-                                <Text text="{ddtext>/BASEPOQTY}" />
-                                <uiT:template>
-                                    <Text text="{detail>BASEPOQTY5}" wrapping="false" />
-                                </uiT:template>
-                            </uiT:Column>
-                            <uiT:Column width="125px" hAlign="End">
-                                <Text text="{ddtext>/BASEPOQTY}" />
-                                <uiT:template>
-                                    <Text text="{detail>BASEPOQTY6}" wrapping="false" />
-                                </uiT:template>
-                            </uiT:Column> -->
-
                             <uiT:Column name="ORDERPOQTY" width="100px" hAlign="End">
                                 <Text text="{ddtext>/ORDERPOQTY}" />
                                 <uiT:template>
@@ -371,19 +358,6 @@
                                 <Text text="{ddtext>/ORDUOM}" />
                                 <uiT:template>
                                     <Input value="{detail>UOM}" tooltip="{detail>UOM}" enabled="false" change="onValueHelpInputChange" />
-                                    <!-- <Input type="Text" 
-                                        value="{detail>UOM}" 
-                                        tooltip="{detail>UOM}"
-                                        showValueHelp="true"
-                                        valueHelpRequest="handleFormValueHelp" 
-                                        showSuggestion="true" 
-                                        suggestionItems="{path: 'uom>/', length: 10000, templateShareable: false}" 
-                                        enabled="false"
-                                        change="onValueHelpInputChange">
-                                        <suggestionItems>
-                                            <core:Item key="{uom>MSEHI}" text="{uom>MSEHI}" />
-                                        </suggestionItems>
-                                    </Input> -->
                                 </uiT:template>
                             </uiT:Column>
                             <uiT:Column name="GROSSPRICE" width="100px" hAlign="End">
@@ -392,12 +366,6 @@
                                     <Input value="{detail>GROSSPRICE}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
                                 </uiT:template>
                             </uiT:Column>
-                            <!-- <uiT:Column width="100px" hAlign="End">
-                                <Text text="{ddtext>/NETPRICE}" />
-                                <uiT:template>
-                                    <Text text="{detail>NETPRICE}" wrapping="false" />
-                                </uiT:template>
-                            </uiT:Column> -->
                             <uiT:Column name="PER" width="100px" hAlign="End">
                                 <Text text="{ddtext>/PER}" />
                                 <uiT:template>
@@ -408,21 +376,18 @@
                                 <Text text="{ddtext>/ORDERPRICEUNIT}" />
                                 <uiT:template>
                                     <Input value="{detail>ORDERPRICEUNIT}" enabled="false" change="onValueHelpInputChange" />
-                                    <!-- <Text text="{detail>ORDERPRICEUNIT}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
                             <uiT:Column name="OVERDELTOL" width="100px" hAlign="End">
                                 <Text text="{ddtext>/OVERDELTOL}" />
                                 <uiT:template>
                                     <Input value="{detail>OVERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
-                                    <!-- <Text text="{detail>OVERDELTOL}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
                             <uiT:Column name="UNDERDELTOL" width="100px" hAlign="End">
                                 <Text text="{ddtext>/UNDERDELTOL}" />
                                 <uiT:template>
                                     <Input value="{detail>UNDERDELTOL}" enabled="false" textAlign="Right" liveChange="onNumberLiveChange" type="Number" />
-                                    <!-- <Text text="{detail>UNDERDELTOL}" wrapping="false" /> -->
                                 </uiT:template>
                             </uiT:Column>
                             <uiT:Column name="UNLI" width="100px" hAlign="Center">
@@ -459,24 +424,6 @@
                                 <Text text="{ddtext>/SUPPLYTYPE}" />
                                 <uiT:template>
                                     <Input value="{detail>SUPPLYTYPE}" tooltip="{detail>SUPPLYTYPE}" enabled="false" change="onValueHelpInputChange" />
-                                    <!-- <Text text="{detail>SUPPLYTYPE}" wrapping="false" tooltip="{detail>SUPPLYTYPE}" /> -->
-                                    <!-- <Input type="Text" 
-                                        value="{ 
-                                            parts: [{ path: 'detail>SUPPLYTYPE' }, { value: 'supplyType' }, { value: 'SUPPLYTYP' }, { value: 'SHORTTEXT' }, { value: 'ValueKey' }],
-                                            formatter: '.formatValueHelp'
-                                        }" 
-                                        textFormatMode="ValueKey"
-                                        showValueHelp="true"
-                                        valueHelpRequest="handleFormValueHelp" 
-                                        showSuggestion="true" 
-                                        suggestionItems="{path: 'supplyType>/', length: 10000, templateShareable: false}" 
-                                        maxSuggestionWidth="160px"
-                                        enabled="false"
-                                        change="onValueHelpInputChange">
-                                        <suggestionItems>
-                                            <core:ListItem key="{supplyType>SUPPLYTYP}" text="{supplyType>SHORTTEXT}" additionalText="{supplyType>SUPPLYTYP}" />
-                                        </suggestionItems>
-                                    </Input>                                     -->
                                 </uiT:template>
                             </uiT:Column>                                                
                             <uiT:Column name="ORDERCONVFACTOR" width="100px" hAlign="End">
@@ -497,7 +444,7 @@
                                     <Text text="{detail>MATERIALTYPE}" wrapping="false"/>
                                 </uiT:template>
                             </uiT:Column>
-                        </uiT:columns>
+                        </uiT:columns> -->
                         <!-- <uiT:extension>
                             <Toolbar>
                                 <ToolbarSpacer/>

@@ -40,6 +40,8 @@
                                 valueHelpRequest="handleStaticValueHelp"  
                                 showSuggestion="true" 
                                 maxSuggestionWidth="600px"
+                                suggest="onInputSuggest"
+                                suggestionItemSelected="onInputSuggestionItemSelected"
                                 change="onStaticValueHelpInputChange">
                             </Input>
                         </uit:template>

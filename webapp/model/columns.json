@@ -17,7 +17,7 @@
             "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
         {"name": "BASEPOQTY", "label": "PO QTY (BASE)", "type": "NUMBER", "required": true, "length": "13", "precision":"13", "scale": "3",
             "ValueHelp": {"show": false, "source": "", "value": "", "desc": ""}},
-        {"ColumnName": "UOM", "name": "UOM", "label": "Order UOM", "type": "STRING", "required": true, "length": "3", "TextFormatMode": "ValueKey",
+        {"ColumnName": "ORDUOM", "name": "ORDUOM", "label": "Order UOM", "type": "STRING", "required": true, "length": "3", "TextFormatMode": "ValueKey",
             "ValueHelp": {"show": true, "items": {"path": "uom", "value": "MSEHI", "text": "MSEHL"},
                 "SuggestionItems": {"path": "uom>/", "text": "{uom>MSEHI}", "additionalText": "{uom>MSEHL}", "maxSuggestionWidth": "300px"},
                 "columns": "tvh_uom"

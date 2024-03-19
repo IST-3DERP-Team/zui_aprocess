@@ -4,10 +4,13 @@ sap.ui.define([
     "sap/m/MessageBox",
     "sap/ui/core/routing/History",
     "sap/m/MessageToast",
-    "../js/TableValueHelp"
+    "../js/TableFilter",
+    "../js/TableValueHelp",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
 ],
 
-function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHelp) {
+function (Controller, JSONModel, MessageBox, History, MessageToast, TableFilter, TableValueHelp, Filter, FilterOperator) {
     var dateFormat = sap.ui.core.format.DateFormat.getDateInstance({pattern : "MM/dd/yyyy" });
     var sapDateFormat = sap.ui.core.format.DateFormat.getDateInstance({pattern : "yyyy-MM-dd" });
     
@@ -53,7 +56,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         onPatternMatched: function() {  
             var me = this;
             this._oModel = this.getOwnerComponent().getModel();
-            this._aColumns = [];            
+            this._aColumns = [];
             this._poCreated = false;
             this._toExtend = false;
             this._sActiveTable = "";
@@ -175,6 +178,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             this._bPackInsChanged = false;
             this._bHeaderChanged = false;
             this._bDetailsChanged = false;
+            this._columnUpdated = false;
             this._aRemarksDataBeforeChange = [];
             this._aPackInsDataBeforeChange = [];
             this._aFabSpecsDataBeforeChange = [];
@@ -241,15 +245,13 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                             me.byId("detailTab").setModel(new JSONModel(oDataGroupDetail), "detail");
                             me.byId("detailTab").bindRows({path: "detail>/"});
                             await me.getColumnProp(me);
-                            console.log(me.getView().getModel("detail").getData())
                         }
 
                         if (iCounter === oHeaderData.length) {
                             me.getView().setModel(new JSONModel(mData), "payterms");
                             me.getView().setModel(new JSONModel(oHeaderData), "header");
                             me.getView().setModel(new JSONModel(oHeaderData.filter(grp => grp.GROUP === "1")), "grpheader");
-                            console.log(me.getView().getModel("grpheader").getData());
-                            me.closeLoadingDialog();
+                            // me.closeLoadingDialog();
                         }                         
                     },
                     error: function (err) {
@@ -345,7 +347,11 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 activeGroup: "1",
                 totalGroup: oHeaderData.length + "",
                 title: oHeaderData[0].EXTEND ? oHeaderData[0].PONO + " " + this.getView().getModel("ddtext").getData()["POEXTEND"] : this.getView().getModel("ddtext").getData()["POCREATE"],
-                generatepo: oHeaderData[0].EXTEND ? this.getView().getModel("ddtext").getData()["EXTENDPO"] : this.getView().getModel("ddtext").getData()["GENERATEPO"]
+                generatepo: oHeaderData[0].EXTEND ? this.getView().getModel("ddtext").getData()["EXTENDPO"] : this.getView().getModel("ddtext").getData()["GENERATEPO"],
+                dataWrap: {
+                    mainTab: false,
+                    detailTab: false
+                }
             }), "ui");
 
             if (oHeaderData.length > 1) { this.byId("btnNextPO").setEnabled(true); } 
@@ -367,6 +373,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             else this._ConfirmDialog.setModel(new JSONModel(oData));
                 
             this._ConfirmDialog.open();
+
+            this.getOwnerComponent().getModel("UI_MODEL").setProperty("/columnUpdate", this._columnUpdated);
+            this.getOwnerComponent().getModel("UI_MODEL").setProperty("/columns", this._aColumns);
         },
 
         getColumnProp: async (me) => {
@@ -375,11 +384,222 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             var oModelColumns = new JSONModel();
             await oModelColumns.loadData(sPath);
 
-            me._aColumns = oModelColumns.getData();
+            var oColumns = oModelColumns.getData();
+            // me._aColumns = oModelColumns.getData();
             me._oModelColumns = oModelColumns.getData();
-            me.setRowEditMode("detail");
+
+            var vColumnUpdated = me.getOwnerComponent().getModel("UI_MODEL").getData().columnUpdate;
+
+            if (me.byId("detailTab").getColumns().length === 0 || vColumnUpdated) {
+                console.log("get columns");
+                me.getDynamicColumns("ANPCRTPO", "Z3DERP_ANPCRTPO", "detailTab", oColumns);
+            }
+            else {
+                me.closeLoadingDialog();
+                me._aColumns = me.getOwnerComponent().getModel("UI_MODEL").getData().columns;
+                me.setRowEditMode("detail");
+            }
+            
+            // me.setRowEditMode("detail");
 
             TableValueHelp.setFormSuggestion(me, "grpheader");
+        },
+
+        getDynamicColumns(arg1, arg2, arg3, arg4) {
+            var me = this;
+            var sType = arg1;
+            var sTabName = arg2;
+            var sTabId = arg3;
+            var oLocColProp = arg4;
+            var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_COMMON_SRV");
+            var vSBU = this.getOwnerComponent().getModel("UI_MODEL").getData().sbu;
+
+            oModel.setHeaders({
+                sbu: vSBU,
+                type: sType,
+                tabname: sTabName
+            });
+
+            oModel.read("/ColumnsSet", {
+                success: function (oData, oResponse) {
+                    if (oData.results.length > 0) {
+                        if (oLocColProp[sTabId.replace("Tab", "")] !== undefined) {
+                            oData.results.forEach(item => {
+                                oLocColProp[sTabId.replace("Tab", "")].filter(loc => loc.ColumnName === item.ColumnName)
+                                    .forEach(col => {
+                                        item.ValueHelp = col.ValueHelp;
+                                        item.TextFormatMode = col.TextFormatMode;
+                                    })
+
+                                if (item.ColumnName === "GRBASEDIV" || item.ColumnName === "UNLI") {
+                                    item.DataType  = "BOOLEAN";
+                                }
+                            })
+                        }
+                        
+                        me._aColumns[sTabId.replace("Tab", "")] = oData.results;
+                        me.setTableColumns(oData.results);
+
+                        var oDDTextResult = me.getView().getModel("ddtext").getData();
+                        oData.results.forEach(item => {
+                            oDDTextResult[item.ColumnName] = item.ColumnLabel;
+                        })
+
+                        me.getView().setModel(new JSONModel(oDDTextResult), "ddtext");
+                    }
+                },
+                error: function (err) {
+                }
+            });
+        },
+
+        setTableColumns(arg) {
+            var me = this;
+            var oColumns = arg;
+            var oTable = this.getView().byId("detailTab");
+            oTable.setModel(new JSONModel({columns: oColumns}));
+            // oTable.getModel("detail").setProperty("/columns", oColumns);
+
+            //bind the dynamic column to the table
+            oTable.bindColumns("/columns", function (index, context) {
+                var sColumnId = context.getObject().ColumnName;
+                var sColumnLabel = context.getObject().ColumnLabel;
+                var sColumnType = context.getObject().ColumnType;
+                var sColumnWidth = context.getObject().ColumnWidth;
+                var sColumnVisible = context.getObject().Visible;
+                var sColumnSorted = context.getObject().Sorted;
+                var sColumnSortOrder = context.getObject().SortOrder;
+                var sColumnDataType = context.getObject().DataType;
+                var sTextWrapping = context.getObject().WrapText;
+
+                if (sColumnWidth === 0) sColumnWidth = 100;
+
+                var oText = new sap.m.Text({
+                    wrapping: sTextWrapping === "X" ? true : false,
+                    tooltip: sColumnDataType === "BOOLEAN" ? "" : "{" + sColumnId + "}"
+                })
+
+                if (sColumnId === "BASEUOM") {
+                    oText.bindText({  
+                        parts: [  
+                            { path: "detail>" + sColumnId }
+                        ],  
+                        formatter: function(sColumnId) {
+                            var oValue = me.getView().getModel("uom").getData().filter(v => v.MSEHI === sColumnId);
+
+                            if (oValue && oValue.length > 0) {
+                                return oValue[0].MSEHL + " (" + sColumnId + ")";
+                            }
+                            else return sColumnId;
+                        }
+                    });
+
+                    return new sap.ui.table.Column({
+                        id: "inforecCol" + sColumnId,
+                        name: sColumnId,
+                        label: new sap.m.Text({text: sColumnLabel}), 
+                        template: oText,
+                        width: sColumnWidth + 'px',
+                        sortProperty: sColumnId,
+                        autoResizable: true,
+                        visible: sColumnVisible,
+                        sorted: sColumnSorted,                        
+                        hAlign: sColumnDataType === "NUMBER" ? "End" : sColumnDataType === "BOOLEAN" ? "Center" : "Begin",
+                        sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending" ),
+                    }); 
+                }
+                else {
+                    return new sap.ui.table.Column({
+                        // id: sColumnId,
+                        name: sColumnId,
+                        label: new sap.m.Text({text: sColumnLabel}), 
+                        template: me.columnTemplate(sColumnId, sColumnDataType, sTextWrapping),
+                        width: sColumnWidth + 'px',
+                        sortProperty: sColumnId,
+                        // filterProperty: sColumnId,
+                        autoResizable: true,
+                        visible: sColumnVisible,
+                        sorted: sColumnSorted,                        
+                        hAlign: sColumnDataType === "NUMBER" ? "End" : sColumnDataType === "BOOLEAN" ? "Center" : "Begin",
+                        sortOrder: ((sColumnSorted === true) ? sColumnSortOrder : "Ascending")
+                    });
+                }
+            });
+
+            var vWrap = oColumns[0].WrapText === "X" ? true : false;
+            this.getOwnerComponent().getModel("UI_MODEL").setProperty("/dataWrap/detailTab", vWrap);
+            this.getView().getModel("ui").setProperty("/dataWrap/detailTab", vWrap);
+
+            //date/number sorting
+            oTable.attachSort(function(oEvent) {
+                var sPath = oEvent.getParameter("column").getSortProperty();
+                var bMultiSort = oEvent.getParameter("columnAdded");
+                var bDescending, sSortOrder, oSorter, oColumn, columnType;
+                var aSorts = [];
+
+                if (!bMultiSort) {
+                    oTable.getColumns().forEach(col => {
+                        if (col.getSorted()) {
+                            col.setSorted(false);
+                        }
+                    })
+                }
+
+                oTable.getSortedColumns().forEach(col => {
+                    if (col.getProperty("name") === sPath) {
+                        sSortOrder = oEvent.getParameter("sortOrder");
+                        oEvent.getParameter("column").setSorted(true); //sort icon indicator
+                        oEvent.getParameter("column").setSortOrder(sSortOrder); //set sort order                          
+                    }
+                    else {
+                        sSortOrder = col.getProperty("sortOrder");
+                    }
+
+                    bDescending = (sSortOrder === "Descending" ? true : false);
+                    oSorter = new sap.ui.model.Sorter(col.getProperty("name"), bDescending); //sorter(columnData, If Ascending(false) or Descending(True))
+                    oColumn = oColumns.filter(fItem => fItem.ColumnName === col.getProperty("name"));
+                    columnType = oColumn[0].DataType;
+
+                    if (columnType === "DATETIME") {
+                        oSorter.fnCompare = function(a, b) {
+                            // parse to Date object
+                            var aDate = new Date(a);
+                            var bDate = new Date(b);
+
+                            if (bDate === null) { return -1; }
+                            if (aDate === null) { return 1; }
+                            if (aDate < bDate) { return -1; }
+                            if (aDate > bDate) { return 1; }
+
+                            return 0;
+                        };
+                    }
+                    else if (columnType === "NUMBER") {
+                        oSorter.fnCompare = function(a, b) {
+                            // parse to Date object
+                            var aNumber = +a;
+                            var bNumber = +b;
+
+                            if (bNumber === null) { return -1; }
+                            if (aNumber === null) { return 1; }
+                            if (aNumber < bNumber) { return -1; }
+                            if (aNumber > bNumber) { return 1; }
+
+                            return 0;
+                        };
+                    }
+
+                    aSorts.push(oSorter);
+                })
+
+                oTable.getBinding('rows').sort(aSorts);
+
+                // prevent internal sorting by table
+                oEvent.preventDefault();
+            });
+
+            TableFilter.updateColumnMenu("detailTab", this);
+            this.setRowEditMode("detail");
         },
 
         getDiscRate() {
@@ -599,7 +819,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
                 this._aColumns[arg].filter(item => item.name === sColName)
                     .forEach(ci => {
-                        col.setTemplate(new sap.m.Text({text: "{" + arg + ">" + ci.name + "}"}));
+                        col.setTemplate(new sap.m.Text({text: "{" + arg + ">" + ci.ColumnName + "}"}));
 
                         if (ci.required) {
                             col.getLabel().removeStyleClass("requiredField");
@@ -614,7 +834,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
         setRowEditMode(arg) {
             var me = this;
             var oTable = this.byId(arg + "Tab");
-            
+
             this._bHeaderChanged = false;
             this._bDetailsChanged = false;
             this._validationErrors = [];
@@ -638,145 +858,130 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     sColName = col.mAggregations.template.mBindingInfos.value.parts[0].path;
                 }
 
-                this._aColumns[arg].filter(item => item.name === sColName)
+                this._aColumns[arg].filter(item => item.ColumnName === sColName)
                     .forEach(ci => {
-                        if (ci.ValueHelp["show"]) {
-                            var bValueFormatter = true;
-                            // var sSuggestItemText = ci.ValueHelp["SuggestionItems"].text;
-                            // var sSuggestItemAddtlText = ci.ValueHelp["SuggestionItems"].additionalText !== undefined ? ci.ValueHelp["SuggestionItems"].additionalText : '';                                    
-                            var sTextFormatMode = "Key";
-
-                            if (ci.TextFormatMode && ci.TextFormatMode !== "" && ci.TextFormatMode !== "Key" && ci.ValueHelp["items"].value !== ci.ValueHelp["items"].text) {
-                                sTextFormatMode = ci.TextFormatMode;
-                                // bValueFormatter = true;
-
-                                // if (ci.ValueHelp["SuggestionItems"].additionalText && ci.ValueHelp["SuggestionItems"].text !== ci.ValueHelp["SuggestionItems"].additionalText) {
-                                //     if (sTextFormatMode === "ValueKey" || sTextFormatMode === "Value") {
-                                //         sSuggestItemText = ci.ValueHelp["SuggestionItems"].additionalText;
-                                //         sSuggestItemAddtlText = ci.ValueHelp["SuggestionItems"].text;
-                                //     }
-                                // }
+                        if (ci.Editable) {
+                            if (ci.ValueHelp && ci.ValueHelp["show"]) {
+                                var bValueFormatter = true;
+                                // var sSuggestItemText = ci.ValueHelp["SuggestionItems"].text;
+                                // var sSuggestItemAddtlText = ci.ValueHelp["SuggestionItems"].additionalText !== undefined ? ci.ValueHelp["SuggestionItems"].additionalText : '';                                    
+                                var sTextFormatMode = "Key";
+    
+                                if (ci.TextFormatMode && ci.TextFormatMode !== "" && ci.TextFormatMode !== "Key" && ci.ValueHelp["items"].value !== ci.ValueHelp["items"].text) {
+                                    sTextFormatMode = ci.TextFormatMode;
+                                }
+                                
+                                var oColumns = [], oCells = [];
+                                            
+                                //assign first cell to key/code
+                                this._oModelColumns[ci.ValueHelp["columns"]].filter(fItem => fItem.Key === true).forEach(item => {
+                                    oColumns.push(new sap.m.Column({
+                                        header: new sap.m.Label({ text: this.getView().getModel("ddtext").getData()[item.ColumnName] })
+                                    }))
+    
+                                    oCells.push(new sap.m.Text({
+                                        text: { path: ci.ValueHelp["items"].path + ">" + item.ColumnName }
+                                    }))
+                                })
+    
+                                //assign second cell to display value/description
+                                this._oModelColumns[ci.ValueHelp["columns"]].filter(fItem => fItem.Key === false && fItem.Value === true).forEach(item => {
+                                    oColumns.push(new sap.m.Column({
+                                        header: new sap.m.Label({ text: this.getView().getModel("ddtext").getData()[item.ColumnName] })
+                                    }))
+    
+                                    oCells.push(new sap.m.Text({
+                                        text: { path: ci.ValueHelp["items"].path + ">" + item.ColumnName }
+                                    }))
+                                })
+    
+                                //add other column info
+                                this._oModelColumns[ci.ValueHelp["columns"]].filter(fItem => fItem.Visible === true && fItem.Key === false && fItem.Value === false).forEach(item => {
+                                    oColumns.push(new sap.m.Column({
+                                        header: new sap.m.Label({ text: this.getView().getModel("ddtext").getData()[item.ColumnName] }),
+                                    }))
+    
+                                    oCells.push(new sap.m.Text({
+                                        text: { path: ci.ValueHelp["items"].path + ">" + item.ColumnName }
+                                    }))
+                                })
+    
+                                var oInput = new sap.m.Input({
+                                    type: "Text",
+                                    showValueHelp: true,
+                                    valueHelpRequest: TableValueHelp.handleTableValueHelp.bind(this),
+                                    showSuggestion: true,
+                                    maxSuggestionWidth: ci.ValueHelp["SuggestionItems"].maxSuggestionWidth !== undefined ? ci.ValueHelp["SuggestionItems"].maxSuggestionWidth : "1px",
+                                    suggestionColumns: oColumns,
+                                    suggestionRows: {
+                                        path: ci.ValueHelp["SuggestionItems"].path,
+                                        template: new sap.m.ColumnListItem({
+                                            cells: oCells
+                                        }),
+                                        length: 10000,
+                                        templateShareable: false
+                                    },
+                                    change: this.onValueHelpInputChange.bind(this),
+                                    suggest: this.onInputSuggest.bind(this),
+                                    suggestionItemSelected: this.onInputSuggestionItemSelected.bind(this)
+                                })
+    
+                                oInput.setSuggestionRowValidator(this.suggestionRowValidator);
+    
+                                if (bValueFormatter) {
+                                    oInput.setProperty("textFormatMode", sTextFormatMode)
+    
+                                    oInput.bindValue({  
+                                        parts: [{ path: arg + ">" + sColName }, { value: ci.ValueHelp["items"].path }, { value: ci.ValueHelp["items"].value }, { value: ci.ValueHelp["items"].text }, { value: sTextFormatMode }],
+                                        formatter: this.formatValueHelp.bind(this)
+                                    });
+                                }
+                                else {
+                                    oInput.bindValue({  
+                                        parts: [  
+                                            { path: arg + ">" + sColName }
+                                        ]
+                                    });
+                                }
+    
+                                oInput.addEventDelegate(oInputEventDelegate);
+    
+                                col.setTemplate(oInput);
                             }
-                            
-                            var oColumns = [], oCells = [];
-                                        
-                            //assign first cell to key/code
-                            this._oModelColumns[ci.ValueHelp["columns"]].filter(fItem => fItem.Key === true).forEach(item => {
-                                oColumns.push(new sap.m.Column({
-                                    header: new sap.m.Label({ text: this.getView().getModel("ddtext").getData()[item.ColumnName] })
-                                }))
-
-                                oCells.push(new sap.m.Text({
-                                    text: { path: ci.ValueHelp["items"].path + ">" + item.ColumnName }
-                                }))
-                            })
-
-                            //assign second cell to display value/description
-                            this._oModelColumns[ci.ValueHelp["columns"]].filter(fItem => fItem.Key === false && fItem.Value === true).forEach(item => {
-                                oColumns.push(new sap.m.Column({
-                                    header: new sap.m.Label({ text: this.getView().getModel("ddtext").getData()[item.ColumnName] })
-                                }))
-
-                                oCells.push(new sap.m.Text({
-                                    text: { path: ci.ValueHelp["items"].path + ">" + item.ColumnName }
-                                }))
-                            })
-
-                            //add other column info
-                            this._oModelColumns[ci.ValueHelp["columns"]].filter(fItem => fItem.Visible === true && fItem.Key === false && fItem.Value === false).forEach(item => {
-                                oColumns.push(new sap.m.Column({
-                                    header: new sap.m.Label({ text: this.getView().getModel("ddtext").getData()[item.ColumnName] }),
-                                }))
-
-                                oCells.push(new sap.m.Text({
-                                    text: { path: ci.ValueHelp["items"].path + ">" + item.ColumnName }
-                                }))
-                            })
-
-                            var oInput = new sap.m.Input({
-                                type: "Text",
-                                showValueHelp: true,
-                                valueHelpRequest: TableValueHelp.handleTableValueHelp.bind(this),
-                                showSuggestion: true,
-                                maxSuggestionWidth: ci.ValueHelp["SuggestionItems"].maxSuggestionWidth !== undefined ? ci.ValueHelp["SuggestionItems"].maxSuggestionWidth : "1px",
-                                suggestionColumns: oColumns,
-                                suggestionRows: {
-                                    path: ci.ValueHelp["SuggestionItems"].path,
-                                    template: new sap.m.ColumnListItem({
-                                        cells: oCells
-                                    }),
-                                    length: 10000,
-                                    templateShareable: false
-                                },
-                                // suggestionItems: {
-                                //     path: ci.ValueHelp["SuggestionItems"].path,
-                                //     length: 10000,
-                                //     template: new sap.ui.core.ListItem({
-                                //         key: ci.ValueHelp["SuggestionItems"].text,
-                                //         text: sSuggestItemText,
-                                //         additionalText: sSuggestItemAddtlText,
-                                //     }),
-                                //     templateShareable: false
-                                // },
-                                // suggest: this.handleSuggestion.bind(this),
-                                change: this.onValueHelpInputChange.bind(this)
-                            })
-
-                            oInput.setSuggestionRowValidator(this.suggestionRowValidator);
-
-                            if (bValueFormatter) {
-                                oInput.setProperty("textFormatMode", sTextFormatMode)
-
-                                oInput.bindValue({  
-                                    parts: [{ path: arg + ">" + sColName }, { value: ci.ValueHelp["items"].path }, { value: ci.ValueHelp["items"].value }, { value: ci.ValueHelp["items"].text }, { value: sTextFormatMode }],
-                                    formatter: this.formatValueHelp.bind(this)
-                                });
+                            else if (ci.DataType === "NUMBER") {
+                                col.setTemplate(new sap.m.Input({
+                                    type: sap.m.InputType.Number,
+                                    textAlign: sap.ui.core.TextAlign.Right,
+                                    // value: "{" + arg + ">" + sColName + "}",
+                                    value: "{path:'" + arg + ">" + sColName + "', formatOptions:{ minFractionDigits:" + ci.Decimal + ", maxFractionDigits:" + ci.Decimal + " }, constraints:{ precision:" + ci.Length + ", scale:" + ci.Decimal + " }}",
+                                    // change: this.onNumberChange.bind(this),
+                                    liveChange: this.onNumberLiveChange.bind(this), 
+                                    enabled: true
+                                }).addEventDelegate(oInputEventDelegate));
+                            }
+                            else if (ci.DataType === "DATE" || ci.DataType === "DATETIME") {
+                                col.setTemplate(new sap.m.DatePicker({
+                                    value: "{" + arg + ">" + sColName + "}",
+                                    displayFormat: "MM/dd/yyyy",
+                                    valueFormat: "MM/dd/yyyy",
+                                    change: this.onDateChange.bind(this),
+                                    navigate: this.onClickDate.bind(this)
+                                }).addEventDelegate(oInputEventDelegate))
                             }
                             else {
-                                oInput.bindValue({  
-                                    parts: [  
-                                        { path: arg + ">" + sColName }
-                                    ]
-                                });
+                                col.setTemplate(new sap.m.Input({
+                                    value: "{" + arg + ">" + ci.ColumnName + "}"
+                                    // liveChange: this.onInputLiveChange.bind(this)
+                                }).addEventDelegate(oInputEventDelegate));
                             }
-
-                            oInput.addEventDelegate(oInputEventDelegate);
-
-                            col.setTemplate(oInput);
-                        }
-                        else if (ci.type === "NUMBER") {
-                            col.setTemplate(new sap.m.Input({
-                                type: sap.m.InputType.Number,
-                                textAlign: sap.ui.core.TextAlign.Right,
-                                // value: "{" + arg + ">" + sColName + "}",
-                                value: "{path:'" + arg + ">" + sColName + "', formatOptions:{ minFractionDigits:" + ci.scale + ", maxFractionDigits:" + ci.scale + " }, constraints:{ precision:" + ci.precision + ", scale:" + ci.scale + " }}",
-                                // change: this.onNumberChange.bind(this),
-                                liveChange: this.onNumberLiveChange.bind(this), 
-                                enabled: true
-                            }).addEventDelegate(oInputEventDelegate));
-                        }
-                        else if (ci.type === "DATE") {
-                            col.setTemplate(new sap.m.DatePicker({
-                                value: "{" + arg + ">" + sColName + "}",
-                                displayFormat: "MM/dd/yyyy",
-                                valueFormat: "MM/dd/yyyy",
-                                change: this.onDateChange.bind(this),
-                                navigate: this.onClickDate.bind(this)
-                            }).addEventDelegate(oInputEventDelegate))
-                        }
-                        else {
-                            col.setTemplate(new sap.m.Input({
-                                value: "{" + arg + ">" + ci.name + "}"
-                                // liveChange: this.onInputLiveChange.bind(this)
-                            }).addEventDelegate(oInputEventDelegate));
                         }
 
-                        if (ci.required) {
+                        if (ci.Mandatory) {
                             col.getLabel().addStyleClass("sapMLabelRequired");
                         }
                     }) 
 
-                    if (sColName === "GROSSPRICE") col.getLabel().addStyleClass("sapMLabelRequired");                    
+                    // if (sColName === "GROSSPRICE") col.getLabel().addStyleClass("sapMLabelRequired");                    
             })
 
             this.getView().getModel(arg).getData().forEach(item => item.Edited = false);
@@ -788,7 +993,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         if (cell.getBindingInfo("value").parts[0].path === "GROSSPRICE") iGPCellIndex = idx;
                         else if (cell.getBindingInfo("value").parts[0].path === "OVERDELTOL") iOTCellIndex = idx;
                         else if (cell.getBindingInfo("value").parts[0].path === "UNDERDELTOL") iUTCellIndex = idx;
-                        else if (cell.getBindingInfo("value").parts[0].path === "UOM") iOrdUOMCellIndex = idx;
+                        else if (cell.getBindingInfo("value").parts[0].path === "ORDUOM") iOrdUOMCellIndex = idx;
                         else if (cell.getBindingInfo("value").parts[0].path === "ORDERPRICEUNIT") iOrdPrxUnitCellIndex = idx;
                         else if (cell.getBindingInfo("value").parts[0].path === "SUPPLYTYPE") iSupTypCellIndex = idx;
                     }
@@ -828,6 +1033,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                     }
                 })
             }, 100);
+
+            this.closeLoadingDialog();
         },
 
         setValuePrecision(oEvent) {
@@ -991,7 +1198,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 this._inputField = oSource.getBindingInfo("value").parts[0].path;
             }
 
-            if (this._inputField === 'SHIPMODE' || this._inputField === 'INCOTERMS' || this._inputField === 'SUPPLYTYPE' || this._inputField === 'UOM' || this._inputField === 'ORDERPRICEUNIT') {
+            if (this._inputField === 'SHIPMODE' || this._inputField === 'INCOTERMS' || this._inputField === 'SUPPLYTYPE' || this._inputField === 'ORDUOM' || this._inputField === 'ORDERPRICEUNIT') {
                 var vCellPath = this._inputField;
                 var vColProp = this._aColumns[sModel].filter(item => item.name === vCellPath);
                 var vItemValue = vColProp[0].valueHelp.items.value;
@@ -1238,67 +1445,67 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             //     }
             // })
 
-            if (isInvalid) this._validationErrors.push(oEvent.getSource().getId());
+            if (isInvalid) {
+                this.validateInputValue(oSource);
+            }
             else {
-                this._validationErrors.forEach((item, index) => {
-                    if (item === oEvent.getSource().getId()) {
-                        this._validationErrors.splice(index, 1)
-                    }
-                })
+                this.setValuesAfterInputChange(oSource);
+                // this._validationErrors.forEach((item, index) => {
+                //     if (item === oEvent.getSource().getId()) {
+                //         this._validationErrors.splice(index, 1)
+                //     }
+                // })
             }
 
-            if (sModel === "detail") { 
-                var oTable = this.byId(sModel + "Tab");
-                sRowPath = oSource.oParent.getBindingContext(sModel).sPath
+            // if (sModel === "detail") { 
+            //     var oTable = this.byId(sModel + "Tab");
+            //     sRowPath = oSource.oParent.getBindingContext(sModel).sPath
                 
-                if (oSource.getBindingInfo("value").parts[0].path === "SUPPLYTYPE") {
-                    var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === oSource.getSelectedKey());
-                    var iRowIndex = +sRowPath.split("/")[sRowPath.split("/").length-1];
+            //     if (oSource.getBindingInfo("value").parts[0].path === "SUPPLYTYPE") {
+            //         var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === oSource.getSelectedKey());
+            //         var iRowIndex = +sRowPath.split("/")[sRowPath.split("/").length-1];
     
-                    if (oSupplyType[0].FOC === "X") {
-                        //disable gross/net price, set value to zero                    
-                        oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false);
+            //         if (oSupplyType[0].FOC === "X") {
+            //             //disable gross/net price, set value to zero                    
+            //             oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false);
     
-                        this.getView().getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
-                        oTable.getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
-                    }
-                    else {
-                        var vInfoRecCheck = this.getView().getModel(sModel).getProperty(sRowPath + '/INFORECCHECK');
-                        if (vInfoRecCheck) { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false); }
-                        else { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", true); }
-                    }
-                }
-                else if (oSource.getBindingInfo("value").parts[0].path === "UOM") {
-                    var oUOM = this.getView().getModel("uom").getData().filter(fItem => fItem.MSEHI === oSource.getSelectedKey());
-                    var vOrderUOMANDEC = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERUOMANDEC');
+            //             this.getView().getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
+            //             oTable.getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
+            //         }
+            //         else {
+            //             var vInfoRecCheck = this.getView().getModel(sModel).getProperty(sRowPath + '/INFORECCHECK');
+            //             if (vInfoRecCheck) { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false); }
+            //             else { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", true); }
+            //         }
+            //     }
+            //     else if (oSource.getBindingInfo("value").parts[0].path === "ORDUOM") {
+            //         var oUOM = this.getView().getModel("uom").getData().filter(fItem => fItem.MSEHI === oSource.getSelectedKey());
+            //         var vOrderUOMANDEC = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERUOMANDEC');
     
-                    if (vOrderUOMANDEC !== oUOM[0].ANDEC) {
-                        var vBasePOQty = this.getView().getModel(sModel).getProperty(sRowPath + '/BASEPOQTY');
-                        var vBaseConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/BASECONVFACTOR');
-                        var vOrderConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERCONVFACTOR');
-                        var vPer = this.getView().getModel(sModel).getProperty(sRowPath + '/PER');
+            //         if (vOrderUOMANDEC !== oUOM[0].ANDEC) {
+            //             var vBasePOQty = this.getView().getModel(sModel).getProperty(sRowPath + '/BASEPOQTY');
+            //             var vBaseConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/BASECONVFACTOR');
+            //             var vOrderConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERCONVFACTOR');
+            //             var vPer = this.getView().getModel(sModel).getProperty(sRowPath + '/PER');
     
-                        var sOrderConvFactor = vOrderConvFactor === "" || vOrderConvFactor === "0" ? "1" : vOrderConvFactor;
-                        var sBaseConvFactor = vBaseConvFactor === "" || vBaseConvFactor === "0" ? "1" : vBaseConvFactor;
-                        var sPer = vPer === "" ? "1" : vPer;
-                        var vComputedPOQty = +vBasePOQty / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
-                        var vFinalPOQty = "0";
+            //             var sOrderConvFactor = vOrderConvFactor === "" || vOrderConvFactor === "0" ? "1" : vOrderConvFactor;
+            //             var sBaseConvFactor = vBaseConvFactor === "" || vBaseConvFactor === "0" ? "1" : vBaseConvFactor;
+            //             var sPer = vPer === "" ? "1" : vPer;
+            //             var vComputedPOQty = +vBasePOQty / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
+            //             var vFinalPOQty = "0";
     
-                        if (oUOM[0].ANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
-                        else vFinalPOQty = vComputedPOQty.toFixed(oUOM[0].ANDEC);
+            //             if (oUOM[0].ANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
+            //             else vFinalPOQty = vComputedPOQty.toFixed(oUOM[0].ANDEC);
     
-                        this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERUOMANDEC', oUOM[0].ANDEC);
-                        this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERPOQTY', vFinalPOQty);
-                    }                
-                }
-                
-                this.getView().getModel(sModel).setProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path, vValue);
-                console.log(sRowPath, oSource.getBindingInfo("value").parts[0].path, vValue)
-                console.log(this.getView().getModel(sModel).getProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path))
-                if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
-                console.log(oSource);
-                console.log(this.getView().getModel(sModel).getData())
-            }
+            //             this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERUOMANDEC', oUOM[0].ANDEC);
+            //             this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERPOQTY', vFinalPOQty);
+            //         }
+            //     }
+
+            //     this.getView().getModel(sModel).setProperty(sRowPath + '/' + oSource.getBindingInfo("value").parts[0].path, vValue);
+
+            //     if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
+            // }
 
             this._bHeaderChanged = true;
         },
@@ -2492,6 +2699,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 }
     
                 this.setRowReadMode("detail");
+                this.getOwnerComponent().getModel("UI_MODEL").setProperty("/columnUpdate", this._columnUpdated);
+                this.getOwnerComponent().getModel("UI_MODEL").setProperty("/columns", this._aColumns);
             }
             else if (this._ConfirmDialog.getModel().getData().Process === "batchdelvdate-update") {
                 this.batchUpdateDelvDate(this._ConfirmDialog.getModel().getData().DelvDate);
@@ -2802,8 +3011,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                                                 MatGrp: poitem.MATERIALGRP,
                                                                 ShortText: poitem.GMCDESCEN.length > 40 ? poitem.GMCDESCEN.slice(0, 40) : poitem.GMCDESCEN,
                                                                 Plant: poitem.PURCHPLANT,
-                                                                PoUnit: poitem.UOM,
-                                                                OrderprUn: poitem.UOM,
+                                                                PoUnit: poitem.ORDUOM,
+                                                                OrderprUn: poitem.ORDUOM,
                                                                 NetPrice: poitem.GROSSPRICE,
                                                                 PriceUnit: poitem.PER,
                                                                 ConvNum1: poitem.ORDERCONVFACTOR,
@@ -3133,7 +3342,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                                 var PODate = sapDateFormat.format(new Date(item.PODATE)) + "T00:00:00";
                                 var filter = encodeURIComponent("(VENDOR='"+item.VENDOR+"',PURCHGRP='" + item.PURCHGRP +"',PURCHORG='"+ item.PURCHORG +"',SHIPTOPLANT='"+ item.SHIPTOPLANT +"',PURCHPLANT='"+ item.PURCHPLANT +"',PODT=datetime'"+ PODate +"')")
 
-                                extendPOModel.read(extendPOEntitySet+filter , {
+                                extendPOModel.read("/ExtendPO"+filter , {
                                     success: function (oData, oResponse) {
                                         console.log(oData)
                                         oData.PODT = dateFormat.format(new Date(oData.PODT));
@@ -3327,7 +3536,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         Matnr     : item.MATERIALNO,
                         Txz01     : item.GMCDESCEN.substring(0, 40),
                         Menge     : item.ORDERPOQTY + "",
-                        Meins     : item.UOM,
+                        Meins     : item.ORDUOM,
                         Netpr     : item.GROSSPRICE,
                         Peinh     : item.PER,
                         Bprme     : item.ORDERPRICEUNIT,
@@ -3582,7 +3791,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                         Matnr     : item.MATERIALNO,
                         Txz01     : item.GMCDESCEN.substring(0, 40),
                         Menge     : item.ORDERPOQTY + "",
-                        Meins     : item.UOM,
+                        Meins     : item.ORDUOM,
                         Netpr     : item.GROSSPRICE,
                         Peinh     : item.PER,
                         Bprme     : item.ORDERPRICEUNIT,
@@ -4121,7 +4330,9 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 oRouter.navTo("RouteMain", {}, true /*no history*/);
             }
 
-            this.setRowReadMode("detail");            
+            this.setRowReadMode("detail");
+            this.getOwnerComponent().getModel("UI_MODEL").setProperty("/columnUpdate", this._columnUpdated);
+            this.getOwnerComponent().getModel("UI_MODEL").setProperty("/columns", this._aColumns);
         },
 
         showMessage: function(oMessage, iDuration) {
@@ -4369,14 +4580,14 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             //     }
             // })
 
-            if (isInvalid) this._validationErrors.push(oEvent.getSource().getId());
+            if (isInvalid) {
+                this.validateInputValue(oSource);
+            }
             else {
                 var sModel = oSource.getBindingInfo("value").parts[0].model;
                 var sPath = oSource.getBindingInfo("value").parts[0].path;
 
                 this.getView().getModel(sModel).setProperty(sPath, oSource.getSelectedKey());
-                console.log(oSource);
-                console.log(this.getView().getModel(sModel).getData())
 
                 this._validationErrors.forEach((item, index) => {
                     if (item === oEvent.getSource().getId()) {
@@ -4433,6 +4644,8 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
             if (oEvent.key === "ArrowUp" || oEvent.key === "ArrowDown") {
                 //prevent increase/decrease of number value
                 oEvent.preventDefault();
+
+                if (this._inputSuggest) { return }
 
                 var sTableId = oEvent.srcControl.oParent.oParent.sId;
                 // var oTable = this.byId(sTableId);
@@ -4586,7 +4799,7 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
 
         suggestionRowValidator: function (oColumnListItem) {
             var aCells = oColumnListItem.getCells();
-            console.log(aCells)
+            
             if (aCells.length === 1) {
                 return new sap.ui.core.Item({
                     key: aCells[0].getText(),
@@ -4600,6 +4813,289 @@ function (Controller, JSONModel, MessageBox, History, MessageToast, TableValueHe
                 });
             }
         },
+
+        onSaveTableLayout: function () {
+            //saving of the layout of table
+            var me = this;
+            var ctr = 1;
+            var oTable = this.getView().byId("detailTab");
+            var oColumns = oTable.getColumns();
+            var vSBU = this.getOwnerComponent().getModel("UI_MODEL").getData().sbu;
+
+            var oParam = {
+                "SBU": vSBU,
+                "TYPE": "ANPCRTPO",
+                "TABNAME": "Z3DERP_ANPCRTPO",
+                "TableLayoutToItems": []
+            };
+            
+            //get information of columns, add to payload
+            oColumns.forEach((column) => {
+                oParam.TableLayoutToItems.push({
+                    COLUMNNAME: column.mProperties.name,
+                    ORDER: ctr.toString(),
+                    SORTED: column.mProperties.sorted,
+                    SORTORDER: column.mProperties.sortOrder,
+                    SORTSEQ: "1",
+                    VISIBLE: column.mProperties.visible,
+                    WIDTH: column.mProperties.width.replace('px',''),
+                    WRAPTEXT: this.getOwnerComponent().getModel("UI_MODEL").getData().dataWrap["detailTab"] === true ? "X" : ""
+                });
+
+                ctr++;
+            });
+
+            //call the layout save
+            var oModel = this.getOwnerComponent().getModel("ZGW_3DERP_COMMON_SRV");
+
+            oModel.create("/TableLayoutSet", oParam, {
+                method: "POST",
+                success: function(data, oResponse) {
+                    sap.m.MessageBox.information(me.getView().getModel("ddtext").getData()["INFO_LAYOUT_SAVE"]);
+                    //Common.showMessage(me._i18n.getText('t6'));
+                },
+                error: function(err) {
+                    sap.m.MessageBox.error(err);
+                }
+            });
+        },
+
+        onWrapText: function(oEvent) {
+            this._sActiveTable = oEvent.getSource().data("TableId");
+
+            var vWrap = this.getOwnerComponent().getModel("UI_MODEL").getData().dataWrap[this._sActiveTable];
+            
+            this.byId(this._sActiveTable).getColumns().forEach(col => {
+                var oTemplate = col.getTemplate();
+                
+                if (col.getTemplate() instanceof sap.m.Text) {
+                    oTemplate.setWrapping(!vWrap);
+                    col.setTemplate(oTemplate);
+                }
+            })
+
+            this.getOwnerComponent().getModel("UI_MODEL").setProperty("/dataWrap/" + [this._sActiveTable], !vWrap);
+            this.getView().getModel("ui").setProperty("/dataWrap/" + [this._sActiveTable], !vWrap);
+        },
+
+        columnTemplate: function (sColumnId, sColumnType, sTextWrapping) {
+            var oColumnTemplate;
+
+            if (sColumnType === "BOOLEAN") {
+                oColumnTemplate = new sap.m.CheckBox({ selected: "{detail>" + sColumnId + "}", editable: false });
+            }
+            else if (sColumnType === "NUMBER") {
+                oColumnTemplate = new sap.m.Text({ 
+                    text: "{detail>" + sColumnId + "}", 
+                    wrapping: sTextWrapping === "X" ? true : false
+                }); 
+            }
+            else {
+                oColumnTemplate = new sap.m.Text({ 
+                    text: "{detail>" + sColumnId + "}", 
+                    wrapping: sTextWrapping === "X" ? true : false,
+                    tooltip: "{detail>" + sColumnId + "}"
+                }); 
+            }
+
+            return oColumnTemplate;
+        },
+
+        onInputSuggest: function(oEvent) {
+            //override the default filtering "StartsWidth" to "Contains"
+            var oInputSource = oEvent.getSource();
+            var sSuggestValue = oEvent.getParameter("suggestValue").toLowerCase();
+            var aFilters = [];
+            var oFilter = null;
+            // console.log(oInputSource)
+            this._inputSuggest = true;
+
+            if (oInputSource.getSuggestionRows().length === 0){
+                oInputSource.getBinding("suggestionRows").filter(null);
+            }
+            
+            if (oInputSource.getSuggestionRows().length > 0) {
+                oInputSource.getSuggestionRows()[0].getCells().forEach(cell => {
+                    aFilters.push(new Filter(cell.getBinding("text").sPath, FilterOperator.Contains, sSuggestValue))
+                })
+
+                oFilter = new Filter(aFilters, false);
+
+                oInputSource.getBinding("suggestionRows").filter(oFilter);
+                oInputSource.setShowSuggestion(true);
+                oInputSource.setFilterSuggests(false);
+            }
+        },
+
+        onInputSuggestionItemSelected: function(oEvent) {
+            this._inputSuggest = false;
+        },
+
+        validateInputValue(source) {
+            var oInputSource = source;                
+            var sValue = oInputSource.getProperty("value").toLowerCase();
+            var sDataSourceModel = oInputSource.getBindingInfo("value").parts[1].value;
+            var sKey = oInputSource.getBindingInfo("value").parts[2].value;
+            var sText = oInputSource.getBindingInfo("value").parts[3].value;
+            var sTextFormatMode = oInputSource.getProperty("textFormatMode");
+            var aDataSource = jQuery.extend(true, [], this.getView().getModel(sDataSourceModel).getData());
+
+            aDataSource.forEach(item => {
+                if (sTextFormatMode === "ValueKey") {
+                    item.DESCCODE = item[sText] + " (" + item[sKey] + ")";
+                }
+                else if (sTextFormatMode === "KeyValue") {
+                    item.CODEDESC = item[sKey] + " (" + item[sText] + ")";
+                }
+            })
+
+            var aCols = Object.keys(aDataSource[0]).filter(fItem => fItem !== "__metadata");
+            var vColCount = aCols.length;
+
+            // var matchedData = aDataSource.filter(function (d) {
+            //     for (let i = 0; i < vColCount; i++) {
+            //         // check for a match
+            //         if (d[aCols[i]] != null) {
+            //             if (d[aCols[i]].toString().toLowerCase().indexOf(sValue) !== -1 || !sValue) {
+            //                 // found match, return true to add to result set
+            //                 return true;
+            //             }
+            //         }
+            //     }
+            // });
+
+            var matchedData = aDataSource.filter(function (d) {
+                for (let i = 0; i < vColCount; i++) {
+                    // check for a match
+                    if (d[aCols[i]] != null) {
+                        if (d[aCols[i]].toString().toLowerCase() === sValue) {
+                            // found match, return true to add to result set
+                            return true;
+                        }
+                    }
+                }
+            });
+
+            if (matchedData.length !== 0) {
+                // console.log(matchedData[0][sKey])                    
+                
+                if (sTextFormatMode === "ValueKey") {
+                    oInputSource.setValue(matchedData[0][sText] + " (" + matchedData[0][sKey] + ")")
+                }
+                else if (sTextFormatMode === "KeyValue") {
+                    oInputSource.setValue(matchedData[0][sKey] + " (" + matchedData[0][sText] + ")")
+                }
+                else if (sTextFormatMode === "Key") {
+                    oInputSource.setValue(matchedData[0][sKey])
+                }
+                else if (sTextFormatMode === "Value") {
+                    oInputSource.setValue(matchedData[0][sText])
+                }
+
+                oInputSource.setSelectedKey(matchedData[0][sKey]);
+                oInputSource.setValueState("None");
+
+                this.setValuesAfterInputChange(oInputSource);
+
+                // if (sModel === "grpheader") {
+                //     this.getView().getModel(sModel).setProperty(sFieldName, matchedData[0][sKey]);
+                // }
+                // else {
+                //     this.byId(this._sActiveTable).getModel().setProperty(sRowPath + '/' + sFieldName, matchedData[0][sKey]);
+                // }
+
+                // this._validationErrors.forEach((item, index) => {
+                //     if (item === oEvent.getSource().getId()) {
+                //         this._validationErrors.splice(index, 1)
+                //     }
+                // })
+            }
+            else {
+                oInputSource.setValueState("Error");
+                this._validationErrors.push(oEvent.getSource().getId()); 
+            }
+        },
+
+        setValuesAfterInputChange(source) {
+            var oSource = source;
+            var sModel = oSource.getBindingInfo("value").parts[0].model;
+            var sPath = oSource.getBindingInfo("value").parts[0].path;
+            var vValue = oSource.getSelectedKey();
+
+            if (sModel === "grpheader") {
+                this.getView().getModel(sModel).setProperty(sPath, vValue);
+            }
+            else {
+                var oTable = this.byId(sModel + "Tab");
+                var sRowPath = oSource.oParent.getBindingContext(sModel).sPath;
+                
+                if (sPath === "SUPPLYTYPE") {
+                    var iRowIndex = +sRowPath.split("/")[sRowPath.split("/").length-1];
+                        
+                    if (vValue === "") {
+                        var vInfoRecCheck = this.getView().getModel(sModel).getProperty(sRowPath + '/INFORECCHECK');
+                        if (vInfoRecCheck) { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false); }
+                        else { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", true); }
+                    }
+                    else {
+                        var oSupplyType = this.getView().getModel("supplyType").getData().filter(fItem => fItem.SUPPLYTYP === vValue);
+
+                        if (oSupplyType[0].FOC === "X") {
+                            //disable gross/net price, set value to zero                    
+                            oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false);
+        
+                            this.getView().getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
+                            oTable.getModel(sModel).setProperty(sRowPath + '/GROSSPRICE', "0");
+                        }
+                        else {
+                            var vInfoRecCheck = this.getView().getModel(sModel).getProperty(sRowPath + '/INFORECCHECK');
+                            if (vInfoRecCheck) { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", false); }
+                            else { oTable.getRows()[iRowIndex].getCells()[this._iGPCellIndex].setProperty("enabled", true); }
+                        }
+                    }
+                }
+                else if (oSource.getBindingInfo("value").parts[0].path === "ORDUOM") {
+                    if (vValue !== "") {
+                        var oUOM = this.getView().getModel("uom").getData().filter(fItem => fItem.MSEHI === vValue);
+                        var vOrderUOMANDEC = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERUOMANDEC');
+        
+                        if (vOrderUOMANDEC !== oUOM[0].ANDEC) {
+                            var vBasePOQty = this.getView().getModel(sModel).getProperty(sRowPath + '/BASEPOQTY');
+                            var vBaseConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/BASECONVFACTOR');
+                            var vOrderConvFactor = this.getView().getModel(sModel).getProperty(sRowPath + '/ORDERCONVFACTOR');
+                            var vPer = this.getView().getModel(sModel).getProperty(sRowPath + '/PER');
+        
+                            var sOrderConvFactor = vOrderConvFactor === "" || vOrderConvFactor === "0" ? "1" : vOrderConvFactor;
+                            var sBaseConvFactor = vBaseConvFactor === "" || vBaseConvFactor === "0" ? "1" : vBaseConvFactor;
+                            var sPer = vPer === "" ? "1" : vPer;
+                            var vComputedPOQty = +vBasePOQty / ((+sOrderConvFactor) * (+sBaseConvFactor) * (+sPer));
+                            var vFinalPOQty = "0";
+        
+                            if (oUOM[0].ANDEC === 0) vFinalPOQty = Math.ceil(vComputedPOQty).toString();
+                            else vFinalPOQty = vComputedPOQty.toFixed(oUOM[0].ANDEC);
+        
+                            this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERUOMANDEC', oUOM[0].ANDEC);
+                            this.getView().getModel(sModel).setProperty(sRowPath + '/ORDERPOQTY', vFinalPOQty);
+                        }
+                    }
+                }
+
+                this.getView().getModel(sModel).setProperty(sRowPath + '/' + sPath, vValue);
+
+                if (oSource.getSelectedKey() === "") { oSource.setSelectedKey(vValue); }
+            }
+
+            this._validationErrors.forEach((item, index) => {
+                if (item === oEvent.getSource().getId()) {
+                    this._validationErrors.splice(index, 1)
+                }
+            })
+        },
+
+        onColumnUpdated: function(oEvent) {
+            console.log(oEvent);
+            this._columnUpdated = true;
+        }
 
     })
 })
