@@ -903,15 +903,27 @@ sap.ui.define([
 
                         if (oCtrl) {
                             var aCustomFilter = [];
-    
+                            console.log(oCtrl)
                             if (oCtrl.getTokens().length === 1) {
                                 oCtrl.getTokens().map(function(oToken) {
-                                    aFilters.push(new Filter(item, FilterOperator.EQ, oToken.getKey()))
+                                    var vValue = oToken.getKey();
+
+                                    if (oCtrl.getProperty("name") === "VENDOR") {
+                                        while (vValue.length < 10) vValue = "0" + vValue;
+                                    }
+                                    
+                                    aFilters.push(new Filter(item, FilterOperator.EQ, vValue))
                                 })
                             }
                             else if (oCtrl.getTokens().length > 1) {
                                 oCtrl.getTokens().map(function(oToken) {
-                                    aCustomFilter.push(new Filter(item, FilterOperator.EQ, oToken.getKey()))
+                                    var vValue = oToken.getKey();
+
+                                    if (oCtrl.getProperty("name") === "VENDOR") {
+                                        while (vValue.length < 10) vValue = "0" + vValue;
+                                    }
+
+                                    aCustomFilter.push(new Filter(item, FilterOperator.EQ, vValue))
                                 })
     
                                 aFilters.push(new Filter(aCustomFilter));
